@@ -4,7 +4,6 @@
 
 import Deferred
 import Foundation
-import UIKit
 import Shared
 
 /**
