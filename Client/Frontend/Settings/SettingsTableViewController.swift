@@ -664,6 +664,27 @@ private class LoginsSetting: Setting {
     }
 }
 
+private class TouchIDPasscodeSetting: Setting {
+    let profile: Profile
+    var tabManager: TabManager!
+
+    override var accessoryType: UITableViewCellAccessoryType { return .DisclosureIndicator }
+
+    init(settings: SettingsTableViewController, delegate: SettingsDelegate? = nil) {
+        self.profile = settings.profile
+        self.tabManager = settings.tabManager
+
+        let title = NSLocalizedString("Touch ID & Passcode", tableName: "AuthenticationManager", comment: "Title for Touch ID/Passcode settings option")
+        super.init(title: NSAttributedString(string: title, attributes: [NSForegroundColorAttributeName: UIConstants.TableViewRowTextColor]),
+                   delegate: delegate)
+    }
+
+    override func onClick(navigationController: UINavigationController?) {
+        let viewController = AuthenticationSettingsViewController(profile: profile)
+        navigationController?.pushViewController(viewController, animated: true)
+    }
+}
+
 private class ClearPrivateDataSetting: Setting {
     let profile: Profile
     var tabManager: TabManager!
@@ -800,12 +821,16 @@ class SettingsTableViewController: UITableViewController {
             SettingSection(title: NSAttributedString(string: NSLocalizedString("General", comment: "General settings section title")), children: generalSettings)
         ]
 
-        var privacySettings: [Setting]
+        var privacySettings = [Setting]()
         if AppConstants.MOZ_LOGIN_MANAGER {
-            privacySettings = [LoginsSetting(settings: self, delegate: settingsDelegate), ClearPrivateDataSetting(settings: self)]
-        } else {
-            privacySettings = [ClearPrivateDataSetting(settings: self)]
+            privacySettings.append(LoginsSetting(settings: self, delegate: settingsDelegate))
         }
+
+        if AppConstants.MOZ_AUTHENTICATION_MANAGER {
+            privacySettings.append(TouchIDPasscodeSetting(settings: self))
+        }
+
+        privacySettings.append(ClearPrivateDataSetting(settings: self))
 
         if #available(iOS 9, *) {
             privacySettings += [
@@ -956,21 +981,12 @@ class SettingsTableViewController: UITableViewController {
     }
 
     override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        //make account/sign-in and close private tabs rows taller, as per design specs
-        if indexPath.section == 0 && indexPath.row == 0 {
+        // Make account/sign-in and close private tabs rows taller, as per design specs.
+        let section = settings[indexPath.section]
+        if let setting = section[indexPath.row] as? BoolSetting where setting.prefKey == "settings.closePrivateTabs" {
             return 64
-        }
-
-        if #available(iOS 9, *) {
-            if AppConstants.MOZ_LOGIN_MANAGER {
-                if indexPath.section == 2 && indexPath.row == 2 {
-                    return 64
-                }
-            } else {
-                if indexPath.section == 2 && indexPath.row == 1 {
-                    return 64
-                }
-            }
+        } else if section[indexPath.row] is ConnectSetting {
+            return 64
         }
 
         return 44

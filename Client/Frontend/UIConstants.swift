@@ -79,7 +79,6 @@ private struct TempStrings {
     let backToThemesAccessibilityString = NSLocalizedString("Back to Themes", tableName: "LightweightThemes", comment: "Pending feature; currently unused string! Accessibility label for back button to theme chooser")
 
     // Bug 1198418 - Touch ID Passcode Strings
-    let touchIDSetting          = NSLocalizedString("Touch ID & Passcode", tableName: "AuthenticationManager", comment: "Title for Touch ID/Passcode settings option")
     let turnPasscodeOn          = NSLocalizedString("Turn Passcode On", tableName: "AuthenticationManager", comment: "Title for setting to turn on passcode")
     let turnPasscodeOff         = NSLocalizedString("Turn Passcode Off", tableName: "AuthenticationManager", comment: "Title for setting to turn off passcode")
     let passcode                = NSLocalizedString("Passcode", tableName: "AuthenticationManager", comment: "List section title for passcode settings")
