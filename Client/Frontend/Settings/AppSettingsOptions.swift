@@ -470,7 +470,8 @@ class TouchIDPasscodeSetting: Setting {
     }
 
     override func onClick(navigationController: UINavigationController?) {
-        let viewController = AuthenticationSettingsViewController(profile: profile)
+        let viewController = AuthenticationSettingsViewController()
+        viewController.profile = profile
         navigationController?.pushViewController(viewController, animated: true)
     }
 }
