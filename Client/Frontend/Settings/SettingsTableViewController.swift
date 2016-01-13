@@ -225,26 +225,15 @@ class SettingsTableViewController: UITableViewController {
     private let SectionHeaderIdentifier = "SectionHeaderIdentifier"
     private var settings = [SettingSection]()
 
-    private let settingsGenerator: SettingsGenerator
-
     weak var settingsDelegate: SettingsDelegate?
 
     var profile: Profile!
     var tabManager: TabManager!
 
-    init(generator: SettingsGenerator) {
-        self.settingsGenerator = generator
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        settings = settingsGenerator(self, settingsDelegate)
+        settings = generateSettings()
 
         tableView.registerClass(SettingsTableViewCell.self, forCellReuseIdentifier: Identifier)
         tableView.registerClass(SettingsTableSectionHeaderFooterView.self, forHeaderFooterViewReuseIdentifier: SectionHeaderIdentifier)
@@ -271,6 +260,11 @@ class SettingsTableViewController: UITableViewController {
         NSNotificationCenter.defaultCenter().removeObserver(self, name: NotificationProfileDidStartSyncing, object: nil)
         NSNotificationCenter.defaultCenter().removeObserver(self, name: NotificationProfileDidFinishSyncing, object: nil)
         NSNotificationCenter.defaultCenter().removeObserver(self, name: NotificationFirefoxAccountChanged, object: nil)
+    }
+
+    // Override to provide settings in subclasses
+    func generateSettings() -> [SettingSection] {
+        return []
     }
 
     @objc private func SELsyncDidChangeState() {

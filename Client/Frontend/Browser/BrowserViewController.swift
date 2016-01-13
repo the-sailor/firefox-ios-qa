@@ -2332,7 +2332,7 @@ extension BrowserViewController: IntroViewControllerDelegate {
         // Show the settings page if we have already signed in. If we haven't then show the signin page
         let vcToPresent: UIViewController
         if profile.hasAccount() {
-            let settingsTableViewController = AppSettingsTableViewController(generator: generateAppSettings)
+            let settingsTableViewController = AppSettingsTableViewController()
             settingsTableViewController.profile = profile
             settingsTableViewController.tabManager = tabManager
             vcToPresent = settingsTableViewController
