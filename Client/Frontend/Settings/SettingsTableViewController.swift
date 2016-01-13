@@ -246,11 +246,6 @@ class SettingsTableViewController: UITableViewController {
 
         settings = settingsGenerator(self, settingsDelegate)
 
-        navigationItem.title = NSLocalizedString("Settings", comment: "Settings")
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: NSLocalizedString("Done", comment: "Done button on left side of the Settings view controller title bar"),
-            style: UIBarButtonItemStyle.Done,
-            target: navigationController, action: "SELdone")
         tableView.registerClass(SettingsTableViewCell.self, forCellReuseIdentifier: Identifier)
         tableView.registerClass(SettingsTableSectionHeaderFooterView.self, forHeaderFooterViewReuseIdentifier: SectionHeaderIdentifier)
         tableView.tableFooterView = SettingsTableFooterView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 128))

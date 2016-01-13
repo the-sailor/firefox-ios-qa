@@ -439,7 +439,7 @@ class TabTrayController: UIViewController {
     }
 
     func SELdidClickSettingsItem() {
-        let settingsTableViewController = SettingsTableViewController(generator: generateAppSettings)
+        let settingsTableViewController = AppSettingsTableViewController(generator: generateAppSettings)
         settingsTableViewController.profile = profile
         settingsTableViewController.tabManager = tabManager
         settingsTableViewController.settingsDelegate = self
