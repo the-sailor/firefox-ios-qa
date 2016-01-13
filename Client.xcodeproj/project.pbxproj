@@ -681,6 +681,7 @@
 		E68B437C1C08A875002D2D76 /* SnapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68B43751C08A724002D2D76 /* SnapKit.framework */; };
 		E68B437D1C08A888002D2D76 /* SnapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68B43751C08A724002D2D76 /* SnapKit.framework */; };
 		E692E3291C46E62D009D1240 /* AuthenticationSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E692E3281C46E62D009D1240 /* AuthenticationSettingsViewController.swift */; };
+		E692E3371C46E86A009D1240 /* AppSettingsOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E692E3361C46E86A009D1240 /* AppSettingsOptions.swift */; };
 		E695D8651C037E9F00D3FCCE /* FSUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = E695D8631C037E9F00D3FCCE /* FSUtils.h */; };
 		E695D8661C037E9F00D3FCCE /* FSUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = E695D8641C037E9F00D3FCCE /* FSUtils.m */; };
 		E695D8681C03804F00D3FCCE /* FSUtilsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E695D8671C03804F00D3FCCE /* FSUtilsTests.swift */; };
@@ -1905,6 +1906,7 @@
 		E68AEDAF1B18F81A00133D99 /* SwipeAnimator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwipeAnimator.swift; sourceTree = "<group>"; };
 		E68B436D1C08A724002D2D76 /* SnapKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SnapKit.xcodeproj; path = Carthage/Checkouts/SnapKit/SnapKit.xcodeproj; sourceTree = "<group>"; };
 		E692E3281C46E62D009D1240 /* AuthenticationSettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthenticationSettingsViewController.swift; sourceTree = "<group>"; };
+		E692E3361C46E86A009D1240 /* AppSettingsOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppSettingsOptions.swift; sourceTree = "<group>"; };
 		E695D8631C037E9F00D3FCCE /* FSUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSUtils.h; sourceTree = "<group>"; };
 		E695D8641C037E9F00D3FCCE /* FSUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FSUtils.m; sourceTree = "<group>"; };
 		E695D8671C03804F00D3FCCE /* FSUtilsTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FSUtilsTests.swift; sourceTree = "<group>"; };
@@ -2401,6 +2403,7 @@
 		2F44FC551A9E83E200FD20CC /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				E692E3361C46E86A009D1240 /* AppSettingsOptions.swift */,
 				2F44FC711A9E840300FD20CC /* SettingsNavigationController.swift */,
 				2F44FCC41A9E85E900FD20CC /* SettingsTableViewController.swift */,
 				2F44FCC61A9E8CF500FD20CC /* SearchSettingsTableViewController.swift */,
@@ -4989,6 +4992,7 @@
 				39C5750E1BE28BAE00E1C4B1 /* OnePasswordExtension.h in Sources */,
 				D38F02D11C05127100175932 /* Authenticator.swift in Sources */,
 				39C5750F1BE28BAE00E1C4B1 /* OnePasswordExtension.m in Sources */,
+				E692E3371C46E86A009D1240 /* AppSettingsOptions.swift in Sources */,
 				7B3631EA1C244FEE00D12AF9 /* Theme.swift in Sources */,
 				E66C5B481BDA81050051AA93 /* UIImage+ImageEffects.m in Sources */,
 				E4CD9F6D1A77DD2800318571 /* ReaderModeStyleViewController.swift in Sources */,
