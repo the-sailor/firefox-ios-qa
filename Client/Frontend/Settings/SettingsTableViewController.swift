@@ -52,12 +52,15 @@ class Setting {
 
     var accessoryType: UITableViewCellAccessoryType { return .None }
 
+    private(set) var enabled: Bool = true
+
     // Called when the cell is setup. Call if you need the default behaviour.
     func onConfigureCell(cell: UITableViewCell) {
         cell.detailTextLabel?.attributedText = status
         cell.textLabel?.attributedText = title
         cell.accessoryType = accessoryType
         cell.accessoryView = nil
+        cell.selectionStyle = enabled ? .Default : .None
     }
 
     // Called when the pref is tapped.
@@ -73,9 +76,10 @@ class Setting {
         }
     }
 
-    init(title: NSAttributedString? = nil, delegate: SettingsDelegate? = nil) {
+    init(title: NSAttributedString? = nil, delegate: SettingsDelegate? = nil, enabled: Bool? = nil) {
         self._title = title
         self.delegate = delegate
+        self.enabled = enabled ?? true
     }
 }
 
@@ -233,8 +237,6 @@ class SettingsTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        settings = generateSettings()
-
         tableView.registerClass(SettingsTableViewCell.self, forCellReuseIdentifier: Identifier)
         tableView.registerClass(SettingsTableSectionHeaderFooterView.self, forHeaderFooterViewReuseIdentifier: SectionHeaderIdentifier)
         tableView.tableFooterView = SettingsTableFooterView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 128))
@@ -245,9 +247,14 @@ class SettingsTableViewController: UITableViewController {
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
+
+        settings = generateSettings()
+
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "SELsyncDidChangeState", name: NotificationProfileDidStartSyncing, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "SELsyncDidChangeState", name: NotificationProfileDidFinishSyncing, object: nil)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "SELfirefoxAccountDidChange", name: NotificationFirefoxAccountChanged, object: nil)
+
+        tableView.reloadData()
     }
 
     override func viewDidAppear(animated: Bool) {
@@ -346,12 +353,11 @@ class SettingsTableViewController: UITableViewController {
         return height
     }
 
-    override func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         let section = settings[indexPath.section]
-        if let setting = section[indexPath.row] {
+        if let setting = section[indexPath.row] where setting.enabled {
             setting.onClick(navigationController)
         }
-        return nil
     }
 
     override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
