@@ -34,6 +34,9 @@ class TurnPasscodeOnSetting: Setting {
 
     override func onClick(navigationController: UINavigationController?) {
         // Navigate to passcode configuration screen
+        let passcodeController = PasscodeViewController(passcodeEntryType: .NewPasscode)
+        let passcodeNav = UINavigationController(rootViewController: passcodeController)
+        navigationController?.presentViewController(passcodeNav, animated: true, completion: nil)
     }
 }
 
@@ -45,7 +48,9 @@ class TurnPasscodeOffSetting: Setting {
     }
 
     override func onClick(navigationController: UINavigationController?) {
-        // Navigate to passcode configuration screen
+        let passcodeController = PasscodeViewController(passcodeEntryType: .TurnOffPasscode)
+        let passcodeNav = UINavigationController(rootViewController: passcodeController)
+        navigationController?.presentViewController(passcodeNav, animated: true, completion: nil)
     }
 }
 
@@ -108,7 +113,7 @@ class AuthenticationSettingsViewController: SettingsTableViewController {
 
     override func generateSettings() -> [SettingSection] {
 
-        if true {
+        if false {
             return passcodeEnabledSettings()
         } else {
             return passcodeDisabledSettings()
