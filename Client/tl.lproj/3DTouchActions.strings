@@ -1,0 +1,12 @@
+/* Label for preview action on Tab Tray Tab to add current tab to Bookmarks */
+"Add to Bookmarks" = "I-add sa mga Bookmarks";
+
+/* Label for preview action on Tab Tray Tab to add current tab to Reading List */
+"Add to Reading List" = "I-add sa Reading List";
+
+/* Label for preview action on Tab Tray Tab to close the current tab */
+"Close Tab" = "Isara ang Tab";
+
+/* Label for preview action on Tab Tray Tab to copy the URL of the current tab to clipboard */
+"Copy URL" = "Kopyahin ang URL";
+
