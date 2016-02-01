@@ -18,7 +18,7 @@ extension SQLiteBookmarks: LocalItemSource {
         return self.db.getMirrorItemsFromTable(TableBookmarksLocal, guids: guids)
     }
 
-    public func prefetchLocalItemsWithGUIDs(guids: [GUID]) -> Success {
+    public func prefetchLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
         log.debug("Not implemented for SQLiteBookmarks.")
         return succeed()
     }
@@ -494,7 +494,7 @@ extension SQLiteBookmarkBufferStorage: BufferItemSource {
         return self.db.getMirrorItemsFromTable(TableBookmarksBuffer, guids: guids)
     }
 
-    public func prefetchBufferItemsWithGUIDs(guids: [GUID]) -> Success {
+    public func prefetchBufferItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
         log.debug("Not implemented.")
         return succeed()
     }
@@ -584,7 +584,7 @@ extension MergedSQLiteBookmarks: BufferItemSource {
         return self.buffer.getBufferItemWithGUID(guid)
     }
 
-    public func prefetchBufferItemsWithGUIDs(guids: [GUID]) -> Success {
+    public func prefetchBufferItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
         return self.buffer.prefetchBufferItemsWithGUIDs(guids)
     }
 }
@@ -598,7 +598,7 @@ extension MergedSQLiteBookmarks: LocalItemSource {
         return self.local.getLocalItemsWithGUIDs(guids)
     }
 
-    public func prefetchLocalItemsWithGUIDs(guids: [GUID]) -> Success {
+    public func prefetchLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
         return self.local.prefetchLocalItemsWithGUIDs(guids)
     }
 }
