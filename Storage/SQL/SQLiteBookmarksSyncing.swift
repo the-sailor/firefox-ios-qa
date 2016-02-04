@@ -10,6 +10,10 @@ import XCGLogger
 private let log = Logger.syncLogger
 
 extension SQLiteBookmarks: LocalItemSource {
+    public func getLocalItemWithGUID(guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>> {
+        return self.db.getMirrorItemFromTable(TableBookmarksLocal, guid: guid)
+    }
+
     public func getLocalItemsWithGUIDs(guids: [GUID]) -> Deferred<Maybe<[GUID: BookmarkMirrorItem]>> {
         return self.db.getMirrorItemsFromTable(TableBookmarksLocal, guids: guids)
     }
@@ -586,6 +590,10 @@ extension MergedSQLiteBookmarks: BufferItemSource {
 }
 
 extension MergedSQLiteBookmarks: LocalItemSource {
+    public func getLocalItemWithGUID(guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>> {
+        return self.local.getLocalItemWithGUID(guid)
+    }
+
     public func getLocalItemsWithGUIDs(guids: [GUID]) -> Deferred<Maybe<[GUID: BookmarkMirrorItem]>> {
         return self.local.getLocalItemsWithGUIDs(guids)
     }
