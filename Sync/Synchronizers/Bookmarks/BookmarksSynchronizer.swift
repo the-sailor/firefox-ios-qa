@@ -61,7 +61,7 @@ public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchron
         }
     }
 
-    public func synchronizeBookmarksToStorage(storage: protocol<SyncableBookmarks, LocalItemSource>, usingBuffer buffer: protocol<BookmarkBufferStorage, BufferItemSource>, withServer storageClient: Sync15StorageClient, info: InfoCollections, greenLight: () -> Bool) -> SyncResult {
+    public func synchronizeBookmarksToStorage(storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>, usingBuffer buffer: protocol<BookmarkBufferStorage, BufferItemSource>, withServer storageClient: Sync15StorageClient, info: InfoCollections, greenLight: () -> Bool) -> SyncResult {
         if let reason = self.reasonToNotSync(storageClient) {
             return deferMaybe(.NotStarted(reason))
         }
@@ -95,7 +95,7 @@ class MergeApplier {
     let client: BookmarkStorer
     let merger: BookmarksStorageMerger
 
-    init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource>, client: BookmarkStorer, greenLight: () -> Bool) {
+    init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>, client: BookmarkStorer, greenLight: () -> Bool) {
         self.greenLight = greenLight
         self.buffer = buffer
         self.storage = storage
@@ -173,7 +173,7 @@ class MergeApplier {
  * racing. Later!
  */
 protocol BookmarksStorageMerger {
-    init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource>)
+    init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>)
     func merge() -> Deferred<Maybe<BookmarksMergeResult>>
 }
 
@@ -181,7 +181,7 @@ class NoOpBookmarksMerger: BookmarksStorageMerger {
     let buffer: BookmarkBufferStorage
     let storage: SyncableBookmarks
 
-    required init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource>) {
+    required init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>) {
         self.buffer = buffer
         self.storage = storage
     }
@@ -193,9 +193,9 @@ class NoOpBookmarksMerger: BookmarksStorageMerger {
 
 class ThreeWayBookmarksStorageMerger: BookmarksStorageMerger {
     let buffer: protocol<BookmarkBufferStorage, BufferItemSource>
-    let storage: protocol<SyncableBookmarks, LocalItemSource>
+    let storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>
 
-    required init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource>) {
+    required init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>) {
         self.buffer = buffer
         self.storage = storage
     }
@@ -261,7 +261,7 @@ class ThreeWayBookmarksStorageMerger: BookmarksStorageMerger {
             return self.storage.treeForMirror() >>== { mirror in
                 // At this point we know that there have been changes both locally and remotely.
                 // (Or, in the general case, changes either locally or remotely.)
-                return deferMaybe(ThreeWayTreeMerger(local: local, mirror: mirror, remote: remote, localItemSource: self.storage, bufferItemSource: self.buffer))
+                return deferMaybe(ThreeWayTreeMerger(local: local, mirror: mirror, remote: remote, localItemSource: self.storage, mirrorItemSource: self.storage, bufferItemSource: self.buffer))
             }
         }
     }
