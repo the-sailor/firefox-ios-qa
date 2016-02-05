@@ -203,7 +203,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         let l = BookmarkTree.emptyTree()
         let s = MockItemSource()
 
-        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, bufferItemSource: s)
+        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, mirrorItemSource: s, bufferItemSource: s)
         guard let mergedTree = merger.produceMergedTree().value.successValue else {
             XCTFail("Couldn't merge.")
             return
@@ -225,7 +225,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         let l = self.localTree()
         let s = MockItemSource()
 
-        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, bufferItemSource: s)
+        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, mirrorItemSource: s, bufferItemSource: s)
         guard let mergedTree = merger.produceMergedTree().value.successValue else {
             XCTFail("Couldn't merge.")
             return
