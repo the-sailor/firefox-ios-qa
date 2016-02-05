@@ -552,16 +552,18 @@ extension SQLiteHistory: Favicons {
 
     public func addFavicon(icon: Favicon) -> Deferred<Maybe<Int>> {
         var err: NSError?
-        let res = db.withWritableConnection(&err) { (conn, inout err: NSError?) -> Int in
+        guard let res = (db.withWritableConnection(&err) { (conn, inout err: NSError?) -> Int in
             // Blind! We don't see failure here.
             let id = self.favicons.insertOrUpdate(conn, obj: icon)
             return id ?? 0
+        }) else {
+            return deferMaybe(DatabaseError(err: err))
         }
 
-        if err == nil {
+        guard let error = err else {
             return deferMaybe(res)
         }
-        return deferMaybe(DatabaseError(err: err))
+        return deferMaybe(DatabaseError(err: error))
     }
 
     /**

@@ -231,8 +231,8 @@ public class BrowserDB {
 
     typealias IntCallback = (connection: SQLiteDBConnection, inout err: NSError?) -> Int
 
-    func withConnection<T>(flags flags: SwiftData.Flags, inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T {
-        var res: T!
+    func withConnection<T>(flags flags: SwiftData.Flags, inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T? {
+        var res: T?
         err = db.withConnection(flags) { connection in
             var err: NSError? = nil
             res = callback(connection: connection, err: &err)
@@ -241,11 +241,11 @@ public class BrowserDB {
         return res
     }
 
-    func withWritableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T {
+    func withWritableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T? {
         return withConnection(flags: SwiftData.Flags.ReadWrite, err: &err, callback: callback)
     }
 
-    func withReadableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> Cursor<T>) -> Cursor<T> {
+    func withReadableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> Cursor<T>) -> Cursor<T>? {
         return withConnection(flags: SwiftData.Flags.ReadOnly, err: &err, callback: callback)
     }
 

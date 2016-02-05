@@ -177,7 +177,7 @@ public class SQLiteBookmarks: BookmarksModelFactory {
         self.favicons = FaviconsTable<Favicon>()
     }
 
-    private func getChildrenWhere(whereClause: String, args: Args, includeIcon: Bool) -> Cursor<BookmarkNode> {
+    private func getChildrenWhere(whereClause: String, args: Args, includeIcon: Bool) -> Cursor<BookmarkNode>? {
         var err: NSError? = nil
         return db.withReadableConnection(&err) { (conn, err) -> Cursor<BookmarkNode> in
             let inner = "SELECT id, type, guid, url, title, faviconID FROM \(TableBookmarks) WHERE \(whereClause)"
@@ -197,20 +197,20 @@ public class SQLiteBookmarks: BookmarksModelFactory {
         }
     }
 
-    private func getRootChildren() -> Cursor<BookmarkNode> {
+    private func getRootChildren() -> Cursor<BookmarkNode>? {
         let args: Args = [BookmarkRoots.RootID, BookmarkRoots.RootID]
         let sql = "parent = ? AND id IS NOT ?"
         return self.getChildrenWhere(sql, args: args, includeIcon: true)
     }
 
-    private func getChildren(guid: String) -> Cursor<BookmarkNode> {
+    private func getChildren(guid: String) -> Cursor<BookmarkNode>? {
         let args: Args = [guid]
         let sql = "parent IS NOT NULL AND parent = (SELECT id FROM \(TableBookmarks) WHERE guid = ?)"
         return self.getChildrenWhere(sql, args: args, includeIcon: true)
     }
 
     func folderForGUID(guid: GUID, title: String) -> BookmarkFolder? {
-        let children = getChildren(guid)
+        guard let children = getChildren(guid) else { return nil }
         if children.status == .Failure {
             log.warning("Couldn't get children: \(children.statusMessage).")
             return nil
@@ -243,7 +243,9 @@ public class SQLiteBookmarks: BookmarksModelFactory {
     }
 
     public func modelForRoot() -> Deferred<Maybe<BookmarksModel>> {
-        let children = getRootChildren()
+        guard let children = getRootChildren() else {
+            return deferMaybe(DatabaseError(description: "Unable to fetch bookmark root children"))
+        }
         if children.status == .Failure {
             return deferMaybe(DatabaseError(description: children.statusMessage))
         }
@@ -262,14 +264,13 @@ public class SQLiteBookmarks: BookmarksModelFactory {
         let sql = "SELECT id FROM \(TableBookmarks) WHERE url = ? LIMIT 1"
         let args: Args = [url]
 
-        let c = db.withReadableConnection(&err) { (conn, err) -> Cursor<Int> in
+        guard let c = (db.withReadableConnection(&err) { (conn, err) -> Cursor<Int> in
             return conn.executeQuery(sql, factory: { $0["id"] as! Int }, withArgs: args)
+            }) where c.status == .Success else {
+                return deferMaybe(DatabaseError(err: err))
         }
 
-        if c.status == .Success {
-            return deferMaybe(c.count > 0)
-        }
-        return deferMaybe(DatabaseError(err: err))
+        return deferMaybe(c.count > 0)
     }
 
     public func clearBookmarks() -> Success {
@@ -306,7 +307,7 @@ extension SQLiteBookmarks: ShareToDestination {
     public func addToMobileBookmarks(url: NSURL, title: String, favicon: Favicon?) -> Success {
         var err: NSError?
 
-        return self.db.withWritableConnection(&err) {  (conn, err) -> Success in
+        guard let res = (self.db.withWritableConnection(&err) {  (conn, err) -> Success in
             func insertBookmark(icon: Int) -> Success {
                 log.debug("Inserting bookmark with specified icon \(icon).")
                 let urlString = url.absoluteString
@@ -345,7 +346,11 @@ extension SQLiteBookmarks: ShareToDestination {
                 }
             }
             return insertBookmark(-1)
+        }) else {
+            return deferMaybe(DatabaseError(err: err))
         }
+
+        return res
     }
 
     public func shareItem(item: ShareItem) {

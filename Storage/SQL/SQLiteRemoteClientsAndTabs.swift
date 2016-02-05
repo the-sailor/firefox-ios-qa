@@ -141,19 +141,21 @@ public class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
     public func getClients() -> Deferred<Maybe<[RemoteClient]>> {
         var err: NSError?
 
-        let clientCursor = db.withReadableConnection(&err) { connection, _ in
+        if let clientCursor = (db.withReadableConnection(&err) { connection, _ in
             return self.clients.query(connection, options: nil)
-        }
+            }) {
 
-        if let err = err {
+            if let err = err {
+                clientCursor.close()
+                return deferMaybe(DatabaseError(err: err))
+            }
+
+            let clients = clientCursor.asArray()
             clientCursor.close()
-            return deferMaybe(DatabaseError(err: err))
+
+            return deferMaybe(clients)
         }
-
-        let clients = clientCursor.asArray()
-        clientCursor.close()
-
-        return deferMaybe(clients)
+        return deferMaybe(DatabaseError(err: err))
     }
 
     public func getClientGUIDs() -> Deferred<Maybe<Set<GUID>>> {
@@ -187,65 +189,69 @@ public class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
         var err: NSError?
 
         // Now find the clients.
-        let clientCursor = db.withReadableConnection(&err) { connection, _ in
+        if let clientCursor = (db.withReadableConnection(&err) { connection, _ in
             return self.clients.query(connection, options: nil)
-        }
+            }) {
 
-        if let err = err {
+            if let err = err {
+                clientCursor.close()
+                return deferMaybe(DatabaseError(err: err))
+            }
+
+            let clients = clientCursor.asArray()
             clientCursor.close()
-            return deferMaybe(DatabaseError(err: err))
-        }
 
-        let clients = clientCursor.asArray()
-        clientCursor.close()
+            log.debug("Found \(clients.count) clients in the DB.")
 
-        log.debug("Found \(clients.count) clients in the DB.")
+            if let tabCursor = (db.withReadableConnection(&err) { connection, _ in
+                return self.tabs.query(connection, options: nil)
+                }) {
 
-        let tabCursor = db.withReadableConnection(&err) { connection, _ in
-            return self.tabs.query(connection, options: nil)
-        }
+                log.debug("Found \(tabCursor.count) raw tabs in the DB.")
 
-        log.debug("Found \(tabCursor.count) raw tabs in the DB.")
-
-        if let err = err {
-            tabCursor.close()
-            return deferMaybe(DatabaseError(err: err))
-        }
-
-        let deferred = Deferred<Maybe<[ClientAndTabs]>>(defaultQueue: dispatch_get_main_queue())
-
-        // Aggregate clientGUID -> RemoteTab.
-        var acc = [String: [RemoteTab]]()
-        for tab in tabCursor {
-            if let tab = tab, guid = tab.clientGUID {
-                if acc[guid] == nil {
-                    acc[guid] = [tab]
-                } else {
-                    acc[guid]!.append(tab)
+                if let err = err {
+                    tabCursor.close()
+                    return deferMaybe(DatabaseError(err: err))
                 }
-            } else {
-                log.error("Couldn't cast tab \(tab) to RemoteTab.")
+
+                let deferred = Deferred<Maybe<[ClientAndTabs]>>(defaultQueue: dispatch_get_main_queue())
+
+                // Aggregate clientGUID -> RemoteTab.
+                var acc = [String: [RemoteTab]]()
+                for tab in tabCursor {
+                    if let tab = tab, guid = tab.clientGUID {
+                        if acc[guid] == nil {
+                            acc[guid] = [tab]
+                        } else {
+                            acc[guid]!.append(tab)
+                        }
+                    } else {
+                        log.error("Couldn't cast tab \(tab) to RemoteTab.")
+                    }
+                }
+
+                tabCursor.close()
+
+                // Most recent first.
+                let fillTabs: (RemoteClient) -> ClientAndTabs = { client in
+                    var tabs: [RemoteTab]? = nil
+                    if let guid: String = client.guid {
+                        tabs = acc[guid]
+                    }
+                    return ClientAndTabs(client: client, tabs: tabs ?? [])
+                }
+
+                let removeLocalClient: (RemoteClient) -> Bool = { client in
+                    return client.guid != nil
+                }
+
+                // Why is this whole function synchronous?
+                deferred.fill(Maybe(success: clients.filter(removeLocalClient).map(fillTabs)))
+                return deferred
             }
         }
 
-        tabCursor.close()
-
-        // Most recent first.
-        let fillTabs: (RemoteClient) -> ClientAndTabs = { client in
-            var tabs: [RemoteTab]? = nil
-            if let guid: String = client.guid {
-                tabs = acc[guid]
-            }
-            return ClientAndTabs(client: client, tabs: tabs ?? [])
-        }
-
-        let removeLocalClient: (RemoteClient) -> Bool = { client in
-            return client.guid != nil
-        }
-
-        // Why is this whole function synchronous?
-        deferred.fill(Maybe(success: clients.filter(removeLocalClient).map(fillTabs)))
-        return deferred
+        return deferMaybe(DatabaseError(err: err))
     }
 
     public func deleteCommands() -> Success {
@@ -306,22 +312,24 @@ public class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
         var err: NSError?
 
         // Now find the clients.
-        let commandCursor = db.withReadableConnection(&err) { connection, _ in
+        if let commandCursor = (db.withReadableConnection(&err) { connection, _ in
             return self.commands.query(connection, options: nil)
-        }
+            }) {
 
-        if let err = err {
+            if let err = err {
+                commandCursor.close()
+                return failOrSucceed(err, op: "getCommands", val: [GUID: [SyncCommand]]())
+            }
+
+            let allCommands = commandCursor.asArray()
             commandCursor.close()
-            return failOrSucceed(err, op: "getCommands", val: [GUID: [SyncCommand]]())
+
+            let clientSyncCommands = clientsFromCommands(allCommands)
+
+                log.debug("Found \(clientSyncCommands.count) client sync commands in the DB.")
+                return failOrSucceed(err, op: "get commands", val: clientSyncCommands)
         }
-
-        let allCommands = commandCursor.asArray()
-        commandCursor.close()
-
-        let clientSyncCommands = clientsFromCommands(allCommands)
-
-        log.debug("Found \(clientSyncCommands.count) client sync commands in the DB.")
-        return failOrSucceed(err, op: "get commands", val: clientSyncCommands)
+        return deferMaybe(DatabaseError(err: err))
     }
 
     func clientsFromCommands(commands: [SyncCommand]) -> [GUID: [SyncCommand]] {
