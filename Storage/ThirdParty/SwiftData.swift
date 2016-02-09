@@ -93,7 +93,7 @@ public class SwiftData {
      * The real meat of all the execute methods. This is used internally to open and
      * close a database connection and run a block of code inside it.
      */
-    public func withConnection(flags: SwiftData.Flags, synchronous: Bool=true, cb: (db: SQLiteDBConnection) -> NSError?) -> NSError? {
+    public func withConnection(flags: SwiftData.Flags, synchronous: Bool=true, cb: (db: SQLiteDBConnection?) -> NSError?) -> NSError? {
         let conn: SQLiteDBConnection?
 
         if SwiftData.ReuseConnections {
@@ -103,25 +103,23 @@ public class SwiftData {
             conn = SQLiteDBConnection(filename: filename, flags: flags.toSQL(), key: self.key, prevKey: self.prevKey)
         }
 
-        guard let connection = conn else {
-            return NSError(domain: "mozilla", code: 0, userInfo: [NSLocalizedDescriptionKey: "Could not create a connection"])
-        }
+        let queue = conn?.queue ?? self.sharedConnectionQueue
 
         if synchronous {
             var error: NSError? = nil
-            dispatch_sync(connection.queue) {
-                error = cb(db: connection)
+            dispatch_sync(queue) {
+                error = cb(db: conn)
             }
             return error
         }
 
-        dispatch_async(connection.queue) {
-            cb(db: connection)
+        dispatch_async(queue) {
+            cb(db: conn)
         }
         return nil
     }
 
-    public func transaction(transactionClosure: (db: SQLiteDBConnection) -> Bool) -> NSError? {
+    public func transaction(transactionClosure: (db: SQLiteDBConnection?) -> Bool) -> NSError? {
         return self.transaction(synchronous: true, transactionClosure: transactionClosure)
     }
 
@@ -129,8 +127,12 @@ public class SwiftData {
      * Helper for opening a connection, starting a transaction, and then running a block of code inside it.
      * The code block can return true if the transaction should be committed. False if we should roll back.
      */
-    public func transaction(synchronous synchronous: Bool=true, transactionClosure: (db: SQLiteDBConnection) -> Bool) -> NSError? {
+    public func transaction(synchronous synchronous: Bool=true, transactionClosure: (db: SQLiteDBConnection?) -> Bool) -> NSError? {
         return withConnection(SwiftData.Flags.ReadWriteCreate, synchronous: synchronous) { db in
+            guard let db = db else {
+                return NSError(domain: "mozilla", code: 0, userInfo: [NSLocalizedDescriptionKey: "No connection"])
+            }
+
             if let err = db.executeChange("BEGIN EXCLUSIVE") {
                 log.warning("BEGIN EXCLUSIVE failed.")
                 return err

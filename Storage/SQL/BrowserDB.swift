@@ -122,6 +122,10 @@ public class BrowserDB {
         }
 
         if let _ = self.db.transaction({ connection -> Bool in
+            guard let connection = connection else {
+                return false
+            }
+
             let thread = NSThread.currentThread().description
             // If the table doesn't exist, we'll create it.
             for table in tables {
@@ -214,6 +218,10 @@ public class BrowserDB {
             }
 
             if let _ = db.transaction({ connection -> Bool in
+                guard let connection = connection else {
+                    return false
+                }
+
                 for table in tables {
                     doCreate(table, connection)
                     if !success {
@@ -231,7 +239,7 @@ public class BrowserDB {
 
     typealias IntCallback = (connection: SQLiteDBConnection, inout err: NSError?) -> Int
 
-    func withConnection<T>(flags flags: SwiftData.Flags, inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T {
+    func withConnection<T>(flags flags: SwiftData.Flags, inout err: NSError?, callback: (connection: SQLiteDBConnection?, inout err: NSError?) -> T) -> T {
         var res: T!
         err = db.withConnection(flags) { connection in
             var err: NSError? = nil
@@ -241,19 +249,19 @@ public class BrowserDB {
         return res
     }
 
-    func withWritableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> T) -> T {
+    func withWritableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection?, inout err: NSError?) -> T) -> T {
         return withConnection(flags: SwiftData.Flags.ReadWrite, err: &err, callback: callback)
     }
 
-    func withReadableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> Cursor<T>) -> Cursor<T> {
+    func withReadableConnection<T>(inout err: NSError?, callback: (connection: SQLiteDBConnection?, inout err: NSError?) -> Cursor<T>) -> Cursor<T> {
         return withConnection(flags: SwiftData.Flags.ReadOnly, err: &err, callback: callback)
     }
 
-    func transaction(inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> Bool) -> NSError? {
+    func transaction(inout err: NSError?, callback: (connection: SQLiteDBConnection?, inout err: NSError?) -> Bool) -> NSError? {
         return self.transaction(synchronous: true, err: &err, callback: callback)
     }
 
-    func transaction(synchronous synchronous: Bool=true, inout err: NSError?, callback: (connection: SQLiteDBConnection, inout err: NSError?) -> Bool) -> NSError? {
+    func transaction(synchronous synchronous: Bool=true, inout err: NSError?, callback: (connection: SQLiteDBConnection?, inout err: NSError?) -> Bool) -> NSError? {
         return db.transaction(synchronous: synchronous) { connection in
             var err: NSError? = nil
             return callback(connection: connection, err: &err)
@@ -265,13 +273,16 @@ extension BrowserDB {
     func vacuum() {
         log.debug("Vacuuming a BrowserDB.")
         db.withConnection(SwiftData.Flags.ReadWriteCreate, synchronous: true) { connection in
-            return connection.vacuum()
+            return connection?.vacuum()
         }
     }
 
     func checkpoint() {
         log.debug("Checkpointing a BrowserDB.")
         db.transaction(synchronous: true) { connection in
+            guard let connection = connection else {
+                return false
+            }
             connection.checkpoint()
             return true
         }
@@ -384,6 +395,10 @@ extension BrowserDB {
     func run(sql: [(sql: String, args: Args?)]) -> Success {
         var err: NSError? = nil
         self.transaction(&err) { (conn, err) -> Bool in
+            guard let conn = conn else {
+                return false
+            }
+
             for (sql, args) in sql {
                 err = conn.executeChange(sql, withArgs: args)
                 if err != nil {
