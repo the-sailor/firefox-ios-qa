@@ -205,7 +205,7 @@ public struct BookmarkMirrorItem: Equatable {
     let pos: Int?
 
     // Folders, livemarks, bookmarks and queries.
-    let title: String?
+    public let title: String?
     let description: String?
 
     // Bookmarks and queries.
@@ -218,7 +218,7 @@ public struct BookmarkMirrorItem: Equatable {
     let queryID: String?
 
     // Folders.
-    let children: [GUID]?
+    public let children: [GUID]?
 
     // Internal stuff.
     let faviconID: Int?
