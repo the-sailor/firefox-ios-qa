@@ -57,4 +57,32 @@ var KIFHelper = {
     }
     return false;
   },
+
+  /**
+   * Simulate a touchstart event for the element matching the accessibility label given.
+   */
+  fireTouchStartOnElementWithAccessibilityLabel: function (label) {
+    var found = this._getElementWithAccessibilityLabel(document.body, label);
+    if (found) {
+      var event = document.createEvent('UIEvents');
+      event.initUIEvent('touchstart', true, true, window, 1);
+      found.dispatchEvent(event);
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Simulate a touchend event for the element matching the accessibility label given.
+   */
+  fireTouchEndOnElementWithAccessibilityLabel: function (label) {
+    var found = this._getElementWithAccessibilityLabel(document.body, label);
+    if (found) {
+      var event = document.createEvent('UIEvents');
+      event.initUIEvent('touchend', true, true, window, 1);
+      found.dispatchEvent(event);
+      return true;
+    }
+    return false;
+  },
 };

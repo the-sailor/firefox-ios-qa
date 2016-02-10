@@ -160,6 +160,36 @@ extension KIFUITestActor {
     }
 
     /**
+     * Long-pressed a WKWebView element with the given label.
+     */
+    func longPressWebViewElementWithAccessibilityLabel(text: String) {
+        let webView = getWebViewWithKIFHelper()
+        var stepResult = KIFTestStepResult.Wait
+
+        // Fire a touchstart event, wait 2 seconds, then fire a touchend event to simulate a long press.
+        let escaped = text.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+        webView.evaluateJavaScript("KIFHelper.fireTouchStartOnElementWithAccessibilityLabel(\"\(escaped)\")") { touchStartSuccess, _ in
+            guard (touchStartSuccess as! Bool) else {
+                stepResult = KIFTestStepResult.Failure
+                return
+            }
+
+            self.waitForTimeInterval(2)
+
+            webView.evaluateJavaScript("KIFHelper.fireTouchEndOnElementWithAccessibilityLabel(\"\(escaped)\")") { touchEndSuccess, _ in
+                stepResult = (touchEndSuccess as! Bool) ? KIFTestStepResult.Success : KIFTestStepResult.Failure
+            }
+        }
+
+        runBlock { error in
+            if stepResult == KIFTestStepResult.Failure {
+                error.memory = NSError(domain: "KIFHelper", code: 0, userInfo: [NSLocalizedDescriptionKey: "Accessibility label not found in webview: \(escaped)"])
+            }
+            return stepResult
+        }
+    }
+
+    /**
      * Determines whether an element in the page exists.
      */
     func hasWebViewElementWithAccessibilityLabel(text: String) -> Bool {
@@ -334,7 +364,7 @@ class SimplePageServer {
             return GCDWebServerDataResponse(data: img, contentType: "image/png")
         }
 
-        for page in ["findPage", "noTitle", "readablePage", "JSPrompt"] {
+        for page in ["findPage", "noTitle", "readablePage", "JSPrompt", "linkList", "alert"] {
             webServer.addHandlerForMethod("GET", path: "/\(page).html", requestClass: GCDWebServerRequest.self) { (request) -> GCDWebServerResponse! in
                 return GCDWebServerDataResponse(HTML: self.getPageData(page))
             }

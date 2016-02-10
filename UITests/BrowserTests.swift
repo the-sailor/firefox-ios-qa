@@ -34,4 +34,15 @@ class BrowserTests: KIFTestCase {
 
         BrowserUtils.resetToAboutHome(tester())
     }
+
+    func testClosingTabWithQueuedAlerts() {
+        let url = "\(webRoot)/linkList.html"
+        tester().tapViewWithAccessibilityIdentifier("url")
+        tester().clearTextFromAndThenEnterTextIntoCurrentFirstResponder("\(url)\n")
+        tester().waitForWebViewElementWithAccessibilityLabel("Alert Page")
+
+        tester().longPressWebViewElementWithAccessibilityLabel("Alert Page")
+
+        BrowserUtils.resetToAboutHome(tester())
+    }
 }
