@@ -40,7 +40,7 @@ public class UpstreamCompletionOp: PerhapsNoOp {
     }
 }
 
-public struct BookmarksMergeResult: PerhapsNoOp {
+public class BookmarksMergeResult: PerhapsNoOp {
     let uploadCompletion: UpstreamCompletionOp
     let overrideCompletion: LocalOverrideCompletionOp
     let bufferCompletion: BufferCompletionOp
@@ -55,6 +55,12 @@ public struct BookmarksMergeResult: PerhapsNoOp {
         return client.applyUpstreamCompletionOp(self.uploadCompletion)
           >>== { storage.applyLocalOverrideCompletionOp(self.overrideCompletion, withModifiedTimestamp: $0.modified) }
            >>> { buffer.applyBufferCompletionOp(self.bufferCompletion) }
+    }
+
+    init(uploadCompletion: UpstreamCompletionOp, overrideCompletion: LocalOverrideCompletionOp, bufferCompletion: BufferCompletionOp) {
+        self.uploadCompletion = uploadCompletion
+        self.overrideCompletion = overrideCompletion
+        self.bufferCompletion = bufferCompletion
     }
 
     static let NoOp = BookmarksMergeResult(uploadCompletion: UpstreamCompletionOp(), overrideCompletion: LocalOverrideCompletionOp(), bufferCompletion: BufferCompletionOp())
