@@ -13,7 +13,7 @@ private let log = Logger.syncLogger
 // Because generic protocols in Swift are a pain in the ass.
 public protocol BookmarkStorer: class {
     // TODO: this should probably return a timestamp.
-    func applyUpstreamCompletionOp(op: UpstreamCompletionOp) -> Deferred<Maybe<POSTResult>>
+    func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>>
 }
 
 public class UpstreamCompletionOp: PerhapsNoOp {
@@ -44,6 +44,7 @@ public class BookmarksMergeResult: PerhapsNoOp {
     let uploadCompletion: UpstreamCompletionOp
     let overrideCompletion: LocalOverrideCompletionOp
     let bufferCompletion: BufferCompletionOp
+    let itemSources: ItemSources
 
     public var isNoOp: Bool {
         return self.uploadCompletion.isNoOp &&
@@ -52,18 +53,21 @@ public class BookmarksMergeResult: PerhapsNoOp {
     }
 
     func applyToClient(client: BookmarkStorer, storage: SyncableBookmarks, buffer: BookmarkBufferStorage) -> Success {
-        return client.applyUpstreamCompletionOp(self.uploadCompletion)
-          >>== { storage.applyLocalOverrideCompletionOp(self.overrideCompletion, withModifiedTimestamp: $0.modified) }
-           >>> { buffer.applyBufferCompletionOp(self.bufferCompletion) }
+        return client.applyUpstreamCompletionOp(self.uploadCompletion, itemSources: self.itemSources)
+        >>== { storage.applyLocalOverrideCompletionOp(self.overrideCompletion, withModifiedTimestamp: $0.modified, itemSources: self.itemSources) }
+         >>> { buffer.applyBufferCompletionOp(self.bufferCompletion, itemSources: self.itemSources) }
     }
 
-    init(uploadCompletion: UpstreamCompletionOp, overrideCompletion: LocalOverrideCompletionOp, bufferCompletion: BufferCompletionOp) {
+    init(uploadCompletion: UpstreamCompletionOp, overrideCompletion: LocalOverrideCompletionOp, bufferCompletion: BufferCompletionOp, itemSources: ItemSources) {
         self.uploadCompletion = uploadCompletion
         self.overrideCompletion = overrideCompletion
         self.bufferCompletion = bufferCompletion
+        self.itemSources = itemSources
     }
 
-    static let NoOp = BookmarksMergeResult(uploadCompletion: UpstreamCompletionOp(), overrideCompletion: LocalOverrideCompletionOp(), bufferCompletion: BufferCompletionOp())
+    static func NoOp(itemSources: ItemSources) -> BookmarksMergeResult {
+        return BookmarksMergeResult(uploadCompletion: UpstreamCompletionOp(), overrideCompletion: LocalOverrideCompletionOp(), bufferCompletion: BufferCompletionOp(), itemSources: itemSources)
+    }
 }
 
 func guidOnceOnlyStack() -> OnceOnlyStack<GUID, GUID> {

@@ -29,7 +29,7 @@ public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchron
             self.uploader = uploader
         }
 
-        func applyUpstreamCompletionOp(op: UpstreamCompletionOp) -> Deferred<Maybe<POSTResult>> {
+        func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>> {
             log.debug("Uploading \(op.records.count) modified records.")
             log.debug("Uploading \(op.amendChildrenFromBuffer.count) amended buffer records.")
             log.debug("Uploading \(op.amendChildrenFromMirror.count) amended mirror records.")
@@ -184,8 +184,8 @@ protocol BookmarksStorageMerger: class {
 }
 
 class NoOpBookmarksMerger: BookmarksStorageMerger {
-    let buffer: BookmarkBufferStorage
-    let storage: SyncableBookmarks
+    let buffer: protocol<BookmarkBufferStorage, BufferItemSource>
+    let storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>
 
     required init(buffer: protocol<BookmarkBufferStorage, BufferItemSource>, storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>) {
         self.buffer = buffer
@@ -193,7 +193,7 @@ class NoOpBookmarksMerger: BookmarksStorageMerger {
     }
 
     func merge() -> Deferred<Maybe<BookmarksMergeResult>> {
-        return deferMaybe(BookmarksMergeResult.NoOp)
+        return deferMaybe(BookmarksMergeResult.NoOp(ItemSources(local: self.storage, mirror: self.storage, buffer: self.buffer)))
     }
 }
 
@@ -268,11 +268,8 @@ class ThreeWayBookmarksStorageMerger: BookmarksStorageMerger {
                 // At this point we know that there have been changes both locally and remotely.
                 // (Or, in the general case, changes either locally or remotely.)
 
-                let localItemSource = CachingLocalItemSource(source: self.storage)
-                let mirrorItemSource = CachingMirrorItemSource(source: self.storage)
-                let bufferItemSource = CachingBufferItemSource(source: self.buffer)
-
-                return deferMaybe(ThreeWayTreeMerger(local: local, mirror: mirror, remote: remote, localItemSource: localItemSource, mirrorItemSource: mirrorItemSource, bufferItemSource: bufferItemSource))
+                let itemSources = ItemSources(local: CachingLocalItemSource(source: self.storage), mirror: CachingMirrorItemSource(source: self.storage), buffer: CachingBufferItemSource(source: self.buffer))
+                return deferMaybe(ThreeWayTreeMerger(local: local, mirror: mirror, remote: remote, itemSources: itemSources))
             }
         }
     }
@@ -295,7 +292,7 @@ class ThreeWayBookmarksStorageMerger: BookmarksStorageMerger {
                 switch (noIncoming, noOutgoing) {
                 case (true, true):
                     // Nothing to do!
-                    return deferMaybe(BookmarksMergeResult.NoOp)
+                    return deferMaybe(BookmarksMergeResult.NoOp(ItemSources(local: self.storage, mirror: self.storage, buffer: self.buffer)))
                 case (true, false):
                     // No incoming records to apply. Unilaterally apply local changes.
                     return self.applyLocalDirectlyToMirror()

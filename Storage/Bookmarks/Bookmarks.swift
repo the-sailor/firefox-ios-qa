@@ -19,7 +19,7 @@ public protocol SyncableBookmarks: class, ResettableSyncStorage, AccountRemovalD
     func getLocalDeletions() -> Deferred<Maybe<[(GUID, Timestamp)]>>
     func treesForEdges() -> Deferred<Maybe<(local: BookmarkTree, buffer: BookmarkTree)>>
     func treeForMirror() -> Deferred<Maybe<BookmarkTree>>
-    func applyLocalOverrideCompletionOp(op: LocalOverrideCompletionOp, withModifiedTimestamp timestamp: Timestamp) -> Success
+    func applyLocalOverrideCompletionOp(op: LocalOverrideCompletionOp, withModifiedTimestamp timestamp: Timestamp, itemSources: ItemSources) -> Success
 }
 
 public protocol BookmarkBufferStorage: class {
@@ -29,7 +29,7 @@ public protocol BookmarkBufferStorage: class {
 
     func validate() -> Success
     func getBufferedDeletions() -> Deferred<Maybe<[(GUID, Timestamp)]>>
-    func applyBufferCompletionOp(op: BufferCompletionOp) -> Success
+    func applyBufferCompletionOp(op: BufferCompletionOp, itemSources: ItemSources) -> Success
 }
 
 public protocol MirrorItemSource: class {
@@ -48,6 +48,24 @@ public protocol LocalItemSource: class {
     func getLocalItemWithGUID(guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>>
     func getLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Deferred<Maybe<[GUID: BookmarkMirrorItem]>>
     func prefetchLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success
+}
+
+public class ItemSources {
+    public let local: LocalItemSource
+    public let mirror: MirrorItemSource
+    public let buffer: BufferItemSource
+
+    public init(local: LocalItemSource, mirror: MirrorItemSource, buffer: BufferItemSource) {
+        self.local = local
+        self.mirror = mirror
+        self.buffer = buffer
+    }
+
+    public func prefetchWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
+        return self.local.prefetchLocalItemsWithGUIDs(guids)
+         >>> { self.mirror.prefetchMirrorItemsWithGUIDs(guids) }
+         >>> { self.buffer.prefetchBufferItemsWithGUIDs(guids) }
+    }
 }
 
 public struct BookmarkRoots {
