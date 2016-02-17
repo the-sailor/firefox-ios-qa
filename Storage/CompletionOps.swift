@@ -43,7 +43,7 @@ public class BufferCompletionOp: PerhapsNoOp {
     public var processedBufferChanges: Set<GUID> = Set()    // These can be deleted when we're run.
 
     public var isNoOp: Bool {
-        return true
+        return self.processedBufferChanges.isEmpty
     }
 
     public init() {
