@@ -585,8 +585,8 @@ extension MergedSQLiteBookmarks: BookmarkBufferStorage {
         return self.buffer.getBufferedDeletions()
     }
 
-    public func applyBufferCompletionOp(op: BufferCompletionOp) -> Success {
-        return self.buffer.applyBufferCompletionOp(op)
+    public func applyBufferCompletionOp(op: BufferCompletionOp, itemSources: ItemSources) -> Success {
+        return self.buffer.applyBufferCompletionOp(op, itemSources: itemSources)
     }
 }
 
@@ -891,7 +891,7 @@ extension SQLiteBookmarks {
 // MARK: - Applying merge operations.
 
 public extension SQLiteBookmarkBufferStorage {
-    public func applyBufferCompletionOp(op: BufferCompletionOp) -> Success {
+    public func applyBufferCompletionOp(op: BufferCompletionOp, itemSources: ItemSources) -> Success {
         log.debug("Marking buffer rows as applied.")
         if op.isNoOp {
             log.debug("Nothing to do.")
@@ -911,7 +911,7 @@ public extension SQLiteBookmarkBufferStorage {
 }
 
 extension MergedSQLiteBookmarks {
-    public func applyLocalOverrideCompletionOp(op: LocalOverrideCompletionOp, withModifiedTimestamp timestamp: Timestamp) -> Success {
+    public func applyLocalOverrideCompletionOp(op: LocalOverrideCompletionOp, withModifiedTimestamp timestamp: Timestamp, itemSources: ItemSources) -> Success {
         log.debug("Applying local op to merged.")
         if op.isNoOp {
             log.debug("Nothing to do.")
