@@ -151,8 +151,8 @@ class ThreeWayTreeMerger {
     // For now, track just one list. We might need to split this later.
     var done: Set<GUID> = Set()
 
-    // Local branches down which we did not recurse on our first pass.
-    var localQueue = nodeOnceOnlyStack()
+    // Local records that we identified as being the same as remote records.
+    var duped: Set<GUID> = Set()
 
     init(local: BookmarkTree, mirror: BookmarkTree, remote: BookmarkTree, itemSources: ItemSources) {
         precondition(mirror.root != nil)
@@ -860,7 +860,9 @@ class ThreeWayTreeMerger {
         log.debug("Marking \(guid) as merged.")
         self.done.insert(guid)
         if let otherGUID = localNode?.recordGUID where otherGUID != guid {
+            log.debug("Marking superseded local record \(otherGUID) as merged.")
             self.done.insert(otherGUID)
+            self.duped.insert(otherGUID)
         }
 
         func takeRemoteAndMergeChildren(remote: BookmarkTreeNode, mirror: BookmarkTreeNode?=nil) throws -> MergedTreeNode {
@@ -1030,7 +1032,7 @@ class ThreeWayTreeMerger {
 
         // Validate. Note that we might end up with *more* records than this -- records
         // that didn't change naturally aren't present in the change list on either side.
-        let expected = self.allChangedGUIDs.subtract(self.allDeletions)
+        let expected = self.allChangedGUIDs.subtract(self.allDeletions).subtract(self.duped)
         assert(self.merged.allGUIDs.isSupersetOf(expected))
         assert(self.merged.allGUIDs.intersect(self.allDeletions).isEmpty)
 
