@@ -37,6 +37,8 @@ public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchron
 
             //
             // TODO: synthesize amended records.
+            // TODO: synthesize them with remote GUIDs. We need the local ones in order to
+            // fetch from the DB!
             assert(op.amendChildrenFromBuffer.count == 0)
             assert(op.amendChildrenFromMirror.count == 0)
             assert(op.amendChildrenFromLocal.count == 0)
