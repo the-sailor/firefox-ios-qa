@@ -606,7 +606,7 @@ class ThreeWayTreeMerger {
             return MergeState.Local
         }
 
-        if let remote = remoteRecord {
+        if let _ = remoteRecord {
             // No local!
             log.debug("Expected two-way merge for \(guid), but no local item found.")
             return MergeState.Remote
