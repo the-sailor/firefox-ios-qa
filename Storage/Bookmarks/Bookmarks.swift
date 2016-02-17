@@ -279,7 +279,7 @@ public struct BookmarkMirrorItem: Equatable {
            self.feedURI != rhs.feedURI ||
            self.siteURI != rhs.siteURI ||
            self.title != rhs.title ||
-           self.description != rhs.description ||
+           (self.description ?? "") != (rhs.description ?? "") ||
            self.bookmarkURI != rhs.bookmarkURI ||
            self.tags != rhs.tags ||
            self.keyword != rhs.keyword ||
