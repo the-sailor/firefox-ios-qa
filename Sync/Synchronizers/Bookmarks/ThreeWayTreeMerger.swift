@@ -572,10 +572,10 @@ class ThreeWayTreeMerger {
 
     private func resolveThreeWayValueConflict(guid: GUID) throws -> MergeState<BookmarkMirrorItem> {
         // TODO
-        return try self.resolveTwoWayValueConflict(guid)
+        return try self.resolveTwoWayValueConflict(guid, localGUID: guid)
     }
 
-    private func resolveTwoWayValueConflict(guid: GUID) throws -> MergeState<BookmarkMirrorItem> {
+    private func resolveTwoWayValueConflict(guid: GUID, localGUID: GUID) throws -> MergeState<BookmarkMirrorItem> {
         // We don't check for all roots, because we might have to
         // copy them to the mirror or buffer, so we need to pick
         // a direction. The Places root is never uploaded.
@@ -584,7 +584,7 @@ class ThreeWayTreeMerger {
             return MergeState.Unchanged
         }
 
-        let localRecord = self.itemSources.local.getLocalItemWithGUID(guid).value.successValue
+        let localRecord = self.itemSources.local.getLocalItemWithGUID(localGUID).value.successValue
         let remoteRecord = self.itemSources.buffer.getBufferItemWithGUID(guid).value.successValue
 
         if let local = localRecord {
@@ -648,7 +648,7 @@ class ThreeWayTreeMerger {
             result.valueState = MergeState.Local
         } else {
             if mirrorNode == nil {
-                result.valueState = try self.resolveTwoWayValueConflict(guid)
+                result.valueState = try self.resolveTwoWayValueConflict(guid, localGUID: localNode.recordGUID)
             } else {
                 result.valueState = try self.resolveThreeWayValueConflict(guid)
             }
@@ -1265,8 +1265,9 @@ class ThreeWayTreeMerger {
             // it means it's been processed, and no longer needs to be kept
             // on the edges.
             if node.hasLocal {
-                log.debug("Marking \(node.guid) to drop from local.")
-                localOp.processedLocalChanges.insert(node.guid)
+                let localGUID = node.local!.recordGUID
+                log.debug("Marking \(localGUID) to drop from local.")
+                localOp.processedLocalChanges.insert(localGUID)
             }
 
             if node.hasRemote {
@@ -1297,15 +1298,18 @@ class ThreeWayTreeMerger {
                 localOp.mirrorValuesToCopyFromBuffer.insert(node.guid)
 
             case .Local:
-                // TODO: make sure parent is correct.
-                guard let value = self.itemSources.local.getLocalItemWithGUID(node.guid).value.successValue else {
-                    assertionFailure("Couldn't fetch value for new item \(node.guid). This should never happen.")
+                let localGUID = node.local!.recordGUID
+                guard let value = self.itemSources.local.getLocalItemWithGUID(localGUID).value.successValue else {
+                    assertionFailure("Couldn't fetch local value for new item \(localGUID). This should never happen.")
                     return
                 }
+
+                // Note that we take the final merged GUID here, but we had to use the local GUID above,
+                // just in case we did a value-based merge.
                 let record = Record<BookmarkBasePayload>(id: node.guid, payload: value.asPayload())
                 upstreamOp.records.append(record)
 
-                localOp.mirrorValuesToCopyFromLocal.insert(node.guid)
+                localOp.mirrorValuesToCopyFromLocal.insert(localGUID)
 
             // New. Emit explicit insertions into all three places,
             // and eliminate any existing records for this GUID.
