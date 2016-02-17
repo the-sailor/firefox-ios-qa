@@ -590,6 +590,13 @@ class ThreeWayTreeMerger {
         if let local = localRecord {
             if let remote = remoteRecord {
                 // Two-way.
+                // If they're the same, take the remote record. It saves us having to rewrite
+                // local values to keep a remote GUID.
+                if local.sameAs(remote) {
+                    log.debug("Local record \(local.guid) same as remote \(remote.guid). Taking remote.")
+                    return MergeState.Remote
+                }
+
                 log.debug("Comparing local (\(local.localModified)) to remote (\(remote.serverModified)) clock for two-way value merge of \(guid).")
                 if local.localModified > remote.serverModified {
                     return MergeState.Local
@@ -1299,14 +1306,18 @@ class ThreeWayTreeMerger {
 
             case .Local:
                 let localGUID = node.local!.recordGUID
+
+                // If we're taking the local value, we expect to keep the local GUID.
+                // TODO: this restriction isn't strictly required, but we know that our
+                // content-based merges will only ever take the remote value.
+                precondition(localGUID == node.guid, "Can't take local value without keeping local GUID.")
+
                 guard let value = self.itemSources.local.getLocalItemWithGUID(localGUID).value.successValue else {
                     assertionFailure("Couldn't fetch local value for new item \(localGUID). This should never happen.")
                     return
                 }
 
-                // Note that we take the final merged GUID here, but we had to use the local GUID above,
-                // just in case we did a value-based merge.
-                let record = Record<BookmarkBasePayload>(id: node.guid, payload: value.asPayload())
+                let record = Record<BookmarkBasePayload>(id: localGUID, payload: value.asPayload())
                 upstreamOp.records.append(record)
 
                 localOp.mirrorValuesToCopyFromLocal.insert(localGUID)
