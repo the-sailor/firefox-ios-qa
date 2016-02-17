@@ -817,7 +817,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         // All of the incoming records exist.
         XCTAssertFalse(mirror.isEmpty)
-        XCTAssertTrue(mirror.subtrees[0].recordGUID == BookmarkRoots.RootGUID)
+        XCTAssertEqual(mirror.subtrees[0].recordGUID, BookmarkRoots.RootGUID)
         XCTAssertNotNil(mirror.find("emptyempty01"))
         XCTAssertNotNil(mirror.find("emptyempty02"))
         XCTAssertNotNil(mirror.find("emptyempty03"))
@@ -829,15 +829,13 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertTrue(uploader.added.contains("toolbar"))
         XCTAssertTrue(uploader.added.contains("menu"))
         XCTAssertTrue(uploader.added.contains("unfiled"))
-        //XCTAssertTrue(uploader.added.contains("mobile"))  // Not once we take structure correctly.
+        XCTAssertFalse(uploader.added.contains("mobile"))  // Structure and value didn't change.
 
         // The local record that was smushed is not present…
-        // TODO
-        // XCTAssertNil(mirror.find("emptyemptyL0"))
+        XCTAssertNil(mirror.find("emptyemptyL0"))
 
-        // … and even though it was marked New, we tried to delete it, just in case.
-        //XCTAssertTrue(uploader.added.isEmpty)
-        //XCTAssertTrue(uploader.deletions.contains("emptyemptyL0"))  // TODO
+        // … and because it was marked New, we don't bother trying to delete it.
+        XCTAssertFalse(uploader.deletions.contains("emptyemptyL0"))
 
         guard let mobile = mirror.find(BookmarkRoots.MobileFolderGUID) else {
             XCTFail("No mobile folder in mirror.")
