@@ -184,7 +184,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         }
         lookup[BookmarkRoots.RootGUID] = places
 
-        return BookmarkTree(subtrees: [places], lookup: lookup, parents: parents, orphans: Set(), deleted: Set(), modified: Set(lookup.keys))
+        return BookmarkTree(subtrees: [places], lookup: lookup, parents: parents, orphans: Set(), deleted: Set(), modified: Set(lookup.keys), virtual: Set())
     }
 
     // Our synthesized tree is the same as the one we pull out of a brand new local DB.
