@@ -295,6 +295,10 @@ public struct BookmarkMirrorItem: Equatable {
     }
 
     public func asJSON() -> JSON {
+        return self.asJSONWithChildren(self.children)
+    }
+
+    public func asJSONWithChildren(children: [GUID]?) -> JSON {
         var out: [String: AnyObject] = [:]
 
         out["id"] = BookmarkRoots.translateOutgoingRootGUID(self.guid)
@@ -344,7 +348,7 @@ public struct BookmarkMirrorItem: Equatable {
         case .Folder:
             take("title", self.title)
             take("description", self.description)
-            if let children = self.children {
+            if let children = children {
                 if BookmarkRoots.RootGUID == self.guid {
                     // Only the root contains roots, and so only its children
                     // need to be translated.

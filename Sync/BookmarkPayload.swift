@@ -13,6 +13,24 @@ extension BookmarkMirrorItem {
     func asPayload() -> BookmarkBasePayload {
         return BookmarkType.somePayloadFromJSON(self.asJSON())
     }
+
+    func asPayloadWithChildren(children: [GUID]?) -> BookmarkBasePayload {
+        let remappedChildren: [GUID]?
+        if let children = children {
+            if BookmarkRoots.RootGUID == self.guid {
+                // Only the root contains roots, and so only its children
+                // need to be translated.
+                remappedChildren = children.map(BookmarkRoots.translateOutgoingRootGUID)
+            } else {
+                remappedChildren = children
+            }
+        } else {
+            remappedChildren = nil
+        }
+
+        let json = self.asJSONWithChildren(remappedChildren)
+        return BookmarkType.somePayloadFromJSON(json)
+    }
 }
 
 /**
