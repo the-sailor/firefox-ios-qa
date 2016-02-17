@@ -12,6 +12,74 @@ private let log = Logger.syncLogger
 
 typealias UploadFunction = ([Record<BookmarkBasePayload>], lastTimestamp: Timestamp?, onUpload: (POSTResult) -> DeferredTimestamp) -> DeferredTimestamp
 
+class TrivialBookmarkStorer: BookmarkStorer {
+    let uploader: UploadFunction
+    init(uploader: UploadFunction) {
+        self.uploader = uploader
+    }
+
+    func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>> {
+        log.debug("Uploading \(op.records.count) modified records.")
+        log.debug("Uploading \(op.amendChildrenFromBuffer.count) amended buffer records.")
+        log.debug("Uploading \(op.amendChildrenFromMirror.count) amended mirror records.")
+        log.debug("Uploading \(op.amendChildrenFromLocal.count) amended local records.")
+
+        var records: [Record<BookmarkBasePayload>] = []
+        records.reserveCapacity(op.records.count + op.amendChildrenFromBuffer.count + op.amendChildrenFromLocal.count + op.amendChildrenFromMirror.count)
+        records.appendContentsOf(op.records)
+
+        func accumulateFromAmendMap(itemsWithNewChildren: [GUID: [GUID]], fetch: [GUID: [GUID]] -> Maybe<[GUID: BookmarkMirrorItem]>) throws /* MaybeErrorType */ {
+            if itemsWithNewChildren.isEmpty {
+                return
+            }
+
+            let fetched = fetch(itemsWithNewChildren)
+            guard let items = fetched.successValue else {
+                log.warning("Couldn't fetch items to amend.")
+                throw fetched.failureValue!
+            }
+
+            items.forEach { (guid, item) in
+                let payload = item.asPayloadWithChildren(itemsWithNewChildren[guid])
+                let mappedGUID = payload["id"].asString ?? guid
+                let record = Record<BookmarkBasePayload>(id: mappedGUID, payload: payload)
+                records.append(record)
+            }
+        }
+
+        do {
+            try accumulateFromAmendMap(op.amendChildrenFromBuffer, fetch: { itemSources.buffer.getBufferItemsWithGUIDs($0.keys).value })
+            try accumulateFromAmendMap(op.amendChildrenFromMirror, fetch: { itemSources.mirror.getMirrorItemsWithGUIDs($0.keys).value })
+            try accumulateFromAmendMap(op.amendChildrenFromLocal, fetch: { itemSources.local.getLocalItemsWithGUIDs($0.keys).value })
+        } catch {
+            return deferMaybe(error as! MaybeErrorType)
+        }
+
+        var modified: Timestamp = 0
+        var success: [GUID] = []
+        var failed: [GUID: [String]] = [:]
+
+        func onUpload(result: POSTResult) -> DeferredTimestamp {
+            modified = result.modified
+            success.appendContentsOf(result.success)
+            result.failed.forEach { guid, strings in
+                failed[guid] = strings
+            }
+
+            return deferMaybe(result.modified)
+        }
+
+        // Chain the last upload timestamp right into our lastFetched timestamp.
+        // This is what Sync clients tend to do, but we can probably do better.
+        // Upload 50 records at a time.
+        return uploader(records, lastTimestamp: op.ifUnmodifiedSince, onUpload: onUpload)
+            // As if we uploaded everything in one go.
+            >>> { deferMaybe(POSTResult(modified: modified, success: success, failed: failed)) }
+    }
+}
+
+// MARK: - External synchronizer interface.
+
 public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchronizer, Synchronizer {
     public required init(scratchpad: Scratchpad, delegate: SyncDelegate, basePrefs: Prefs) {
         super.init(scratchpad: scratchpad, delegate: delegate, basePrefs: basePrefs, collection: "bookmarks")
@@ -19,50 +87,6 @@ public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchron
 
     override var storageVersion: Int {
         return BookmarksStorageVersion
-    }
-
-    private class Storer: BookmarkStorer {
-        let uploader: UploadFunction
-        init(uploader: UploadFunction) {
-            self.uploader = uploader
-        }
-
-        func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>> {
-            log.debug("Uploading \(op.records.count) modified records.")
-            log.debug("Uploading \(op.amendChildrenFromBuffer.count) amended buffer records.")
-            log.debug("Uploading \(op.amendChildrenFromMirror.count) amended mirror records.")
-            log.debug("Uploading \(op.amendChildrenFromLocal.count) amended local records.")
-
-            //
-            // TODO: synthesize amended records.
-            // TODO: synthesize them with remote GUIDs. We need the local ones in order to
-            // fetch from the DB!
-            assert(op.amendChildrenFromBuffer.count == 0)
-            assert(op.amendChildrenFromMirror.count == 0)
-            assert(op.amendChildrenFromLocal.count == 0)
-            //
-
-            var modified: Timestamp = 0
-            var success: [GUID] = []
-            var failed: [GUID: [String]] = [:]
-
-            func onUpload(result: POSTResult) -> DeferredTimestamp {
-                modified = result.modified
-                success.appendContentsOf(result.success)
-                result.failed.forEach { guid, strings in
-                    failed[guid] = strings
-                }
-
-                return deferMaybe(result.modified)
-            }
-
-            // Chain the last upload timestamp right into our lastFetched timestamp.
-            // This is what Sync clients tend to do, but we can probably do better.
-            // Upload 50 records at a time.
-            return uploader(op.records, lastTimestamp: op.ifUnmodifiedSince!, onUpload: onUpload)
-                // As if we uploaded everything in one go.
-                >>> { deferMaybe(POSTResult(modified: modified, success: success, failed: failed)) }
-        }
     }
 
     public func synchronizeBookmarksToStorage(storage: protocol<SyncableBookmarks, LocalItemSource, MirrorItemSource>, usingBuffer buffer: protocol<BookmarkBufferStorage, BufferItemSource>, withServer storageClient: Sync15StorageClient, info: InfoCollections, greenLight: () -> Bool) -> SyncResult {
