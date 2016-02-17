@@ -919,8 +919,9 @@ extension MergedSQLiteBookmarks {
         }
 
         let deferred = Success()
+
         var err: NSError?
-        self.local.db.transaction(&err) { (conn, inout err: NSError?) in
+        let resultError = self.local.db.transaction(&err) { (conn, inout err: NSError?) in
             // This is a little tortured because we want it all to happen in a single transaction.
             // We walk through the accrued work items, applying them in the right order (e.g., structure
             // then value), doing so with the ugly NSError-based transaction API.
@@ -1109,8 +1110,14 @@ extension MergedSQLiteBookmarks {
             }
 
             // Commit the result.
-            deferred.fill(Maybe(success: ()))
             return true
+        }
+
+        if let err = resultError {
+            log.warning("Got error “\(err.localizedDescription)”")
+            deferred.fillIfUnfilled(Maybe(failure: DatabaseError(err: err)))
+        } else {
+            deferred.fill(Maybe(success: ()))
         }
 
         return deferred
