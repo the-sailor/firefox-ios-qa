@@ -1237,11 +1237,14 @@ class ThreeWayTreeMerger {
                 upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
             case .New:
                 log.debug("Root \(node.guid) taking new structure.")
-                if node.hasMirror {
+                if node.hasMirror && !mirrorVersionIsVirtual {
+                    log.debug("… uploading with mirror value.")
                     upstreamOp.amendChildrenFromMirror[node.guid] = childGUIDs
                 } else if node.hasLocal {
+                    log.debug("… uploading with local value.")
                     upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
                 } else if node.hasRemote {
+                    log.debug("… uploading with remote value.")
                     upstreamOp.amendChildrenFromBuffer[node.guid] = childGUIDs
                 } else {
                     log.warning("No values to copy to remote for \(node.guid). Need to synthesize root. Empty merge?")
