@@ -375,7 +375,8 @@ public class BookmarkBasePayload: CleartextPayloadJSON {
     private static let optionalBooleanFields: [String] = ["hasDupe"]
 
     static func deletedPayload(guid: GUID) -> BookmarkBasePayload {
-        return BookmarkBasePayload(JSON(["id": guid, "deleted": true]))
+        let remappedGUID = BookmarkRoots.translateOutgoingRootGUID(guid)
+        return BookmarkBasePayload(JSON(["id": remappedGUID, "deleted": true]))
     }
 
     func hasStringArrayField(name: String) -> Bool {
