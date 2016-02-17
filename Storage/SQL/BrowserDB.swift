@@ -403,7 +403,7 @@ extension BrowserDB: Changeable {
         }
 
         var err: NSError? = nil
-        self.transaction(&err) { (conn, err) -> Bool in
+        let errorResult = self.transaction(&err) { (conn, err) -> Bool in
             for (sql, args) in commands {
                 err = conn.executeChange(sql, withArgs: args)
                 if let err = err {
@@ -414,7 +414,7 @@ extension BrowserDB: Changeable {
             return true
         }
 
-        if let err = err {
+        if let err = err ?? errorResult {
             return deferMaybe(DatabaseError(err: err))
         }
 
