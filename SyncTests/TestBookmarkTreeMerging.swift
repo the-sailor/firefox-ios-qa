@@ -194,6 +194,8 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertNotNil(fromDB)
         XCTAssertTrue(fromDB!.isFullyRootedIn(constructed))
         XCTAssertTrue(constructed.isFullyRootedIn(fromDB!))
+        XCTAssertTrue(fromDB!.virtual.isEmpty)
+        XCTAssertTrue(constructed.virtual.isEmpty)
     }
 
     // This should never occur in the wild: local will never be empty.
@@ -203,6 +205,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         let l = BookmarkTree.emptyTree()
         let s = MockItemSource()
 
+        XCTAssertEqual(m.virtual, BookmarkRoots.Real)
         let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, mirrorItemSource: s, bufferItemSource: s)
         guard let mergedTree = merger.produceMergedTree().value.successValue else {
             XCTFail("Couldn't merge.")
@@ -217,7 +220,9 @@ class TestBookmarkTreeMerging: SaneTestCase {
             return
         }
 
-        XCTAssertTrue(result.isNoOp)
+        // We don't test the local override completion, because of course we saw mirror items.
+        XCTAssertTrue(result.uploadCompletion.isNoOp)
+        XCTAssertTrue(result.bufferCompletion.isNoOp)
     }
 
     func getItemSourceIncludingEmptyRoots() -> MockItemSource {
@@ -259,8 +264,16 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertFalse(result.isNoOp)
         XCTAssertTrue(result.overrideCompletion.processedLocalChanges.isSupersetOf(Set(BookmarkRoots.RootChildren)))
 
-        // TODO: we should be dropping the roots from local, and uploading roots to the server.
+        // We should be dropping the roots from local, and uploading roots to the server.
         // The outgoing records should use Sync-style IDs.
+        // We never upload the places root.
+        let banned = Set<GUID>(["places", BookmarkRoots.RootGUID])
+        XCTAssertTrue(banned.isDisjointWith(result.uploadCompletion.records.map { $0.id }))
+        XCTAssertTrue(banned.isDisjointWith(result.uploadCompletion.amendChildrenFromBuffer.keys))
+        XCTAssertTrue(banned.isDisjointWith(result.uploadCompletion.amendChildrenFromMirror.keys))
+        XCTAssertTrue(banned.isDisjointWith(result.uploadCompletion.amendChildrenFromLocal.keys))
+        XCTAssertEqual(Set(BookmarkRoots.RootChildren), Set(result.uploadCompletion.amendChildrenFromLocal.keys))
+        XCTAssertEqual(Set(BookmarkRoots.Real), result.overrideCompletion.processedLocalChanges)
     }
 
     func testMergingStorageLocalRootsEmptyServer() {
@@ -645,7 +658,6 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertEqual(BookmarkRoots.RootGUID, mergedTree.root.guid)
         XCTAssertEqual(BookmarkRoots.RootGUID, mergedTree.root.mirror?.recordGUID)
         XCTAssertNil(mergedTree.root.remote)
-        XCTAssertNil(mergedTree.root.local)     // Because the root is special.
 
         XCTAssertTrue(MergeState<BookmarkMirrorItem>.Unchanged == mergedTree.root.valueState)
         XCTAssertTrue(MergeState<BookmarkTreeNode>.Unchanged == mergedTree.root.structureState)
@@ -702,12 +714,10 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         // After merge, the buffer and local are empty.
         let edgesAfter = bookmarks.treesForEdges().value.successValue!
-        // TODO: re-enable.
-        //XCTAssertTrue(edgesAfter.local.isEmpty)
-        //XCTAssertTrue(edgesAfter.buffer.isEmpty)
+        XCTAssertTrue(edgesAfter.local.isEmpty)
+        XCTAssertTrue(edgesAfter.buffer.isEmpty)
 
         // When merged in, we do not smush these two records together!
-        /*
         XCTAssertFalse(mirror.isEmpty)
         XCTAssertTrue(mirror.subtrees[0].recordGUID == BookmarkRoots.RootGUID)
         XCTAssertNotNil(mirror.find("emptyempty01"))
@@ -723,7 +733,11 @@ class TestBookmarkTreeMerging: SaneTestCase {
         } else {
             XCTFail("Mobile isn't a folder.")
         }
-*/
+
+
+        // If we try to merge again, we'll get a merge error because both sides are empty.
+        let getSecondMerger = storageMerger.getMerger().value
+        XCTAssertTrue(getSecondMerger.isFailure)
     }
 
     func testApplyingTwoEmptyFoldersMatchesOnlyOne() {
