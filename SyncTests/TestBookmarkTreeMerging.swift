@@ -93,32 +93,29 @@ class MockBufferItemSource: BufferItemSource {
     }
 }
 
-class MockUploader: BookmarkStorer {
+class MockUploader {
     var deletions: Set<GUID> = Set<GUID>()
     var added: Set<GUID> = Set<GUID>()
+    var records: [GUID: Record<BookmarkBasePayload>] = [:]
 
-    func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>> {
-        var addedNow = Set<GUID>()
-        var deletedNow = Set<GUID>()
+    func getStorer() -> TrivialBookmarkStorer {
+        return TrivialBookmarkStorer(uploader: self.doUpload)
+    }
 
-        op.records.forEach { record in
-            if record.payload.deleted {
-                deletedNow.insert(record.id)
+    func doUpload(recs: [Record<BookmarkBasePayload>], lastTimestamp: Timestamp?, onUpload: (POSTResult) -> DeferredTimestamp) -> DeferredTimestamp {
+        var success: [GUID] = []
+        recs.forEach { rec in
+            success.append(rec.id)
+            self.records[rec.id] = rec
+            if rec.payload.deleted {
+                self.deletions.insert(rec.id)
             } else {
-                addedNow.insert(record.id)
+                self.added.insert(rec.id)
             }
         }
 
-        addedNow.unionInPlace(op.amendChildrenFromBuffer.keys)
-        addedNow.unionInPlace(op.amendChildrenFromLocal.keys)
-        addedNow.unionInPlace(op.amendChildrenFromMirror.keys)
-
-        self.deletions.unionInPlace(deletedNow)
-        self.added.unionInPlace(addedNow)
-
-        let guids = addedNow.union(deletedNow).map { $0 }
-        let postResult = POSTResult(modified: NSDate.now(), success: guids, failed: [:])
-        return deferMaybe(postResult)
+        // Now pretend we did the upload.
+        return onUpload(POSTResult(modified: NSDate.now(), success: success, failed: [:]))
     }
 }
 
@@ -309,7 +306,8 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertFalse(edgesBefore.local.isEmpty)
         XCTAssertTrue(edgesBefore.buffer.isEmpty)
 
-        let storer = MockUploader()
+        let uploader = MockUploader()
+        let storer = uploader.getStorer()
         let applier = MergeApplier(buffer: bookmarks, storage: bookmarks, client: storer, greenLight: { true })
         applier.go().succeeded()
 
@@ -325,7 +323,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertTrue(edgesAfter.local.isEmpty)
         XCTAssertTrue(edgesAfter.buffer.isEmpty)
 
-        XCTAssertEqual(storer.added, Set(BookmarkRoots.RootChildren))
+        XCTAssertEqual(uploader.added, Set(BookmarkRoots.RootChildren.map(BookmarkRoots.translateOutgoingRootGUID)))
     }
 
     func testComplexOrphaning() {
@@ -719,7 +717,8 @@ class TestBookmarkTreeMerging: SaneTestCase {
             return
         }
 
-        let storer = MockUploader()
+        let uploader = MockUploader()
+        let storer = uploader.getStorer()
         let applier = MergeApplier(buffer: bookmarks, storage: bookmarks, client: storer, greenLight: { true })
         applier.applyResult(result).succeeded()
 
@@ -787,7 +786,8 @@ class TestBookmarkTreeMerging: SaneTestCase {
         bookmarks.local.db.run("INSERT INTO \(TableBookmarksLocalStructure) (parent, child, idx) VALUES ('\(BookmarkRoots.MobileFolderGUID)', 'emptyemptyL0', 1)").succeeded()
 
 
-        let storer = MockUploader()
+        let uploader = MockUploader()
+        let storer = uploader.getStorer()
         let applier = MergeApplier(buffer: bookmarks, storage: bookmarks, client: storer, greenLight: { true })
         applier.go().succeeded()
 
@@ -798,6 +798,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         // After merge, the buffer and local are empty.
         let edgesAfter = bookmarks.treesForEdges().value.successValue!
+        // TODO
         /*
         XCTAssertTrue(edgesAfter.local.isEmpty)
         XCTAssertTrue(edgesAfter.buffer.isEmpty)
@@ -813,8 +814,8 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertNil(mirror.find("emptyemptyL0"))
 
         // … and even though it was marked New, we tried to delete it, just in case.
-        XCTAssertTrue(storer.added.isEmpty)
-        XCTAssertTrue(storer.deletions.contains("emptyemptyL0"))
+        XCTAssertTrue(uploader.added.isEmpty)
+        XCTAssertTrue(uploader.deletions.contains("emptyemptyL0"))
 
         guard let mobile = mirror.find(BookmarkRoots.MobileFolderGUID) else {
             XCTFail("No mobile folder in mirror.")
@@ -839,28 +840,44 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         bookmarks.buffer.db.assertQueryReturns("SELECT COUNT(*) FROM \(TableBookmarksBuffer)", int: 0)
         bookmarks.buffer.db.assertQueryReturns("SELECT COUNT(*) FROM \(TableBookmarksBufferStructure)", int: 0)
+        bookmarks.buffer.db.assertQueryReturns("SELECT COUNT(*) FROM \(TableBookmarksLocal)", int: 5)
+        bookmarks.buffer.db.assertQueryReturns("SELECT COUNT(*) FROM \(TableBookmarksLocalStructure)", int: 4)
 
         bookmarks.local.db.run("INSERT INTO \(TableFavicons) (id, url, width, height, type, date) VALUES (11, 'http://example.org/favicon.ico', 16, 16, 0, \(NSDate.now()))").succeeded()
         bookmarks.local.db.run("INSERT INTO \(TableBookmarksLocal) (guid, type, title, parentid, parentName, sync_status, bmkUri, faviconID) VALUES ('somebookmark', \(BookmarkNodeType.Bookmark.rawValue), 'Some Bookmark', '\(BookmarkRoots.MobileFolderGUID)', 'Mobile Bookmarks', \(SyncStatus.New.rawValue), 'http://example.org/', 11)").succeeded()
         bookmarks.local.db.run("INSERT INTO \(TableBookmarksLocalStructure) (parent, child, idx) VALUES ('\(BookmarkRoots.MobileFolderGUID)', 'somebookmark', 0)").succeeded()
 
-        let storer = MockUploader()
+        let uploader = MockUploader()
+        let storer = uploader.getStorer()
         let applier = MergeApplier(buffer: bookmarks, storage: bookmarks, client: storer, greenLight: { true })
         applier.go().succeeded()
 
         // After merge, the buffer and local are empty.
         let edgesAfter = bookmarks.treesForEdges().value.successValue!
-        /*
         XCTAssertTrue(edgesAfter.local.isEmpty)
         XCTAssertTrue(edgesAfter.buffer.isEmpty)
 
         // New record was uploaded.
-        XCTAssertTrue(storer.added.contains("somebookmark"))
-        XCTAssertTrue(storer.deletions.isEmpty)
+        XCTAssertTrue(uploader.added.contains("somebookmark"))
+
+        // So were all the roots, with the Sync-native names.
+        XCTAssertTrue(uploader.added.contains("toolbar"))
+        XCTAssertTrue(uploader.added.contains("menu"))
+        XCTAssertTrue(uploader.added.contains("unfiled"))
+        XCTAssertTrue(uploader.added.contains("mobile"))
+
+        // … but not the Places root.
+        XCTAssertFalse(uploader.added.contains("places"))
+        XCTAssertFalse(uploader.added.contains(BookmarkRoots.RootGUID))
+
+        // Their parent IDs are translated.
+        XCTAssertEqual(uploader.records["mobile"]?.payload["parentid"].asString, "places")
+        XCTAssertEqual(uploader.records["somebookmark"]?.payload["parentid"].asString, "mobile")
+
+        XCTAssertTrue(uploader.deletions.isEmpty)
 
         // New record still has its icon ID in the local DB.
         bookmarks.local.db.assertQueryReturns("SELECT faviconID FROM \(TableBookmarksMirror) WHERE bmkUri = 'http://example.org/'", int: 11)
-*/
     }
 }
 
