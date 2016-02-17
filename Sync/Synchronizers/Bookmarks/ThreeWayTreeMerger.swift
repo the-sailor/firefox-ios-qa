@@ -1016,6 +1016,7 @@ class ThreeWayTreeMerger {
         // Get to walkin'.
         root.structureState = MergeState.Unchanged      // We never change the root.
         root.valueState = MergeState.Unchanged
+        root.local = self.local.find(BookmarkRoots.RootGUID)
 
         do {
             try root.mergedChildren = root.mirror!.children!.map {
@@ -1197,6 +1198,7 @@ class ThreeWayTreeMerger {
         }
 
         func accumulateRoot(node: MergedTreeNode) {
+            log.debug("Accumulating \(node.guid).")
             assert(node.isFolder)
             assert(BookmarkRoots.Real.contains(node.guid))
 
@@ -1207,24 +1209,53 @@ class ThreeWayTreeMerger {
             // Recurse first — because why not?
             children.forEach(accumulateNode)
 
+            let mirrorVersionIsVirtual = self.mirror.virtual.contains(node.guid)
+
             // Note that a root can be Unchanged, but be missing from the mirror. That's OK: roots
             // don't really have values. Take whichever we find.
-            if node.mirror == nil {
+            if node.mirror == nil || mirrorVersionIsVirtual {
                 if node.hasLocal {
                     localOp.mirrorValuesToCopyFromLocal.insert(node.guid)
                 } else if node.hasRemote {
                     localOp.mirrorValuesToCopyFromBuffer.insert(node.guid)
                 } else {
-                    assertionFailure("No values to copy into mirror. Need to synthesize root.")
+                    log.warning("No values to copy into mirror for \(node.guid). Need to synthesize root. Empty merge?")
                 }
-
-                // TODO: make sure this work isn't redundant or duplicated.
-                localOp.mirrorStructures[node.guid] = node.mergedChildren?.map { $0.guid }
-                return
             }
 
-            // TODO: deal with the rest of the work of ensuring that non-Places roots
-            // end up on the server and in the mirror.
+            log.debug("Need to accumulate a root.")
+            if case .Unchanged = node.structureState {
+                if !mirrorVersionIsVirtual {
+                    log.debug("Root \(node.guid) is unchanged and already in the mirror.")
+                    return
+                }
+            }
+
+            let childGUIDs = children.map { $0.guid }
+            localOp.mirrorStructures[node.guid] = childGUIDs
+
+            switch node.structureState {
+            case .Remote:
+                log.debug("Root \(node.guid) taking remote structure.")
+                return
+            case .Local:
+                log.debug("Root \(node.guid) taking local structure.")
+                upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
+            case .New:
+                log.debug("Root \(node.guid) taking new structure.")
+                if node.hasMirror {
+                    upstreamOp.amendChildrenFromMirror[node.guid] = childGUIDs
+                } else if node.hasLocal {
+                    upstreamOp.amendChildrenFromLocal[node.guid] = childGUIDs
+                } else if node.hasRemote {
+                    upstreamOp.amendChildrenFromBuffer[node.guid] = childGUIDs
+                } else {
+                    log.warning("No values to copy to remote for \(node.guid). Need to synthesize root. Empty merge?")
+                }
+            default:
+                // Filler.
+                return
+            }
         }
 
         func accumulateNode(node: MergedTreeNode) {
