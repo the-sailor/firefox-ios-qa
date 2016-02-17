@@ -18,9 +18,7 @@ extension Dictionary {
     }
 }
 
-class MockItemSource: BufferItemSource, MirrorItemSource, LocalItemSource {
-    var buffer: [GUID: BookmarkMirrorItem] = [:]
-    var mirror: [GUID: BookmarkMirrorItem] = [:]
+class MockLocalItemSource: LocalItemSource {
     var local: [GUID: BookmarkMirrorItem] = [:]
 
     func getLocalItemWithGUID(guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>> {
@@ -40,8 +38,16 @@ class MockItemSource: BufferItemSource, MirrorItemSource, LocalItemSource {
         return deferMaybe(acc)
     }
 
+    func prefetchLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
+        return succeed()
+    }
+}
+
+class MockMirrorItemSource: MirrorItemSource {
+    var mirror: [GUID: BookmarkMirrorItem] = [:]
+
     func getMirrorItemWithGUID(guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>> {
-        guard let item = self.local[guid] else {
+        guard let item = self.mirror[guid] else {
             return deferMaybe(DatabaseError(description: "Couldn't find item \(guid)."))
         }
         return deferMaybe(item)
@@ -56,6 +62,14 @@ class MockItemSource: BufferItemSource, MirrorItemSource, LocalItemSource {
         }
         return deferMaybe(acc)
     }
+
+    func prefetchMirrorItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
+        return succeed()
+    }
+}
+
+class MockBufferItemSource: BufferItemSource {
+    var buffer: [GUID: BookmarkMirrorItem] = [:]
 
     func getBufferItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Deferred<Maybe<[GUID: BookmarkMirrorItem]>> {
         var acc: [GUID: BookmarkMirrorItem] = [:]
@@ -74,14 +88,6 @@ class MockItemSource: BufferItemSource, MirrorItemSource, LocalItemSource {
         return deferMaybe(item)
     }
 
-    func prefetchLocalItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
-        return succeed()
-    }
-
-    func prefetchMirrorItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
-        return succeed()
-    }
-
     func prefetchBufferItemsWithGUIDs<T: CollectionType where T.Generator.Element == GUID>(guids: T) -> Success {
         return succeed()
     }
@@ -91,15 +97,26 @@ class MockUploader: BookmarkStorer {
     var deletions: Set<GUID> = Set<GUID>()
     var added: Set<GUID> = Set<GUID>()
 
-    func applyUpstreamCompletionOp(op: UpstreamCompletionOp) -> Deferred<Maybe<POSTResult>> {
+    func applyUpstreamCompletionOp(op: UpstreamCompletionOp, itemSources: ItemSources) -> Deferred<Maybe<POSTResult>> {
+        var addedNow = Set<GUID>()
+        var deletedNow = Set<GUID>()
+
         op.records.forEach { record in
             if record.payload.deleted {
-                deletions.insert(record.id)
+                deletedNow.insert(record.id)
             } else {
-                added.insert(record.id)
+                addedNow.insert(record.id)
             }
         }
-        let guids = op.records.map { $0.id }
+
+        addedNow.unionInPlace(op.amendChildrenFromBuffer.keys)
+        addedNow.unionInPlace(op.amendChildrenFromLocal.keys)
+        addedNow.unionInPlace(op.amendChildrenFromMirror.keys)
+
+        self.deletions.unionInPlace(deletedNow)
+        self.added.unionInPlace(addedNow)
+
+        let guids = addedNow.union(deletedNow).map { $0 }
         let postResult = POSTResult(modified: NSDate.now(), success: guids, failed: [:])
         return deferMaybe(postResult)
     }
@@ -203,10 +220,10 @@ class TestBookmarkTreeMerging: SaneTestCase {
         let r = BookmarkTree.emptyTree()
         let m = BookmarkTree.emptyMirrorTree()
         let l = BookmarkTree.emptyTree()
-        let s = MockItemSource()
+        let s = ItemSources(local: MockLocalItemSource(), mirror: MockMirrorItemSource(), buffer: MockBufferItemSource())
 
         XCTAssertEqual(m.virtual, BookmarkRoots.Real)
-        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, mirrorItemSource: s, bufferItemSource: s)
+        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, itemSources: s)
         guard let mergedTree = merger.produceMergedTree().value.successValue else {
             XCTFail("Couldn't merge.")
             return
@@ -225,11 +242,11 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertTrue(result.bufferCompletion.isNoOp)
     }
 
-    func getItemSourceIncludingEmptyRoots() -> MockItemSource {
-        let s = MockItemSource()
+    func getItemSourceIncludingEmptyRoots() -> ItemSources {
+        let local = MockLocalItemSource()
 
         func makeRoot(guid: GUID, _ name: String) {
-            s.local[guid] = BookmarkMirrorItem.folder(guid, modified: NSDate.now(), hasDupe: false, parentID: BookmarkRoots.RootGUID, parentName: "", title: name, description: nil, children: [])
+            local.local[guid] = BookmarkMirrorItem.folder(guid, modified: NSDate.now(), hasDupe: false, parentID: BookmarkRoots.RootGUID, parentName: "", title: name, description: nil, children: [])
         }
 
         makeRoot(BookmarkRoots.MenuFolderGUID, "Bookmarks Menu")
@@ -238,7 +255,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         makeRoot(BookmarkRoots.UnfiledFolderGUID, "Unsorted Bookmarks")
         makeRoot(BookmarkRoots.RootGUID, "")
 
-        return s
+        return ItemSources(local: local, mirror: MockMirrorItemSource(), buffer: MockBufferItemSource())
     }
 
     func testMergingOnlyLocalRoots() {
@@ -247,7 +264,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
         let l = self.localTree()
         let s = self.getItemSourceIncludingEmptyRoots()
 
-        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, localItemSource: s, mirrorItemSource: s, bufferItemSource: s)
+        let merger = ThreeWayTreeMerger(local: l, mirror: m, remote: r, itemSources: s)
         guard let mergedTree = merger.produceMergedTree().value.successValue else {
             XCTFail("Couldn't merge.")
             return
@@ -302,14 +319,13 @@ class TestBookmarkTreeMerging: SaneTestCase {
             return
         }
 
-        // TODO: stuff has moved to the mirror.
-        /*
         XCTAssertFalse(mirror.isEmpty)
         XCTAssertTrue(mirror.subtrees[0].recordGUID == BookmarkRoots.RootGUID)
         let edgesAfter = bookmarks.treesForEdges().value.successValue!
         XCTAssertTrue(edgesAfter.local.isEmpty)
         XCTAssertTrue(edgesAfter.buffer.isEmpty)
-*/
+
+        XCTAssertEqual(storer.added, Set(BookmarkRoots.RootChildren))
     }
 
     func testComplexOrphaning() {
