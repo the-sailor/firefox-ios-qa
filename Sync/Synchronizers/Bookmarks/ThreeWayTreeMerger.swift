@@ -1002,7 +1002,6 @@ class ThreeWayTreeMerger {
     }
 
     private func prefetchItems() -> Success {
-        // TODO: implement caching of results in the item source.
         return self.bufferItemSource.prefetchBufferItemsWithGUIDs(self.allChangedGUIDs)
            >>> { self.mirrorItemSource.prefetchMirrorItemsWithGUIDs(self.allChangedGUIDs) }
            >>> { self.localItemSource.prefetchLocalItemsWithGUIDs(self.allChangedGUIDs) }
