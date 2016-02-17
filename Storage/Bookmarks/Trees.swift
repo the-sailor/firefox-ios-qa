@@ -120,6 +120,11 @@ public struct BookmarkTree {
     // Every record that's changed but not deleted.
     public let modified: Set<GUID>
 
+    // Nodes that are present in this tree but aren't present in the source.
+    // In practical terms, this will be roots that we pretend exist in
+    // the mirror for purposes of three-way merging.
+    public let virtual: Set<GUID>
+
     // Accessor for all top-level folders' GUIDs.
     public var subtreeGUIDs: Set<GUID> {
         return Set(self.subtrees.map { $0.recordGUID })
@@ -130,7 +135,7 @@ public struct BookmarkTree {
     }
 
     public static func emptyTree() -> BookmarkTree {
-        return BookmarkTree(subtrees: [], lookup: [:], parents: [:], orphans: Set<GUID>(), deleted: Set<GUID>(), modified: Set<GUID>())
+        return BookmarkTree(subtrees: [], lookup: [:], parents: [:], orphans: Set<GUID>(), deleted: Set<GUID>(), modified: Set<GUID>(), virtual: Set<GUID>())
     }
 
     public static func emptyMirrorTree() -> BookmarkTree {
@@ -193,6 +198,7 @@ public struct BookmarkTree {
         var tops = Set<GUID>()
         var notTops = Set<GUID>()
         var orphans = Set<GUID>()
+        var virtual = Set<GUID>()
 
         // We can't immediately build the final tree, because we need to do it bottom-up!
         // So store structure, which we can figure out flat.
@@ -244,8 +250,20 @@ public struct BookmarkTree {
         // This gives us our shared basis from which to merge.
         // Doing it here means we don't need to protect the mirror database table.
         if alwaysIncludeRoots {
+            func setVirtual(guid: GUID) {
+                if !remainingFolders.contains(guid) && nodes[guid] == nil {
+                    virtual.insert(guid)
+                }
+            }
+
+
             // Note that we don't check whether the input already contained the roots; we
             // never change them, so it's safe to do this unconditionally.
+            setVirtual(BookmarkRoots.RootGUID)
+            BookmarkRoots.RootChildren.forEach {
+                setVirtual($0)
+            }
+
             pseudoTree[BookmarkRoots.RootGUID] = BookmarkRoots.RootChildren
             tops.insert(BookmarkRoots.RootGUID)
             notTops.unionInPlace(BookmarkRoots.RootChildren)
@@ -288,6 +306,6 @@ public struct BookmarkTree {
 
         // Whatever we're left with in `tops` is the set of records for which we
         // didn't process a parent.
-        return BookmarkTree(subtrees: subtrees, lookup: nodes, parents: parents, orphans: orphans, deleted: deleted, modified: modified)
+        return BookmarkTree(subtrees: subtrees, lookup: nodes, parents: parents, orphans: orphans, deleted: deleted, modified: modified, virtual: virtual)
     }
 }
