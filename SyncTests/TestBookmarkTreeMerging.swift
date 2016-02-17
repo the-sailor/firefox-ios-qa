@@ -755,6 +755,19 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertTrue(getSecondMerger.isFailure)
     }
 
+    /**
+     * Input:
+     * 
+     *           [M]                []             [M]
+     *     _______|_______                     _____|_____
+     *    /       |       \                   /           \
+     *  [e01]   [e02]    [e03]              [e02]        [eL0]
+     * 
+     * Expected output:
+     *
+     * Take remote, delete emptyemptyL0, upload the roots that
+     * weren't remotely present.
+     */
     func testApplyingTwoEmptyFoldersMatchesOnlyOne() {
         guard let bookmarks = self.getSyncableBookmarks("D") else {
             XCTFail("Couldn't get bookmarks.")
@@ -798,8 +811,7 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         // After merge, the buffer and local are empty.
         let edgesAfter = bookmarks.treesForEdges().value.successValue!
-        // TODO
-        /*
+
         XCTAssertTrue(edgesAfter.local.isEmpty)
         XCTAssertTrue(edgesAfter.buffer.isEmpty)
 
@@ -810,12 +822,22 @@ class TestBookmarkTreeMerging: SaneTestCase {
         XCTAssertNotNil(mirror.find("emptyempty02"))
         XCTAssertNotNil(mirror.find("emptyempty03"))
 
+        // The other roots are now in the mirror.
+        XCTAssertTrue(BookmarkRoots.Real.every({ mirror.find($0) != nil }))
+
+        // And are queued for upload.
+        XCTAssertTrue(uploader.added.contains("toolbar"))
+        XCTAssertTrue(uploader.added.contains("menu"))
+        XCTAssertTrue(uploader.added.contains("unfiled"))
+        //XCTAssertTrue(uploader.added.contains("mobile"))  // Not once we take structure correctly.
+
         // The local record that was smushed is not present…
-        XCTAssertNil(mirror.find("emptyemptyL0"))
+        // TODO
+        // XCTAssertNil(mirror.find("emptyemptyL0"))
 
         // … and even though it was marked New, we tried to delete it, just in case.
-        XCTAssertTrue(uploader.added.isEmpty)
-        XCTAssertTrue(uploader.deletions.contains("emptyemptyL0"))
+        //XCTAssertTrue(uploader.added.isEmpty)
+        //XCTAssertTrue(uploader.deletions.contains("emptyemptyL0"))  // TODO
 
         guard let mobile = mirror.find(BookmarkRoots.MobileFolderGUID) else {
             XCTFail("No mobile folder in mirror.")
@@ -828,7 +850,6 @@ class TestBookmarkTreeMerging: SaneTestCase {
         } else {
             XCTFail("Mobile isn't a folder.")
         }
-*/
     }
 
     // TODO: this test should be extended to also exercise the case of a conflict.
