@@ -10,9 +10,7 @@ import XCGLogger
 
 private let log = Logger.syncLogger
 
-// MARK: - External synchronizer interface.
-
-private typealias UploadFunction = ([Record<BookmarkBasePayload>], lastTimestamp: Timestamp, onUpload: (POSTResult) -> DeferredTimestamp) -> DeferredTimestamp
+typealias UploadFunction = ([Record<BookmarkBasePayload>], lastTimestamp: Timestamp?, onUpload: (POSTResult) -> DeferredTimestamp) -> DeferredTimestamp
 
 public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchronizer, Synchronizer {
     public required init(scratchpad: Scratchpad, delegate: SyncDelegate, basePrefs: Prefs) {
@@ -80,8 +78,10 @@ public class BufferingBookmarksSynchronizer: TimestampedSingleCollectionSynchron
         }
 
         let mirrorer = BookmarksMirrorer(storage: buffer, client: bookmarksClient, basePrefs: self.prefs, collection: "bookmarks")
-        let storer = Storer(uploader: { records, lastTimestamp, onUpload in
-            return self.uploadRecords(records, by: 50, lastTimestamp: lastTimestamp, storageClient: bookmarksClient, onUpload: onUpload)
+        let storer = TrivialBookmarkStorer(uploader: { records, lastTimestamp, onUpload in
+            // Default to our last fetch time for If-Unmodified-Since.
+            let timestamp = lastTimestamp ?? self.lastFetched
+            return self.uploadRecords(records, by: 50, lastTimestamp: timestamp, storageClient: bookmarksClient, onUpload: onUpload)
               >>== effect(self.setTimestamp)
         })
         let applier = MergeApplier(buffer: buffer, storage: storage, client: storer, greenLight: greenLight)
