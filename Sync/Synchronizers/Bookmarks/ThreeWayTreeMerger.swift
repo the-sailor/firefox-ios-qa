@@ -533,7 +533,8 @@ class ThreeWayTreeMerger {
                     let parent = self.remote.parents[potentiallyDeleted]
                     if parent == nil || parent == expectedParent {
                         log.debug("Remote still thinks \(potentiallyDeleted) is here. Processing for orphans.")
-                        if let orphans = try processRemoteOrphansForNode(self.remote.find(potentiallyDeleted)!) {
+                        if let parentOfOrphans = self.remote.find(potentiallyDeleted),
+                           let orphans = try processRemoteOrphansForNode(parentOfOrphans) {
                             out.appendContentsOf(try self.relocateOrphansTo(result, orphans: orphans))
                         }
                     }
@@ -550,17 +551,16 @@ class ThreeWayTreeMerger {
                 let parent = self.local.parents[potentiallyDeleted]
                 if parent == nil || parent == expectedParent {
                     log.debug("Local still thinks \(potentiallyDeleted) is here. Processing for orphans.")
-                    try processLocalOrphansForNode(self.local.find(potentiallyDeleted)!)
-
-                    if let orphans = try processLocalOrphansForNode(self.local.find(potentiallyDeleted)!) {
+                    if let parentOfOrphans = self.local.find(potentiallyDeleted),
+                       let orphans = try processLocalOrphansForNode(parentOfOrphans) {
                         out.appendContentsOf(try self.relocateOrphansTo(result, orphans: orphans))
                     }
-
-                    // Accept the remote deletion, and make a note to apply it elsewhere.
-                    self.merged.deleteFromMirror.insert(potentiallyDeleted)
-                    self.merged.deleteLocally.insert(potentiallyDeleted)
-                    self.merged.acceptRemoteDeletion.insert(potentiallyDeleted)
                 }
+
+                // Accept the remote deletion, and make a note to apply it elsewhere.
+                self.merged.deleteFromMirror.insert(potentiallyDeleted)
+                self.merged.deleteLocally.insert(potentiallyDeleted)
+                self.merged.acceptRemoteDeletion.insert(potentiallyDeleted)
             }
         }
 
