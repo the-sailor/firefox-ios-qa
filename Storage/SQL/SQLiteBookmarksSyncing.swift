@@ -970,7 +970,7 @@ extension MergedSQLiteBookmarks {
                 let args: Args = guids.map { $0 as AnyObject }
                 let varlist = BrowserDB.varlist(guids.count)
                 let copySQL = [
-                    "INSERT INTO \(TableBookmarksMirror)",
+                    "INSERT OR REPLACE INTO \(TableBookmarksMirror)",
                     "(guid, type, parentid, parentName, feedUri, siteUri, pos, title, description,",
                     "bmkUri, tags, keyword, folderName, queryId, server_modified)",
                     "SELECT guid, type, parentid, parentName, feedUri, siteUri, pos, title, description,",
@@ -992,7 +992,7 @@ extension MergedSQLiteBookmarks {
                 let varlist = BrowserDB.varlist(guids.count)
                 let copySQL = [
                     // TODO: parentid might well be wrong.
-                    "INSERT INTO \(TableBookmarksMirror)",
+                    "INSERT OR REPLACE INTO \(TableBookmarksMirror)",
                     "(guid, type, parentid, parentName, feedUri, siteUri, pos, title, description,",
                     "bmkUri, tags, keyword, folderName, queryId, faviconID, server_modified)",
                     "SELECT guid, type, parentid, parentName, feedUri, siteUri, pos, title, description,",
