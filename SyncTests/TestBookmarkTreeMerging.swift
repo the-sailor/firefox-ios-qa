@@ -895,6 +895,11 @@ class TestBookmarkTreeMerging: SaneTestCase {
 
         XCTAssertTrue(uploader.deletions.isEmpty)
 
+        // The record looks sane.
+        let bm = uploader.records["somebookmark"]!
+        XCTAssertEqual("bookmark", bm.payload["type"].asString)
+        XCTAssertEqual("Some Bookmark", bm.payload["title"].asString)
+
         // New record still has its icon ID in the local DB.
         bookmarks.local.db.assertQueryReturns("SELECT faviconID FROM \(TableBookmarksMirror) WHERE bmkUri = 'http://example.org/'", int: 11)
     }
