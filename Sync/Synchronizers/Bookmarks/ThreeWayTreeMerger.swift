@@ -420,7 +420,8 @@ class ThreeWayTreeMerger {
                     return
                 }
 
-                if try checkForLocalDeletionOfRemoteNode(remote, mirrorNode: self.mirror.find(guid)) {
+                if try checkForLocalDeletionOfRemoteNode(rem, mirrorNode: self.mirror.find(guid)) {
+                    log.debug("Child \(guid) is locally deleted.")
                     return
                 }
 
