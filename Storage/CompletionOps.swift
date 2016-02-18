@@ -23,8 +23,6 @@ public class LocalOverrideCompletionOp: PerhapsNoOp {
     public var mirrorValuesToCopyFromBuffer: Set<GUID> = Set()         // No need to synthesize BookmarkMirrorItem instances in memory.
     public var mirrorValuesToCopyFromLocal: Set<GUID> = Set()
 
-    // TODO: PRAGMA defer_foreign_keys = ON; ? Or just delete structure before, add structure after?
-
     public var isNoOp: Bool {
         return processedLocalChanges.isEmpty &&
                mirrorValuesToCopyFromBuffer.isEmpty &&
