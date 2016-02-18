@@ -669,6 +669,7 @@ class ThreeWayTreeMerger {
                     // Great!
                     log.debug("Local and remote records have same children in two-way merge.")
                     result.structureState = MergeState.New(value: localNode)    // TODO: what if it's the same as the mirror?
+                    try self.mergeChildListsIntoMergedNode(result, fromLocal: localNode, remote: remoteNode, mirror: mirrorNode)
                     return result
                 }
 
