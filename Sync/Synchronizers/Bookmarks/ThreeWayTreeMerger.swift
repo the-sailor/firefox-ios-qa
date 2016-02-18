@@ -328,12 +328,18 @@ class ThreeWayTreeMerger {
             // here, and we'll take them as additional children.
 
             let guid = node.recordGUID
+
+            if case .Folder = node {} else {
+                log.debug("\(guid) isn't a folder, so it won't have orphans.")
+                return nil
+            }
+
             func isRemotelyDeleted(child: BookmarkTreeNode) throws -> Bool {
                 return try checkForRemoteDeletionOfLocalNode(child, mirrorNode: self.mirror.find(child.recordGUID))
             }
 
             guard let orphans = try node.children?.exclude(isRemotelyDeleted) where !orphans.isEmpty else {
-                log.debug("No local orphans from remote deletion of \(guid).")
+                log.debug("No local orphans from remote deletion of folder \(guid).")
                 return nil
             }
 
