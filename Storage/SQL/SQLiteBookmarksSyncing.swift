@@ -1117,7 +1117,7 @@ extension MergedSQLiteBookmarks {
             log.warning("Got error “\(err.localizedDescription)”")
             deferred.fillIfUnfilled(Maybe(failure: DatabaseError(err: err)))
         } else {
-            deferred.fill(Maybe(success: ()))
+            deferred.fillIfUnfilled(Maybe(success: ()))
         }
 
         return deferred
