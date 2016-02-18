@@ -163,8 +163,8 @@ class ThreeWayTreeMerger {
 
         // These are runtime-tested in merge(). assert to make sure that tests
         // don't do anything stupid, and we don't slip past those constraints.
-        assert(local.isFullyRootedIn(mirror))
-        assert(remote.isFullyRootedIn(mirror))
+        //assert(local.isFullyRootedIn(mirror))
+        //assert(remote.isFullyRootedIn(mirror))
 
         self.local = local
         self.mirror = mirror
