@@ -316,20 +316,22 @@ public struct BookmarkMirrorItem: Equatable {
         }
 
         out["hasDupe"] = self.hasDupe
-        take("parentName", self.parentName)
 
         // TODO: this should never be nil!
         if let parentID = self.parentID {
             out["parentid"] = BookmarkRoots.translateOutgoingRootGUID(parentID)
+            take("parentName", titleForSpecialGUID(parentID) ?? self.parentName)
         }
 
         switch self.type {
 
         case .Query:
+            out["type"] = "query"
             take("folderName", self.folderName)
             take("queryId", self.queryID)
             fallthrough
         case .Bookmark:
+            out["type"] = "bookmark"
             take("title", self.title)
             take("bmkUri", self.bookmarkURI)
             take("description", self.description)
@@ -337,16 +339,22 @@ public struct BookmarkMirrorItem: Equatable {
                 let tagsJSON = JSON.parse(tags)
                 if let tagsArray = tagsJSON.asArray where tagsArray.every({ $0.isString }) {
                     out["tags"] = tagsArray
+                } else {
+                    out["tags"] = []
                 }
+            } else {
+                out["tags"] = []
             }
             take("keyword", self.keyword)
 
         case .Livemark:
+            out["type"] = "livemark"
             take("siteUri", self.siteURI)
             take("feedUri", self.feedURI)
             fallthrough
         case .Folder:
-            take("title", self.title)
+            out["type"] = "folder"
+            take("title", titleForSpecialGUID(self.guid) ?? self.title)
             take("description", self.description)
             if let children = children {
                 if BookmarkRoots.RootGUID == self.guid {
@@ -359,6 +367,7 @@ public struct BookmarkMirrorItem: Equatable {
             }
 
         case .Separator:
+            out["type"] = "separator"
             if let pos = self.pos {
                 out["pos"] = pos
             }

@@ -5,7 +5,7 @@
 import Foundation
 import Shared
 
-func titleForSpecialGUID(guid: GUID) -> String? {
+public func titleForSpecialGUID(guid: GUID) -> String? {
     switch guid {
     case BookmarkRoots.RootGUID:
         return "<Root>"
