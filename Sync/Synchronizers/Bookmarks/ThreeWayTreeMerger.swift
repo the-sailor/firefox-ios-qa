@@ -1267,7 +1267,7 @@ class ThreeWayTreeMerger {
 
         func accumulateNode(node: MergedTreeNode) {
             precondition(!node.valueState.isUnknown)
-            precondition(!node.structureState.isUnknown)
+            precondition(!node.isFolder || !node.structureState.isUnknown)
 
             // These two clauses are common to all: if we walk through a node,
             // it means it's been processed, and no longer needs to be kept
