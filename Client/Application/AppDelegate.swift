@@ -22,13 +22,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     weak var profile: BrowserProfile?
     var tabManager: TabManager!
     var adjustIntegration: AdjustIntegration?
-
+    
     weak var application: UIApplication?
     var launchOptions: [NSObject: AnyObject]?
 
     let appVersion = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString") as! String
 
     var openInFirefoxURL: NSURL? = nil
+    
+    var beaconScanner: ESSBeaconScanner?
 
     func application(application: UIApplication, willFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Hold references to willFinishLaunching parameters for delayed app launch
@@ -140,6 +142,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if getProfile(application).prefs.intForKey(IntroViewControllerSeenProfileKey) == nil {
             getProfile(application).prefs.setString(AppInfo.appVersion, forKey: LatestAppVersionProfileKey)
         }
+        
+        beaconScanner = ESSBeaconScanner()
+        beaconScanner?.delegate = self
+        beaconScanner?.startScanning()
+        
         log.debug("Done with setting up the application.")
         return true
     }
@@ -528,5 +535,17 @@ public func configureCrashReporter(reporter: CrashReporter, optedIn: Bool?) {
     else {
         reporter.start(true)
         configureReporter()
+    }
+}
+
+public var DiscoveredURLs: [NSURL] = [NSURL]()
+
+extension AppDelegate: ESSBeaconScannerDelegate {
+    func beaconScanner(scanner: ESSBeaconScanner!, didFindURL url: NSURL!) {
+        print("We found an URL! \(url.absoluteDisplayString())")
+        if !DiscoveredURLs.contains(url) {
+            DiscoveredURLs.append(url)
+            NSNotificationCenter.defaultCenter().postNotificationName("ESSBeaconScannerDiscoveredURL", object: nil)
+        }
     }
 }

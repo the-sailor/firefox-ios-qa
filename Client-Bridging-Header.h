@@ -12,4 +12,7 @@
 #import "ThirdParty/SWTableViewCell/PodFiles/SWTableViewCell.h"
 #import "ThirdParty/RaptureXML/RXMLElement.h"
 
+#import "ThirdParty/Eddystone/ESSEddystone.h"
+#import "ThirdParty/Eddystone/ESSBeaconScanner.h"
+
 #endif
