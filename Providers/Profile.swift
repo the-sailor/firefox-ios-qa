@@ -948,8 +948,8 @@ public class BrowserProfile: Profile {
          * Runs the single provided synchronization function and returns its status.
          */
         private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
-            return self.withSyncInputs(label, function: function) ??
-                   deferMaybe(.NotStarted(.NoAccount))
+            return syncSeveral((label, function)) >>== { statuses in
+                deferMaybe(statuses[0].1) }
         }
 
         /**
