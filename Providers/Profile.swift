@@ -914,39 +914,40 @@ public class BrowserProfile: Profile {
          * Returns nil if there's no account.
          */
         private func withSyncInputs<T>(label: EngineIdentifier? = nil, function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<T>>) -> Deferred<Maybe<T>>? {
-            if let account = profile.account {
-                if !beginSyncing() {
-                    log.info("Not syncing \(label); already syncing something.")
-                    return deferMaybe(AlreadySyncingError())
-                }
 
-                if let label = label {
-                    log.info("Syncing \(label).")
-                }
-
-                let authState = account.syncAuthState
-
-                let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
-                let delegate = profile.getSyncDelegate()
-
-                let go = readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
-                    function(delegate, self.prefsForSync, ready)
-                }
-
-                // Always unlock when we're done.
-                go.upon({ res in self.endSyncing() })
-
-                return go
+            guard let account = profile.account else {
+                log.warning("No account; can't sync.")
+                return nil
             }
 
-            log.warning("No account; can't sync.")
-            return nil
+            if !beginSyncing() {
+                log.info("Not syncing \(label); already syncing something.")
+                return deferMaybe(AlreadySyncingError())
+            }
+
+            if let label = label {
+                log.info("Syncing \(label).")
+            }
+
+            let authState = account.syncAuthState
+
+            let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
+            let delegate = profile.getSyncDelegate()
+
+            let go = readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
+                function(delegate, self.prefsForSync, ready)
+            }
+
+            // Always unlock when we're done.
+            go.upon({ res in self.endSyncing() })
+            
+            return go
         }
 
         /**
          * Runs the single provided synchronization function and returns its status.
          */
-        private func sync(label: EngineIdentifier, function: (SyncDelegate, Prefs, Ready) -> SyncResult) -> SyncResult {
+        private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
             return self.withSyncInputs(label, function: function) ??
                    deferMaybe(.NotStarted(.NoAccount))
         }
