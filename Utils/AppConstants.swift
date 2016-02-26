@@ -8,6 +8,7 @@ public enum AppBuildChannel {
     case Developer
     case Aurora
     case Release
+    case Beta
 }
 
 public struct AppConstants {
@@ -21,6 +22,8 @@ public struct AppConstants {
     return AppBuildChannel.Aurora
 #elseif MOZ_CHANNEL_RELEASE
     return AppBuildChannel.Release
+#elseif MOZ_CHANNEL_BETA
+    return AppBuildChannel.Beta
 #else
     return AppBuildChannel.Developer
 #endif
@@ -43,6 +46,8 @@ public struct AppConstants {
     return true
 #elseif MOZ_CHANNEL_RELEASE
     return true
+#elseif MOZ_CHANNEL_BETA
+    return true
 #else
     return true
 #endif
@@ -54,6 +59,8 @@ public struct AppConstants {
     return false
 #elseif MOZ_CHANNEL_RELEASE
     return false
+#elseif MOZ_CHANNEL_BETA
+    return true
 #else
     return true
 #endif
