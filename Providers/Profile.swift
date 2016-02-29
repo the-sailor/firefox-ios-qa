@@ -714,11 +714,21 @@ public class BrowserProfile: Profile {
             // We run this in the background after a few hundred milliseconds;
             // it doesn't really matter when it runs, so long as it doesn't
             // happen in the middle of a sync. We take the lock to prevent that.
+            let nothingSynced: [(EngineIdentifier, SyncStatus)] = []
+
             self.doInBackgroundAfter(millis: 300) {
-                OSSpinLockLock(&self.syncLock)
-                self.handleRecreationOfDatabaseNamed(name).upon { res in
-                    log.debug("Reset of \(name) done: \(res.isSuccess)")
-                    OSSpinLockUnlock(&self.syncLock)
+                self.syncLock.lock()
+                defer { self.syncLock.unlock() }
+                // If a sync is not going already, make a dummy one.
+                let sync = self.beginSyncing() ? deferMaybe(nothingSynced) : self.currentSync!
+                self.currentSync = sync
+                    // Actually do the reset here.
+                    >>== { _ in self.handleRecreationOfDatabaseNamed(name) }
+                    >>== {
+                        log.debug("Reset of \(name) done")
+                        self.endSyncing()
+                        // If subsequent sync requests are made, then we resume them here.
+                        return deferMaybe(nothingSynced)
                 }
             }
         }
