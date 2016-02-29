@@ -941,6 +941,14 @@ public class BrowserProfile: Profile {
          * Returns an array of IDs and SyncStatuses the same length as the input.
          */
         private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+            return syncSeveral(synchronizers)
+        }
+
+        /**
+         * Runs each of the provided synchronization functions with the same inputs.
+         * Returns an array of IDs and SyncStatuses the same length as the input.
+         */
+        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             guard let account = profile.account else {
                 log.warning("No account; can't sync.")
                 return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
@@ -961,8 +969,9 @@ public class BrowserProfile: Profile {
             defer { syncLock.unlock() }
 
             if !beginSyncing() {
-                return deferMaybe(AlreadySyncingError())
                 log.info("Already syncing something. Will queue for later")
+                currentSync = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
+                return currentSync!
             }
 
             log.info("Beginning a sync.")
@@ -976,12 +985,36 @@ public class BrowserProfile: Profile {
                 function(delegate, self.prefsForSync, ready)
             }
 
-            // Always unlock when we're done.
+            // Clear the currentSync once it's been filled.
             go.upon({ res in self.endSyncing() })
 
             self.currentSync = go
 
             return go
+        }
+
+        private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [(EngineIdentifier, SyncStatus)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+            var remainingSynchronizers = [(EngineIdentifier, SyncFunction)]()
+            var remainingStatuses = [(EngineIdentifier, SyncStatus)]()
+
+            outer: for synchronizer in synchronizers {
+                for status in statuses {
+                    // If the synchronizer has just been synchronized, then skip it.
+                    if status.0 == synchronizer.0 {
+                        remainingStatuses.append(status)
+                        continue outer
+                    }
+                }
+
+                // The synchronizer hasn't just been used, so we should do it now.
+                remainingSynchronizers.append(synchronizer)
+            }
+
+            if (remainingSynchronizers.isEmpty) {
+                return deferMaybe(remainingStatuses)
+            }
+
+            return syncSeveral(remainingSynchronizers)
         }
 
         func syncEverything() -> Success {
