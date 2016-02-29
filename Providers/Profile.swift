@@ -911,23 +911,41 @@ public class BrowserProfile: Profile {
         }
 
         /**
-         * Returns nil if there's no account.
+         * Runs the single provided synchronization function and returns its status.
          */
-        private func withSyncInputs<T>(label: EngineIdentifier? = nil, function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<T>>) -> Deferred<Maybe<T>>? {
+        private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
+            return syncSeveral((label, function)) >>== { statuses in
+                deferMaybe(statuses[0].1) }
+        }
 
+        /**
+         * Runs each of the provided synchronization functions with the same inputs.
+         * Returns an array of IDs and SyncStatuses the same length as the input.
+         */
+        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             guard let account = profile.account else {
                 log.warning("No account; can't sync.")
-                return nil
+                return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
             }
+
+            typealias Pair = (EngineIdentifier, SyncStatus)
+            let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[Pair]>> = { delegate, syncPrefs, ready in
+                let thunks = synchronizers.map { (i, f) in
+                    return { () -> Deferred<Maybe<Pair>> in
+                        log.debug("Syncing \(i)…")
+                        return f(delegate, syncPrefs, ready) >>== { deferMaybe((i, $0)) }
+                    }
+                }
+                return accumulate(thunks)
+            }
+
 
             if !beginSyncing() {
-                log.info("Not syncing \(label); already syncing something.")
                 return deferMaybe(AlreadySyncingError())
+                log.info("Already syncing something. Will queue for later")
             }
 
-            if let label = label {
-                log.info("Syncing \(label).")
-            }
+            log.info("Beginning a sync.")
 
             let authState = account.syncAuthState
 
@@ -942,34 +960,6 @@ public class BrowserProfile: Profile {
             go.upon({ res in self.endSyncing() })
             
             return go
-        }
-
-        /**
-         * Runs the single provided synchronization function and returns its status.
-         */
-        private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
-            return syncSeveral((label, function)) >>== { statuses in
-                deferMaybe(statuses[0].1) }
-        }
-
-        /**
-         * Runs each of the provided synchronization functions with the same inputs.
-         * Returns an array of IDs and SyncStatuses the same length as the input.
-         */
-        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
-            typealias Pair = (EngineIdentifier, SyncStatus)
-            let combined: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[Pair]>> = { delegate, syncPrefs, ready in
-                let thunks = synchronizers.map { (i, f) in
-                    return { () -> Deferred<Maybe<Pair>> in
-                        log.debug("Syncing \(i)…")
-                        return f(delegate, syncPrefs, ready) >>== { deferMaybe((i, $0)) }
-                    }
-                }
-                return accumulate(thunks)
-            }
-
-            return self.withSyncInputs(nil, function: combined) ??
-                   deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
         }
 
         func syncEverything() -> Success {
