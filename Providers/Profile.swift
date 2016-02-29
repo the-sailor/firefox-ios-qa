@@ -578,28 +578,34 @@ public class BrowserProfile: Profile {
         }
 
         /**
-         * Locking is managed by withSyncInputs. Make sure you take and release these
+         * Locking is managed by syncSeveral. Make sure you take and release these
          * whenever you do anything Sync-ey.
          */
-        var syncLock = OSSpinLock() {
-            didSet {
-                let notification = syncLock == 0 ? NotificationProfileDidFinishSyncing : NotificationProfileDidStartSyncing
-                NSNotificationCenter.defaultCenter().postNotification(NSNotification(name: notification, object: nil))
-            }
-        }
+        private let syncLock = NSRecursiveLock()
 
-        // According to the OSAtomic header documentation, the convention for an unlocked lock is a zero value
-        // and a locked lock is a non-zero value
         var isSyncing: Bool {
-            return syncLock != 0
+            syncLock.lock()
+            defer { syncLock.unlock() }
+            return !(currentSync?.isFilled ?? true)
         }
 
         private func beginSyncing() -> Bool {
-            return OSSpinLockTry(&syncLock)
+            let ready = !isSyncing
+            if ready {
+                notifySyncing(NotificationProfileDidStartSyncing)
+            }
+            return ready
         }
 
         private func endSyncing() {
-            OSSpinLockUnlock(&syncLock)
+            notifySyncing(NotificationProfileDidFinishSyncing)
+            syncLock.lock()
+            currentSync = nil
+            syncLock.unlock()
+        }
+
+        private func notifySyncing(notification: String) {
+            NSNotificationCenter.defaultCenter().postNotification(NSNotification(name: notification, object: nil))
         }
 
         init(profile: BrowserProfile) {
@@ -941,6 +947,8 @@ public class BrowserProfile: Profile {
                 return accumulate(thunks)
             }
 
+            syncLock.lock()
+            defer { syncLock.unlock() }
 
             if !beginSyncing() {
                 return deferMaybe(AlreadySyncingError())
