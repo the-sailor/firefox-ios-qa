@@ -986,7 +986,10 @@ public class BrowserProfile: Profile {
             }
 
             // Clear the currentSync once it's been filled.
-            go.upon({ res in self.endSyncing() })
+            go.upon({ res in
+                log.info("Ending a sync.")
+                self.endSyncing()
+            })
 
             self.currentSync = go
 
@@ -996,6 +999,9 @@ public class BrowserProfile: Profile {
         private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [(EngineIdentifier, SyncStatus)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             var remainingSynchronizers = [(EngineIdentifier, SyncFunction)]()
             var remainingStatuses = [(EngineIdentifier, SyncStatus)]()
+
+            let requestedSyncLabel = synchronizers.map({ $0.0 }).joinWithSeparator(", ")
+            let justSyncedLabel = synchronizers.map({ $0.0 }).joinWithSeparator(", ")
 
             outer: for synchronizer in synchronizers {
                 for status in statuses {
@@ -1010,7 +1016,9 @@ public class BrowserProfile: Profile {
                 remainingSynchronizers.append(synchronizer)
             }
 
+            log.info("Finished sync of \(justSyncedLabel)")
             if (remainingSynchronizers.isEmpty) {
+                log.info("Nothing left to sync. Requested \(requestedSyncLabel) has just been synced")
                 return deferMaybe(remainingStatuses)
             }
 
