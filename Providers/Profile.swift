@@ -967,22 +967,22 @@ public class BrowserProfile: Profile {
 
             syncLock.lock()
             defer { syncLock.unlock() }
-
+            let go: Deferred<Maybe<[Pair]>>
+            let requestedLabels = synchronizers.map { $0.0 }.joinWithSeparator(", ")
             if !beginSyncing() {
-                log.info("Already syncing something. Will queue for later")
-                currentSync = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
-                return currentSync!
-            }
+                log.info("Already syncing something. Will queue for later: \(requestedLabels)")
+                go = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
+            } else {
+                log.info("Beginning a sync of \(requestedLabels)")
 
-            log.info("Beginning a sync.")
+                let authState = account.syncAuthState
 
-            let authState = account.syncAuthState
+                let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
+                let delegate = profile.getSyncDelegate()
 
-            let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
-            let delegate = profile.getSyncDelegate()
-
-            let go = readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
-                function(delegate, self.prefsForSync, ready)
+                go = readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
+                    function(delegate, self.prefsForSync, ready)
+                }
             }
 
             // Clear the currentSync once it's been filled.
@@ -1001,7 +1001,7 @@ public class BrowserProfile: Profile {
             var remainingStatuses = [(EngineIdentifier, SyncStatus)]()
 
             let requestedSyncLabel = synchronizers.map({ $0.0 }).joinWithSeparator(", ")
-            let justSyncedLabel = synchronizers.map({ $0.0 }).joinWithSeparator(", ")
+            let justSyncedLabel = statuses.map({ $0.0 }).joinWithSeparator(", ")
 
             outer: for synchronizer in synchronizers {
                 for status in statuses {
