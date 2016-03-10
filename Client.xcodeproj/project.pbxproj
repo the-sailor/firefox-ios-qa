@@ -2249,8 +2249,7 @@
 			children = (
 				7B9B96791CAEB3E700E6791B /* MenuToolbarItem.swift */,
 			);
-			name = Toolbar;
-			path = Menu/Toolbar;
+			path = Toolbar;
 			sourceTree = "<group>";
 		};
 		7B604FC11C496005006EEEC3 /* Frameworks */ = {
