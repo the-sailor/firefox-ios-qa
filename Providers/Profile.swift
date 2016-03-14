@@ -997,32 +997,17 @@ public class BrowserProfile: Profile {
         }
 
         private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [(EngineIdentifier, SyncStatus)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
-            var remainingSynchronizers = [(EngineIdentifier, SyncFunction)]()
-            var remainingStatuses = [(EngineIdentifier, SyncStatus)]()
-
-            let requestedSyncLabel = synchronizers.map({ $0.0 }).joinWithSeparator(", ")
-            let justSyncedLabel = statuses.map({ $0.0 }).joinWithSeparator(", ")
-
-            outer: for synchronizer in synchronizers {
-                for status in statuses {
-                    // If the synchronizer has just been synchronized, then skip it.
-                    if status.0 == synchronizer.0 {
-                        remainingStatuses.append(status)
-                        continue outer
-                    }
-                }
-
-                // The synchronizer hasn't just been used, so we should do it now.
-                remainingSynchronizers.append(synchronizer)
+            let done = Set(statuses.map { $0.0 })
+            let remaining = synchronizers.filter { !done.contains($0.0) }
+            if !remaining.isEmpty {
+                log.info("Just done \(done); now calling syncSeveral \(remaining.map {$0.0})")
+                return syncSeveral(remaining)
+            } else {
+                let requested = Set(synchronizers.map { $0.0 })
+                let requestedStatuses = statuses.filter { requested.contains($0.0) }
+                log.info("Just done \(done); now returning syncSeveral \(requested)")
+                return deferMaybe(requestedStatuses)
             }
-
-            log.info("Finished sync of \(justSyncedLabel)")
-            if (remainingSynchronizers.isEmpty) {
-                log.info("Nothing left to sync. Requested \(requestedSyncLabel) has just been synced")
-                return deferMaybe(remainingStatuses)
-            }
-
-            return syncSeveral(remainingSynchronizers)
         }
 
         func syncEverything() -> Success {
