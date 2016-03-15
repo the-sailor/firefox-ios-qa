@@ -45,6 +45,7 @@ public protocol SyncManager {
 
 typealias EngineIdentifier = String
 typealias SyncFunction = (SyncDelegate, Prefs, Ready) -> SyncResult
+private typealias EngineStatus = (EngineIdentifier, SyncStatus)
 
 class ProfileFileAccessor: FileAccessor {
     convenience init(profile: Profile) {
@@ -550,7 +551,7 @@ public class BrowserProfile: Profile {
 
         private var syncTimer: NSTimer? = nil
 
-        private var currentSync: Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>>? = nil
+        private var currentSync: Deferred<Maybe<[EngineStatus]>>? = nil
 
         private var backgrounded: Bool = true
         func applicationDidEnterBackground() {
@@ -714,7 +715,7 @@ public class BrowserProfile: Profile {
             // We run this in the background after a few hundred milliseconds;
             // it doesn't really matter when it runs, so long as it doesn't
             // happen in the middle of a sync. We take the lock to prevent that.
-            let nothingSynced: [(EngineIdentifier, SyncStatus)] = []
+            let nothingSynced: [EngineStatus] = []
 
             self.doInBackgroundAfter(millis: 300) {
                 self.syncLock.lock()
@@ -940,7 +941,7 @@ public class BrowserProfile: Profile {
          * Runs each of the provided synchronization functions with the same inputs.
          * Returns an array of IDs and SyncStatuses the same length as the input.
          */
-        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[EngineStatus]>> {
             return syncSeveral(synchronizers)
         }
 
@@ -948,16 +949,15 @@ public class BrowserProfile: Profile {
          * Runs each of the provided synchronization functions with the same inputs.
          * Returns an array of IDs and SyncStatuses the same length as the input.
          */
-        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
             guard let account = profile.account else {
                 log.warning("No account; can't sync.")
                 return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
             }
 
-            typealias Pair = (EngineIdentifier, SyncStatus)
-            let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[Pair]>> = { delegate, syncPrefs, ready in
+            let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[EngineStatus]>> = { delegate, syncPrefs, ready in
                 let thunks = synchronizers.map { (i, f) in
-                    return { () -> Deferred<Maybe<Pair>> in
+                    return { () -> Deferred<Maybe<EngineStatus>> in
                         log.debug("Syncing \(i)…")
                         return f(delegate, syncPrefs, ready) >>== { deferMaybe((i, $0)) }
                     }
@@ -967,7 +967,7 @@ public class BrowserProfile: Profile {
 
             syncLock.lock()
             defer { syncLock.unlock() }
-            let go: Deferred<Maybe<[Pair]>>
+            let go: Deferred<Maybe<[EngineStatus]>>
             let requestedLabels = synchronizers.map { $0.0 }.joinWithSeparator(", ")
             if !beginSyncing() {
                 log.info("Already syncing something. Will queue for later: \(requestedLabels)")
@@ -996,7 +996,7 @@ public class BrowserProfile: Profile {
             return go
         }
 
-        private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [(EngineIdentifier, SyncStatus)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+        private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [EngineStatus]) -> Deferred<Maybe<[EngineStatus]>> {
             let done = Set(statuses.map { $0.0 })
             let remaining = synchronizers.filter { !done.contains($0.0) }
             if !remaining.isEmpty {
