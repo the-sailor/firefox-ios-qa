@@ -952,20 +952,6 @@ public class BrowserProfile: Profile {
          * Returns an array of IDs and SyncStatuses the same length as the input.
          */
         private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
-            guard let account = profile.account else {
-                log.warning("No account; can't sync.")
-                return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
-            }
-
-            let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[EngineStatus]>> = { delegate, syncPrefs, ready in
-                let thunks = synchronizers.map { (i, f) in
-                    return { () -> Deferred<Maybe<EngineStatus>> in
-                        log.debug("Syncing \(i)…")
-                        return f(delegate, syncPrefs, ready) >>== { deferMaybe((i, $0)) }
-                    }
-                }
-                return accumulate(thunks)
-            }
 
             syncLock.lock()
             defer { syncLock.unlock() }
@@ -976,15 +962,7 @@ public class BrowserProfile: Profile {
                 go = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
             } else {
                 log.info("Beginning a sync of \(requestedLabels)")
-
-                let authState = account.syncAuthState
-
-                let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
-                let delegate = profile.getSyncDelegate()
-
-                go = readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
-                    function(delegate, self.prefsForSync, ready)
-                }
+                self.syncWith(synchronizers)
             }
 
             // Clear the currentSync once it's been filled.
@@ -996,6 +974,32 @@ public class BrowserProfile: Profile {
             self.currentSync = go
 
             return go
+        }
+
+        private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
+            guard let account = profile.account else {
+                log.warning("No account; can't sync.")
+                return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
+            }
+
+            let authState = account.syncAuthState
+
+            let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[EngineStatus]>> = { delegate, syncPrefs, ready in
+                let thunks = synchronizers.map { (i, f) in
+                    return { () -> Deferred<Maybe<EngineStatus>> in
+                        log.debug("Syncing \(i)…")
+                        return f(delegate, syncPrefs, ready) >>== { deferMaybe((i, $0)) }
+                    }
+                }
+                return accumulate(thunks)
+            }
+
+            let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
+            let delegate = profile.getSyncDelegate()
+
+            return readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
+                function(delegate, self.prefsForSync, ready)
+            }
         }
 
         private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [EngineStatus]) -> Deferred<Maybe<[EngineStatus]>> {
