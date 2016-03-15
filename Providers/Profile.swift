@@ -934,7 +934,9 @@ public class BrowserProfile: Profile {
          */
         private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
             return syncSeveral((label, function)) >>== { statuses in
-                deferMaybe(statuses[0].1) }
+                let engineStatus = statuses.filter({ $0.0 == label }).first!
+                return deferMaybe(engineStatus.1)
+            }
         }
 
         /**
@@ -1001,7 +1003,7 @@ public class BrowserProfile: Profile {
             let remaining = synchronizers.filter { !done.contains($0.0) }
             if !remaining.isEmpty {
                 log.info("Just done \(done); now calling syncSeveral \(remaining.map {$0.0})")
-                return syncSeveral(remaining)
+                return syncSeveral(remaining) >>==  { deferMaybe($0 + statuses) }
             } else {
                 let requested = Set(synchronizers.map { $0.0 })
                 let requestedStatuses = statuses.filter { requested.contains($0.0) }
