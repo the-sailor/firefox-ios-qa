@@ -985,7 +985,7 @@ public class BrowserProfile: Profile {
             syncLock.lock()
             defer { syncLock.unlock() }
             let go: Deferred<Maybe<[EngineStatus]>>
-            let requestedLabels = synchronizers.map { $0.0 }.joinWithSeparator(", ")
+            let requestedLabels = synchronizers.map { $0.0 }
             if !beginSyncing() {
                 log.info("Already syncing something. Will queue for later: \(requestedLabels)")
                 go = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
