@@ -603,6 +603,8 @@ public class BrowserProfile: Profile {
             return !(syncTerminal?.isFilled ?? true)
         }
 
+        private let syncQueue = dispatch_queue_create("com.mozilla.firefox.sync", DISPATCH_QUEUE_SERIAL)
+
         private func beginSyncing() -> Bool {
             let ready = !isSyncing
             if ready {
@@ -989,7 +991,7 @@ public class BrowserProfile: Profile {
                 go = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
             } else {
                 log.info("Beginning a sync of \(requestedLabels)")
-                self.syncWith(synchronizers)
+                go = deferDispatchAsync(syncQueue, f: { self.syncWith(synchronizers) })
             }
 
             // Clear the currentSync once it's been filled.
