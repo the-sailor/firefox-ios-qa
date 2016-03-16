@@ -551,7 +551,20 @@ public class BrowserProfile: Profile {
 
         private var syncTimer: NSTimer? = nil
 
-        private var currentSync: Deferred<Maybe<[EngineStatus]>>? = nil
+        private var currentSync: Deferred<Maybe<[EngineStatus]>>? = nil {
+            willSet {
+                if syncTerminal == nil {
+                    syncTerminal = Deferred()
+                }
+            }
+        }
+
+        // This Deferred is only filled once the last sync job has finished.
+        // It is separate from currentSync because currentSync can change.
+        // TODO currentSync should probably be called currentLastSync.
+        // It is only set when currentSync is set from nil, and nilled in 
+        // endSyncing. Both of these happen in critical sections.
+        private var syncTerminal: Deferred<Maybe<[EngineStatus]>>?
 
         private var backgrounded: Bool = true
         func applicationDidEnterBackground() {
@@ -607,8 +620,11 @@ public class BrowserProfile: Profile {
         }
 
         private func endSyncing(statuses: [EngineStatus]) {
+            log.info("Ending all queued syncs.")
             notifySyncing(NotificationProfileDidFinishSyncing)
+            syncTerminal?.fill(Maybe(success: statuses))
             currentSync = nil
+            syncTerminal = nil
         }
 
         private func notifySyncing(notification: String) {
@@ -975,13 +991,13 @@ public class BrowserProfile: Profile {
 
             // Clear the currentSync once it's been filled.
             go.upon({ res in
-                log.info("Ending a sync.")
+                log.info("Ending current sync.")
                 self.endSyncingMaybe(res.successValue!)
             })
 
             self.currentSync = go
 
-            return go
+            return syncTerminal!
         }
 
         private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
