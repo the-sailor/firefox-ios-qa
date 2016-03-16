@@ -598,11 +598,17 @@ public class BrowserProfile: Profile {
             return ready
         }
 
-        private func endSyncing() {
-            notifySyncing(NotificationProfileDidFinishSyncing)
+        private func endSyncingMaybe(statuses: [EngineStatus] = []) {
             syncLock.lock()
+            defer { syncLock.unlock() }
+            if !isSyncing {
+                endSyncing(statuses)
+            }
+        }
+
+        private func endSyncing(statuses: [EngineStatus]) {
+            notifySyncing(NotificationProfileDidFinishSyncing)
             currentSync = nil
-            syncLock.unlock()
         }
 
         private func notifySyncing(notification: String) {
@@ -727,9 +733,11 @@ public class BrowserProfile: Profile {
                     >>== { _ in self.handleRecreationOfDatabaseNamed(name) }
                     >>== {
                         log.debug("Reset of \(name) done")
-                        self.endSyncing()
                         // If subsequent sync requests are made, then we resume them here.
                         return deferMaybe(nothingSynced)
+                }
+                self.currentSync!.upon { _ in
+                    self.endSyncingMaybe()
                 }
             }
         }
@@ -968,7 +976,7 @@ public class BrowserProfile: Profile {
             // Clear the currentSync once it's been filled.
             go.upon({ res in
                 log.info("Ending a sync.")
-                self.endSyncing()
+                self.endSyncingMaybe(res.successValue!)
             })
 
             self.currentSync = go
