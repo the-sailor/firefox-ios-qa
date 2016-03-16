@@ -1036,12 +1036,10 @@ public class BrowserProfile: Profile {
             let remaining = synchronizers.filter { !done.contains($0.0) }
             if !remaining.isEmpty {
                 log.info("Just done \(done); now calling syncSeveral \(remaining.map {$0.0})")
-                return syncSeveral(remaining) >>==  { deferMaybe($0 + statuses) }
+                return syncWith(remaining) >>==  { deferMaybe($0 + statuses) }
             } else {
-                let requested = Set(synchronizers.map { $0.0 })
-                let requestedStatuses = statuses.filter { requested.contains($0.0) }
-                log.info("Just done \(done); now returning syncSeveral \(requested)")
-                return deferMaybe(requestedStatuses)
+                log.info("Just done \(done); now returning from syncSeveral")
+                return deferMaybe(statuses)
             }
         }
 
