@@ -994,10 +994,13 @@ public class BrowserProfile: Profile {
                 go = deferDispatchAsync(syncQueue, f: { self.syncWith(synchronizers) })
             }
 
-            // Clear the currentSync once it's been filled.
+            // By the time currentSync finishes, it may not be the last sync, so 
+            // endSyncingMaybe will check, and end if necessary.
             go.upon({ res in
-                log.info("Ending current sync.")
-                self.endSyncingMaybe(res.successValue!)
+                log.info("Ending current sync. \(requestedLabels)")
+                // In the case of failure, then sync status is NotStarted.
+                // This is because we don't know which ones sync function failed.
+                self.endSyncingMaybe(res.successValue ?? synchronizers.map { ($0.0, .NotStarted(.Offline)) })
             })
 
             self.currentSync = go
