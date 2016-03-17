@@ -27,14 +27,14 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         removeFromReadingListInView()
     }
 
-    func loadReaderContent() {
+    private func loadReaderContent() {
         tester().tapViewWithAccessibilityIdentifier("url")
         let url = "\(webRoot)/readerContent.html"
         tester().clearTextFromAndThenEnterTextIntoCurrentFirstResponder("\(url)\n")
         tester().tapViewWithAccessibilityLabel("Reader View")
     }
 
-    func addToReadingList() {
+    private func addToReadingList() {
         tester().tapViewWithAccessibilityLabel("Add to Reading List")
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
@@ -45,7 +45,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().tapViewWithAccessibilityLabel("Cancel")
     }
 
-    func markAsReadFromReaderView() {
+    private func markAsReadFromReaderView() {
         tester().tapViewWithAccessibilityLabel("Mark as Read")
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
@@ -54,7 +54,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().tapViewWithAccessibilityLabel("Cancel")
     }
 
-    func markAsUnreadFromReaderView() {
+    private func markAsUnreadFromReaderView() {
         tester().tapViewWithAccessibilityLabel("Mark as Unread")
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
@@ -63,7 +63,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().tapViewWithAccessibilityLabel("Cancel")
     }
 
-    func markAsReadFromReadingList() {
+    private func markAsReadFromReadingList() {
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
         tester().swipeViewWithAccessibilityLabel("Reader View Test", inDirection: KIFSwipeDirection.Right)
@@ -72,7 +72,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().waitForViewWithAccessibilityLabel("Mark as Unread")
     }
 
-    func markAsUnreadFromReadingList() {
+    private func markAsUnreadFromReadingList() {
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
         tester().swipeViewWithAccessibilityLabel("Reader View Test", inDirection: KIFSwipeDirection.Right)
@@ -81,7 +81,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().waitForViewWithAccessibilityLabel("Mark as Read")
     }
 
-    func removeFromReadingList() {
+    private func removeFromReadingList() {
         tester().tapViewWithAccessibilityIdentifier("url")
         tester().tapViewWithAccessibilityLabel("Reading list")
         tester().swipeViewWithAccessibilityLabel("Reader View Test", inDirection: KIFSwipeDirection.Left)
@@ -91,7 +91,7 @@ class ReaderViewUITests: KIFTestCase, UITextFieldDelegate {
         tester().waitForViewWithAccessibilityLabel("Add to Reading List")
     }
 
-    func removeFromReadingListInView() {
+    private func removeFromReadingListInView() {
         tester().tapViewWithAccessibilityLabel("Remove from Reading List")
         tester().waitForViewWithAccessibilityLabel("Add to Reading List")
         tester().tapViewWithAccessibilityIdentifier("url")
