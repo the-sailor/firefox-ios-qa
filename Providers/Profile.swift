@@ -600,7 +600,7 @@ public class BrowserProfile: Profile {
         var isSyncing: Bool {
             syncLock.lock()
             defer { syncLock.unlock() }
-            return !(currentSync?.isFilled ?? true)
+            return !(syncTerminal?.isFilled ?? true)
         }
 
         private func beginSyncing() -> Bool {
@@ -612,9 +612,12 @@ public class BrowserProfile: Profile {
         }
 
         private func endSyncingMaybe(statuses: [EngineStatus] = []) {
+            // Sync `statuses` may have come from currentSync, or one before it.
             syncLock.lock()
             defer { syncLock.unlock() }
-            if !isSyncing {
+            // If currentSync (the last sync job called) hasn't been filled, then we're still syncing.
+            let stillSycing = !(currentSync?.isFilled ?? true)
+            if !stillSycing {
                 endSyncing(statuses)
             }
         }
