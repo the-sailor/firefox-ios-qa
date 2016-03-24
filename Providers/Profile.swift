@@ -551,21 +551,6 @@ public class BrowserProfile: Profile {
 
         private var syncTimer: NSTimer? = nil
 
-        private var currentSync: Deferred<Maybe<[EngineStatus]>>? = nil {
-            willSet {
-                if syncTerminal == nil {
-                    syncTerminal = Deferred()
-                }
-            }
-        }
-
-        // This Deferred is only filled once the last sync job has finished.
-        // It is separate from currentSync because currentSync can change.
-        // TODO currentSync should probably be called currentLastSync.
-        // It is only set when currentSync is set from nil, and nilled in 
-        // endSyncing. Both of these happen in critical sections.
-        private var syncTerminal: Deferred<Maybe<[EngineStatus]>>?
-
         private var backgrounded: Bool = true
         func applicationDidEnterBackground() {
             self.backgrounded = true
@@ -600,36 +585,25 @@ public class BrowserProfile: Profile {
         var isSyncing: Bool {
             syncLock.lock()
             defer { syncLock.unlock() }
-            return !(syncTerminal?.isFilled ?? true)
+            return !(syncReducer?.isFilled ?? true)
         }
 
+        // The dispatch queue for coordinating syncing and resetting the database.
         private let syncQueue = dispatch_queue_create("com.mozilla.firefox.sync", DISPATCH_QUEUE_SERIAL)
 
-        private func beginSyncing() -> Bool {
-            let ready = !isSyncing
-            if ready {
-                notifySyncing(NotificationProfileDidStartSyncing)
-            }
-            return ready
+        // Used as a task queue for syncing.
+        private var syncReducer: AsyncReducer<[(EngineIdentifier, SyncStatus)], [(EngineIdentifier, SyncFunction)]>?
+
+        private func beginSyncing() {
+            notifySyncing(NotificationProfileDidStartSyncing)
         }
 
-        private func endSyncingMaybe(statuses: [EngineStatus] = []) {
-            // Sync `statuses` may have come from currentSync, or one before it.
+        private func endSyncing() {
             syncLock.lock()
             defer { syncLock.unlock() }
-            // If currentSync (the last sync job called) hasn't been filled, then we're still syncing.
-            let stillSycing = !(currentSync?.isFilled ?? true)
-            if !stillSycing {
-                endSyncing(statuses)
-            }
-        }
-
-        private func endSyncing(statuses: [EngineStatus]) {
             log.info("Ending all queued syncs.")
             notifySyncing(NotificationProfileDidFinishSyncing)
-            syncTerminal?.fill(Maybe(success: statuses))
-            currentSync = nil
-            syncTerminal = nil
+            syncReducer = nil
         }
 
         private func notifySyncing(notification: String) {
@@ -741,24 +715,28 @@ public class BrowserProfile: Profile {
 
             // We run this in the background after a few hundred milliseconds;
             // it doesn't really matter when it runs, so long as it doesn't
-            // happen in the middle of a sync. We take the lock to prevent that.
-            let nothingSynced: [EngineStatus] = []
+            // happen in the middle of a sync.
+
+            let resetDatabase: () -> Success = { _ in
+                return self.handleRecreationOfDatabaseNamed(name) >>== { _ in
+                    log.debug("Reset of \(name) done")
+                    return succeed()
+                }
+            }
 
             self.doInBackgroundAfter(millis: 300) {
                 self.syncLock.lock()
                 defer { self.syncLock.unlock() }
-                // If a sync is not going already, make a dummy one.
-                let sync = self.beginSyncing() ? deferMaybe(nothingSynced) : self.currentSync!
-                self.currentSync = sync
-                    // Actually do the reset here.
-                    >>== { _ in self.handleRecreationOfDatabaseNamed(name) }
-                    >>== {
-                        log.debug("Reset of \(name) done")
-                        // If subsequent sync requests are made, then we resume them here.
-                        return deferMaybe(nothingSynced)
-                }
-                self.currentSync!.upon { _ in
-                    self.endSyncingMaybe()
+                // If we're syncing already, then wait for sync to end, 
+                // then reset the database on the same serial queue.
+                if let reducer = self.syncReducer where !reducer.isFilled {
+                    reducer.terminal.upon { _ in
+                        deferDispatchAsync(self.syncQueue, f: resetDatabase)
+                    }
+                } else {
+                    // Otherwise, reset the database on the sync queue now
+                    // Sync can't start while this is still going on.
+                    deferDispatchAsync(self.syncQueue, f: resetDatabase)
                 }
             }
         }
@@ -962,59 +940,74 @@ public class BrowserProfile: Profile {
          * Runs the single provided synchronization function and returns its status.
          */
         private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
-            return syncSeveral((label, function)) >>== { statuses in
-                let engineStatus = statuses.filter({ $0.0 == label }).first!
-                return deferMaybe(engineStatus.1)
+            return syncSeveral([(label, function)]) >>== { statuses in
+                let status = statuses.find { label == $0.0 }
+                return deferMaybe(status!.1)
             }
         }
 
         /**
-         * Runs each of the provided synchronization functions with the same inputs.
-         * Returns an array of IDs and SyncStatuses the same length as the input.
+         * Convenience method for synchSeveral([(EngineIdentifier, SyncFunction)])
          */
-        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[EngineStatus]>> {
+        private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             return syncSeveral(synchronizers)
         }
 
         /**
          * Runs each of the provided synchronization functions with the same inputs.
-         * Returns an array of IDs and SyncStatuses the same length as the input.
+         * Returns an array of IDs and SyncStatuses at least length as the input. 
+         * The statuses returned will be a superset of the ones that are requested here.
+         * While a sync is ongoing, each engine from successive calls to this method will only be called once.
          */
-        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
-
+        private func syncSeveral(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             syncLock.lock()
             defer { syncLock.unlock() }
-            let go: Deferred<Maybe<[EngineStatus]>>
-            let requestedLabels = synchronizers.map { $0.0 }
-            if !beginSyncing() {
-                log.info("Already syncing something. Will queue for later: \(requestedLabels)")
-                go = currentSync! >>== { justSynced in self.syncRemaining(synchronizers, except: justSynced) }
-            } else {
-                log.info("Beginning a sync of \(requestedLabels)")
-                go = deferDispatchAsync(syncQueue, f: { self.syncWith(synchronizers) })
+
+            if (!isSyncing) {
+                // A sync isn't already going on, so start another one.
+                syncReducer = AsyncReducer(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
+                    let done = Set(statuses.map { $0.0 })
+                    let remaining = synchronizers.filter { !done.contains($0.0) }
+                    if remaining.isEmpty {
+                        log.info("Nothing left to sync")
+                        return deferMaybe(statuses)
+                    }
+
+                    return self.syncWith(remaining) >>== { deferMaybe(statuses + $0) }
+                }
+
+                // The actual work of synchronizing doesn't start until we append 
+                // the synchronizers to the reducer below.
+                beginSyncing()
+                syncReducer?.terminal.upon { _ in
+                    self.endSyncing()
+                }
             }
 
-            // By the time currentSync finishes, it may not be the last sync, so 
-            // endSyncingMaybe will check, and end if necessary.
-            go.upon({ res in
-                log.info("Ending current sync. \(requestedLabels)")
-                // In the case of failure, then sync status is NotStarted.
-                // This is because we don't know which ones sync function failed.
-                self.endSyncingMaybe(res.successValue ?? synchronizers.map { ($0.0, .NotStarted(.Offline)) })
-            })
-
-            self.currentSync = go
-
-            return syncTerminal!
+            do {
+                return try syncReducer!.append(synchronizers)
+            } catch let error {
+                log.error("Synchronizers appended after sync was finished. This is a bug. \(error)")
+                let statuses = synchronizers.map {
+                    ($0.0, SyncStatus.NotStarted(.RedLight))
+                }
+                return deferMaybe(statuses)
+            }
         }
 
-        private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[EngineStatus]>> {
-            guard let account = profile.account else {
-                log.warning("No account; can't sync.")
-                return deferMaybe(synchronizers.map { ($0.0, .NotStarted(.NoAccount)) })
+        // This SHOULD NOT be called directly: use syncSeveral instead.
+        private func syncWith(synchronizers: [(EngineIdentifier, SyncFunction)]) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
+            guard let account = self.profile.account else {
+                log.info("No account to sync with.")
+                let statuses = synchronizers.map {
+                    ($0.0, SyncStatus.NotStarted(.NoAccount))
+                }
+                return deferMaybe(statuses)
             }
-
+            log.info("Syncing \(synchronizers.map { $0.0 })")
             let authState = account.syncAuthState
+            let delegate = self.profile.getSyncDelegate()
+            let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
 
             let function: (SyncDelegate, Prefs, Ready) -> Deferred<Maybe<[EngineStatus]>> = { delegate, syncPrefs, ready in
                 let thunks = synchronizers.map { (i, f) in
@@ -1025,25 +1018,8 @@ public class BrowserProfile: Profile {
                 }
                 return accumulate(thunks)
             }
-
-            let readyDeferred = SyncStateMachine(prefs: self.prefsForSync).toReady(authState)
-            let delegate = profile.getSyncDelegate()
-
-            return readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { ready in
-                function(delegate, self.prefsForSync, ready)
-            }
-        }
-
-        private func syncRemaining(synchronizers: [(EngineIdentifier, SyncFunction)], except statuses: [EngineStatus]) -> Deferred<Maybe<[EngineStatus]>> {
-            let done = Set(statuses.map { $0.0 })
-            let remaining = synchronizers.filter { !done.contains($0.0) }
-            if !remaining.isEmpty {
-                log.info("Just done \(done); now calling syncSeveral \(remaining.map {$0.0})")
-                return syncWith(remaining) >>==  { deferMaybe($0 + statuses) }
-            } else {
-                log.info("Just done \(done); now returning from syncSeveral")
-                return deferMaybe(statuses)
-            }
+            
+            return readyDeferred >>== self.takeActionsOnEngineStateChanges >>== { function(delegate, self.prefsForSync, $0) }
         }
 
         func syncEverything() -> Success {
@@ -1062,7 +1038,7 @@ public class BrowserProfile: Profile {
                 self.syncEverything()
             }
         }
-        
+
         @objc func syncOnTimer() {
             self.syncEverything()
         }
@@ -1085,8 +1061,8 @@ public class BrowserProfile: Profile {
                 ("clients", self.syncClientsWithDelegate),
                 ("tabs", self.syncTabsWithDelegate)
             ) >>== { statuses in
-                let tabsStatus = statuses[1].1
-                return deferMaybe(tabsStatus)
+                let status = statuses.find { "tabs" == $0.0 }
+                return deferMaybe(status!.1)
             }
         }
 
@@ -1118,11 +1094,5 @@ public class BrowserProfile: Profile {
                 self.profile.hasSyncableAccount()
             }
         }
-    }
-}
-
-class AlreadySyncingError: MaybeErrorType {
-    var description: String {
-        return "Already syncing."
     }
 }
