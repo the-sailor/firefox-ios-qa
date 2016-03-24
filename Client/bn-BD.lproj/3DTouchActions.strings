@@ -1,0 +1,18 @@
+/* Label for preview action on Tab Tray Tab to add current tab to Bookmarks */
+"Add to Bookmarks" = "বুকমার্কে যুক্ত করুন";
+
+/* Label for preview action on Tab Tray Tab to add current tab to Reading List */
+"Add to Reading List" = "পঠন তালিকায় যোগ করুন";
+
+/* Label for preview action on Tab Tray Tab to close the current tab */
+"Close Tab" = "ট্যাব বন্ধ করুন";
+
+/* Label for preview action on Tab Tray Tab to copy the URL of the current tab to clipboard */
+"Copy URL" = "URL অনুলিপি করুন";
+
+/* Accessibility Label for preview in Tab Tray of current tab */
+"Preview of %@" = "%@ এর প্রাকদর্শন";
+
+/* Label for preview action on Tab Tray Tab to send the current tab to another device */
+"Send to Device" = "ডিভাইসে প্রেরণ করুন";
+
