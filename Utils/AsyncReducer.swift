@@ -13,36 +13,35 @@ public func asyncReducer<T, U>(initialValue: T, combine: (T, U) -> Deferred<Mayb
 
 /**
  * A appendable, async `reduce`.
+ *
  * The reducer starts empty. New items need to be `append`ed.
+ *
  * The constructor takes an `initialValue`, a `dispatch_queue_t`, and a `combine` function.
- * The reduced value can be accessed via the `reducer.terminal` Deferred<Maybe<T>> which is runs once all items have been combined.
- * The terminal will not be filled if no items have been appended.
- * Once the terminal has been filled, no more items can be appeneded, and `append` methods will error.
+ *
+ * The reduced value can be accessed via the `reducer.terminal` `Deferred<Maybe<T>>`, which is
+ * run once all items have been combined.
+ *
+ * The terminal will never be filled if no items have been appended.
+ *
+ * Once the terminal has been filled, no more items can be appended, and `append` methods will error.
  */
 public class AsyncReducer<T, U> {
-
+    // T is the accumulator. U is the input value. The returned T is the new accumulated value.
     public typealias Combine = (T, U) -> Deferred<Maybe<T>>
-
-    private let initialValueDeferred: Deferred<Maybe<T>>
+    private let lock = NSRecursiveLock()
 
     private let dispatchQueue: dispatch_queue_t
+    private let combine: Combine
 
+    private let initialValueDeferred: Deferred<Maybe<T>>
     public let terminal: Deferred<Maybe<T>> = Deferred()
 
     private var queuedItems: [U] = []
 
-    private var index = 0
-
-    private let lock = NSRecursiveLock()
-
-    private let combine: Combine
-
-    private var isStarted: Bool {
-        return index > 0 && queuedItems.count > 0
-    }
+    private var isStarted: Bool = false
 
     /**
-     * Has this task queue finished.
+     * Has this task queue finished?
      * Once the task queue has finished, it cannot have more tasks appended.
      */
     public var isFilled: Bool {
@@ -52,8 +51,7 @@ public class AsyncReducer<T, U> {
     }
 
     public convenience init(initialValue: T, queue: dispatch_queue_t = DefaultDispatchQueue, combine: Combine) {
-        let starter = deferMaybe(initialValue)
-        self.init(initialValue: starter, queue: queue, combine: combine)
+        self.init(initialValue: deferMaybe(initialValue), queue: queue, combine: combine)
     }
 
     public init(initialValue: Deferred<Maybe<T>>, queue: dispatch_queue_t = DefaultDispatchQueue, combine: Combine) {
@@ -65,23 +63,18 @@ public class AsyncReducer<T, U> {
     // This is always protected by a lock, so we don't need to 
     // take another one.
     private func ensureStarted() {
-        if isStarted {
+        if self.isStarted {
             return
         }
 
         func queueNext(deferredValue: Deferred<Maybe<T>>) {
-            deferredValue.uponQueue(dispatchQueue) { res in
-                continueMaybe(res)
-            }
+            deferredValue.uponQueue(dispatchQueue, block: continueMaybe)
         }
 
         func nextItem() -> U? {
-            if  self.index < queuedItems.count {
-                let value = queuedItems[self.index]
-                self.index += 1
-                return value
-            }
-            return nil
+            // Because popFirst is only available on array slices.
+            // removeFirst is fine for range-replaceable collections.
+            return queuedItems.isEmpty ? nil : queuedItems.removeFirst()
         }
 
         func continueMaybe(res: Maybe<T>) {
@@ -89,6 +82,7 @@ public class AsyncReducer<T, U> {
             defer { lock.unlock() }
 
             if res.isFailure {
+                self.queuedItems.removeAll()
                 self.terminal.fill(Maybe(failure: res.failureValue!))
                 return
             }
@@ -107,12 +101,13 @@ public class AsyncReducer<T, U> {
             queueNext(combineItem)
         }
 
-        queueNext(initialValueDeferred)
+        queueNext(self.initialValueDeferred)
+        self.isStarted = true
     }
 
     /**
-     * Append one or more tasks on to the end of the queue.
-     * Tasks are named with strings.
+     * Append one or more tasks onto the end of the queue.
+     *
      * @throws AlreadyFilled if the queue has finished already.
      */
     public func append(items: U...) throws -> Deferred<Maybe<T>> {
@@ -120,9 +115,9 @@ public class AsyncReducer<T, U> {
     }
 
     /**
-     * Append a list of tasks on to the end of the queue.
-     * Tasks are named with strings.
-     * @throws AlreadyFilled if the queue has finished already.
+     * Append a list of tasks onto the end of the queue.
+     *
+     * @throws AlreadyFilled if the queue has already finished.
      */
     public func append(items: [U]) throws -> Deferred<Maybe<T>> {
         lock.lock()
