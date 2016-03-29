@@ -591,8 +591,11 @@ public class BrowserProfile: Profile {
         // The dispatch queue for coordinating syncing and resetting the database.
         private let syncQueue = dispatch_queue_create("com.mozilla.firefox.sync", DISPATCH_QUEUE_SERIAL)
 
+        private typealias EngineResults = [(EngineIdentifier, SyncStatus)]
+        private typealias EngineTasks = [(EngineIdentifier, SyncFunction)]
+
         // Used as a task queue for syncing.
-        private var syncReducer: AsyncReducer<[(EngineIdentifier, SyncStatus)], [(EngineIdentifier, SyncFunction)]>?
+        private var syncReducer: AsyncReducer<EngineResults, EngineTasks>?
 
         private func beginSyncing() {
             notifySyncing(NotificationProfileDidStartSyncing)
@@ -941,13 +944,13 @@ public class BrowserProfile: Profile {
          */
         private func sync(label: EngineIdentifier, function: SyncFunction) -> SyncResult {
             return syncSeveral([(label, function)]) >>== { statuses in
-                let status = statuses.find { label == $0.0 }
-                return deferMaybe(status!.1)
+                let status = statuses.find { label == $0.0 }?.1
+                return deferMaybe(status ?? .NotStarted(.Unknown))
             }
         }
 
         /**
-         * Convenience method for synchSeveral([(EngineIdentifier, SyncFunction)])
+         * Convenience method for syncSeveral([(EngineIdentifier, SyncFunction)])
          */
         private func syncSeveral(synchronizers: (EngineIdentifier, SyncFunction)...) -> Deferred<Maybe<[(EngineIdentifier, SyncStatus)]>> {
             return syncSeveral(synchronizers)
@@ -965,7 +968,7 @@ public class BrowserProfile: Profile {
 
             if (!isSyncing) {
                 // A sync isn't already going on, so start another one.
-                syncReducer = AsyncReducer(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
+                let reducer = AsyncReducer<EngineResults, EngineTasks>(initialValue: [], queue: syncQueue) { (statuses, synchronizers)  in
                     let done = Set(statuses.map { $0.0 })
                     let remaining = synchronizers.filter { !done.contains($0.0) }
                     if remaining.isEmpty {
@@ -975,13 +978,12 @@ public class BrowserProfile: Profile {
 
                     return self.syncWith(remaining) >>== { deferMaybe(statuses + $0) }
                 }
+                reducer.terminal >>> self.endSyncing
 
                 // The actual work of synchronizing doesn't start until we append 
                 // the synchronizers to the reducer below.
-                beginSyncing()
-                syncReducer?.terminal.upon { _ in
-                    self.endSyncing()
-                }
+                self.syncReducer = reducer
+                self.beginSyncing()
             }
 
             do {
@@ -1004,6 +1006,7 @@ public class BrowserProfile: Profile {
                 }
                 return deferMaybe(statuses)
             }
+
             log.info("Syncing \(synchronizers.map { $0.0 })")
             let authState = account.syncAuthState
             let delegate = self.profile.getSyncDelegate()
