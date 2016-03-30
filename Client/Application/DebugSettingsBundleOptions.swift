@@ -32,4 +32,9 @@ struct DebugSettingsBundleOptions {
     static var attachLogsToDebugEmail: Bool {
         return NSUserDefaults.standardUserDefaults().boolForKey("SettingsBundleEmailLogsOnLaunch") ?? false
     }
+
+    /// When enabled, the keychain information associated with the app will be reset
+    static var resetKeychainOnLaunch: Bool {
+        return NSUserDefaults.standardUserDefaults().boolForKey("SettingsBundleResetKeychain") ?? false
+    }
 }

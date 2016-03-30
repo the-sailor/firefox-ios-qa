@@ -88,6 +88,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             setUpWebServer(profile)
         }
 
+        if DebugSettingsBundleOptions.resetKeychainOnLaunch {
+            func deleteAllKeysForSecClass(secClass: CFTypeRef) {
+                var keys = [unsafeAddressOf(kSecClass)]
+                var values = [unsafeAddressOf(secClass)]
+                var keyCallbacks = kCFTypeDictionaryKeyCallBacks
+                var valueCallbacks = kCFTypeDictionaryValueCallBacks
+                let dict = CFDictionaryCreate(kCFAllocatorDefault, &keys, &values, 1, &keyCallbacks, &valueCallbacks)
+                let result = SecItemDelete(dict)
+                assert(result == noErr || result == errSecItemNotFound, "Error deleting keychain data: \(result)")
+            }
+
+            deleteAllKeysForSecClass(kSecClassGenericPassword)
+            deleteAllKeysForSecClass(kSecClassInternetPassword)
+            deleteAllKeysForSecClass(kSecClassCertificate)
+            deleteAllKeysForSecClass(kSecClassKey)
+            deleteAllKeysForSecClass(kSecClassIdentity)
+        }
+
         log.debug("Setting AVAudioSession category…")
         do {
             // for aural progress bar: play even with silent switch on, and do not stop audio from other apps (like music)
