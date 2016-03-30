@@ -76,7 +76,7 @@ class MenuViewController: UIViewController {
             menuView.toolbar.layer.shadowOffset = CGSize(width: 0, height: 2)
 
             menuView.openMenuImage.image = MenuConfiguration.menuIconForMode(isPrivate: isPrivate)
-            menuView.openMenuImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: "dismissMenu"))
+            menuView.openMenuImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.dismissMenu(_:))))
 
             menuView.snp_makeConstraints { make in
                 make.left.equalTo(view.snp_left).offset(24)
@@ -93,6 +93,12 @@ class MenuViewController: UIViewController {
     }
 
     @objc private func dismissMenu(recognizer: UITapGestureRecognizer) {
+<<<<<<< HEAD
+=======
+        let gestureView = recognizer.view
+        let loc = recognizer.locationInView(gestureView)
+        guard let tappedView = gestureView?.hitTest(loc, withEvent: nil) where tappedView == view || tappedView == menuView.openMenuImage else { return }
+>>>>>>> Bug 1254597 - make menu button user interaction enabled so that we can detect the touch and dismiss the menu
         if recognizer.state == UIGestureRecognizerState.Ended {
             view.backgroundColor = UIColor.clearColor()
             self.dismissViewControllerAnimated(true, completion: {
