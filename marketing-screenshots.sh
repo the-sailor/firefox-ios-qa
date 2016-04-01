@@ -13,6 +13,8 @@ fi
 mkdir marketing-screenshots
 
 DEVICES="iPhone 4s,iPhone 5s,iPhone 6s,iPhone 6s Plus,iPad Air,iPad Pro"
+
+DEVICES="iPhone 4s,iPhone 5s,iPhone 6s,iPhone 6s Plus"
 LANGUAGES="en-US,de,fr"
 
 SNAPSHOT=/Users/sarentz/Projects/fastlane/snapshot/bin/snapshot
