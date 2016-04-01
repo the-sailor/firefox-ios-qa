@@ -24,33 +24,40 @@ class MarketingSnapshotTests: XCTestCase {
         snapshot("01-HomeScreen")
     }
 
+//    func test02HomescreenWithTiles() {
+//        app.buttons["IntroViewController.startBrowsingButton"].tap()
+//        snapshot("01-HomeScreen")
+//    }
+
 //    func test02Bookmarks() {
 //    }
-//
+
 //    func test03History() {
 //    }
-//
+
 //    func test04Sync() {
 //    }
-//
+
 //    func test05ReadingList() {
 //    }
 
     func test06Tabs() {
-        let urls = [
-            "https://www.twitter.com",
-            "https://www.mozilla.org/firefox/desktop",
-            "https://www.flickr.com",
-            "https://www.mozilla.org",
-            "https://www.mozilla.org/firefox/developer"
+        let tabsPerLocale: [String: [String]] = [
+            "*": [
+                "https://www.twitter.com",
+                "https://www.mozilla.org/firefox/desktop",
+                "https://www.flickr.com",
+                "https://www.mozilla.org",
+                "https://www.mozilla.org/firefox/developer/",
+            ],
         ]
 
-        for (index, url) in urls.enumerate() {
+        for url in tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]! {
             // Open a new tab, load the page
             app.buttons["URLBarView.tabsButton"].tap()
             app.buttons["TabTrayController.addTabButton"].tap()
             loadWebPage(url, waitForLoadToFinish: false)
-            sleep(15) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
         }
 
         // Go back to the tabs tray, swipe it back to the top
@@ -66,18 +73,93 @@ class MarketingSnapshotTests: XCTestCase {
         snapshot("07-PrivateBrowsing")
     }
 
-    func test08SearchResults() {
-        let urls = [
-            "https://www.mozilla.org",
-            "https://support.mozilla.org/en-US/products/ios",
-            "https://en.wikipedia.org/wiki/Firefox",
-            "https://www.mozilla.org/firefox/ios",
-            "https://www.twitter.com/firefox"
+    func test08PrivateBrowsingWithTabs() {
+        let tabsPerLocale: [String: [String]] = [
+            "*": [
+                "https://www.mozilla.org",
+            ],
         ]
 
-        for url in urls {
+        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+            // Open a new tab, load the page
+            app.buttons["URLBarView.tabsButton"].tap()
+            if index == 0 {
+                app.buttons["TabTrayController.togglePrivateMode"].tap()
+            }
+            app.buttons["TabTrayController.addTabButton"].tap()
             loadWebPage(url, waitForLoadToFinish: false)
-            sleep(15) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+        }
+
+        // Go back to the tabs tray, swipe it back to the top
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+        snapshot("08-PrivateBrowsingWithTabs")
+    }
+
+    func test09SearchResults() {
+        let historyLastMonthPerLocale: [String: [String]] = [
+            "*": [
+                "http://www.techcrunch.com",
+                "http://www.bbc.com/news",
+                "https://search.yahoo.com/mobile/s?p=privacy",
+                "https://www.eff.org/issues/privacy",
+                "http://www.reuters.com/news",
+                "https://www.nasa.gov",
+                "https://support.mozilla.org",
+                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/",
+                "https://www.smashingmagazine.com"
+            ],
+            "de": [
+                "http://www.spiegel.de",
+                "http://www.ebay.de",
+                "https://search.yahoo.com/mobile/s?p=privatsphäre",
+                "https://www.eff.org/issues/privacy",
+                "http://de.reuters.com",
+                "https://support.mozilla.org",
+                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+            ],
+            "fr": [
+                "https://support.mozilla.org",
+                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+            ],
+        ]
+
+        for url in (historyLastMonthPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyLastMonthPerLocale["*"]!).reverse() {
+            loadWebPage(url, waitForLoadToFinish: false)
+            sleep(5)
+        }
+
+        let historyTodayPerLocale: [String: [String]] = [
+            "*": [
+                "https://www.mozilla.org",
+                "https://www.youtube.com",
+                "https://www.twitter.com",
+                "https://www.reddit.com",
+                "https://support.mozilla.org/products/ios",
+                "https://search.yahoo.com/mobile/s?p=firefox"
+            ],
+            "de": [
+                "https://www.mozilla.org",
+                "https://www.youtube.com",
+                "https://www.twitter.com",
+                "https://www.wikipedia.org",
+                "https://support.mozilla.org/products/ios",
+                "https://search.yahoo.com/mobile/s?p=firefox"
+            ],
+            "fr": [
+                "https://www.mozilla.org",
+                "https://www.youtube.com",
+                "https://www.twitter.com",
+                "https://www.wikipedia.org",
+                "https://support.mozilla.org/products/ios",
+                "https://search.yahoo.com/mobile/s?p=firefox",
+            ]
+        ]
+
+        for url in (historyTodayPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyTodayPerLocale["*"]!).reverse() {
+            loadWebPage(url, waitForLoadToFinish: false)
+            sleep(5)
         }
 
         app.textFields["url"].tap()

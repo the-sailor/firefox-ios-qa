@@ -12,10 +12,11 @@ fi
 
 mkdir marketing-screenshots
 
-DEVICES="iPhone 6s Plus,iPad Air,iPad Pro"
-LANGUAGES="en-US,de,es-CL,es,fr,id,it,ja,pt-BR,ru,zh-CN"
+DEVICES="iPhone 4s,iPhone 5s,iPhone 6s,iPhone 6s Plus,iPad Air,iPad Pro"
+LANGUAGES="en-US,de,fr"
 
 SNAPSHOT=/Users/sarentz/Projects/fastlane/snapshot/bin/snapshot
+SNAPSHOT=snapshot
 
 echo "`date` Snapshotting $lang"
 $SNAPSHOT --project Client.xcodeproj --scheme MarketingSnapshotTests \
