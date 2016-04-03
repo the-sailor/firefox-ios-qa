@@ -106,50 +106,68 @@ class MarketingSnapshotTests: XCTestCase {
         app.buttons["TabTrayController.togglePrivateMode"].tap()
     }
 
-//    func test05PrivateBrowsingWithTabs() {
-//        let tabsPerLocale: [String: [String]] = [
-//            "*": [
-//                "https://www.mozilla.org/firefox/private-browsing",
-//                "https://www.ebay.com",
-//                "https://www.amazon.com",
-//                "https://www.expedia.com",
-//            ],
-//            "de": [
-//                "https://www.mozilla.org/firefox/private-browsing",
-//                "https://www.ebay.de",
-//                "https://www.amazon.de",
-//                "https://www.expedia.de",
-//            ],
-//            "fr": [
-//                "https://www.mozilla.org/firefox/private-browsing",
-//                "https://www.ebay.fr",
-//                "https://www.amazon.fr",
-//                "https://www.expedia.fr",
-//            ],
-//        ]
-//
-//        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
-//            // Open a new tab, load the page
-//            app.buttons["URLBarView.tabsButton"].tap()
-//            if index == 0 {
-//                app.buttons["TabTrayController.togglePrivateMode"].tap()
-//            }
-//            app.buttons["TabTrayController.addTabButton"].tap()
-//            loadWebPage(url, waitForLoadToFinish: false)
-//            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
-//        }
-//
-//        // Go back to the tabs tray, swipe it back to the top
-//        app.buttons["URLBarView.tabsButton"].tap()
-//        app.collectionViews["TabTrayController.collectionView"].swipeDown()
-//
-//        snapshot("PrivateBrowsingWithTabs")
-//
-//        // Leave private mode
-//        app.buttons["TabTrayController.togglePrivateMode"].tap()
-//    }
+            //    func test05PrivateBrowsingWithTabs() {
+            //        let tabsPerLocale: [String: [String]] = [
+            //            "*": [
+            //                "https://www.mozilla.org/firefox/private-browsing",
+            //                "https://www.ebay.com",
+            //                "https://www.amazon.com",
+            //                "https://www.expedia.com",
+            //            ],
+            //            "de": [
+            //                "https://www.mozilla.org/firefox/private-browsing",
+            //                "https://www.ebay.de",
+            //                "https://www.amazon.de",
+            //                "https://www.expedia.de",
+            //            ],
+            //            "fr": [
+            //                "https://www.mozilla.org/firefox/private-browsing",
+            //                "https://www.ebay.fr",
+            //                "https://www.amazon.fr",
+            //                "https://www.expedia.fr",
+            //            ],
+            //        ]
+            //
+            //        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+            //            // Open a new tab, load the page
+            //            app.buttons["URLBarView.tabsButton"].tap()
+            //            if index == 0 {
+            //                app.buttons["TabTrayController.togglePrivateMode"].tap()
+            //            }
+            //            app.buttons["TabTrayController.addTabButton"].tap()
+            //            loadWebPage(url, waitForLoadToFinish: false)
+            //            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+            //        }
+            //
+            //        // Go back to the tabs tray, swipe it back to the top
+            //        app.buttons["URLBarView.tabsButton"].tap()
+            //        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+            //
+            //        snapshot("PrivateBrowsingWithTabs")
+            //
+            //        // Leave private mode
+            //        app.buttons["TabTrayController.togglePrivateMode"].tap()
+            //    }
 
-    func test06History() {
+    func test06ClearPrivateData() {
+        // Open the settings
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.buttons["TabTrayController.settingsButton"].tap()
+
+        // Open CPD Settings
+        let clearPrivateDataCell = app.tables.cells["ClearPrivateData"]
+        clearPrivateDataCell.tap()
+
+        // Press CPD Button
+        let clearPrivateDataButton = app.tables.cells["ClearPrivateData"]
+        clearPrivateDataButton.tap()
+
+        // Confirm dialog
+        let button = app.alerts.elementBoundByIndex(0).collectionViews.buttons.elementBoundByIndex(1)
+        button.tap()
+    }
+
+    func test07History() {
 
         // TODO Needs a Clear Private Data first
 
