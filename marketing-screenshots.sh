@@ -13,10 +13,10 @@ fi
 mkdir marketing-screenshots
 
 DEVICES="iPhone 4s,iPhone 5s,iPhone 6s,iPhone 6s Plus,iPad Air,iPad Pro"
-LANGUAGES="en-US,de,fr"
+LANGUAGES="en-US,de,fr,es"
 
-DEVICES="iPhone 6s Plus"
-LANGUAGES="en-US,de,fr"
+DEVICES="iPhone 6s,iPad Air"
+LANGUAGES="en-US,de,es,fr"
 
 #LANGUAGES="af,ar,az,bg,bn-BD,bn-IN,br,bs,cs,cy,da,de,dsb,el,en-US,eo,es,es-CL,es-MX,fa,fr,fy-NL,ga-IE,gd,gl,hsb,id,is,it,ja,kk,km,kn,ko,lo,lt,lv,ml,ms,my,nb-NO,ne-NP,nl,nn-NO,or,pl,pt-BR,pt-PT,rm,ro,ru,ses,sk,sl,sv-SE,th,tl,tn,tr,uk,uz,zh-CN,zh-TW"
 

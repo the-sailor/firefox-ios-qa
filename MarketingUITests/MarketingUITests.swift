@@ -42,6 +42,14 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://support.mozilla.org/de/products/ios",
                 "https://www.mozilla.org"
             ],
+            "es": [
+                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "https://www.twitter.com/firefox",
+                "https://www.mozilla.org/firefox/ios",
+                "https://es.wikipedia.org/wiki/Firefox",
+                "https://support.mozilla.org/de/products/ios",
+                "https://www.mozilla.org"
+            ],
             "fr": [
                 "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
                 "https://www.twitter.com/firefox",
@@ -68,7 +76,26 @@ class MarketingSnapshotTests: XCTestCase {
         snapshot("SearchResults")
     }
 
-    func test03Tabs() {
+//    func test04CloseAllTabs() {
+//        loadWebPage("http://www.mozilla.org", waitForLoadToFinish: false)
+//        sleep(3)
+//
+//        // Open the tab tray and close the one tab we have open now
+//        app.buttons["URLBarView.tabsButton"].tap()
+//
+////        //app.buttons["TabCell.closeButton"].tap()
+////        app.collectionViews["TabTrayController.collectionView"].buttons.elementBoundByIndex(0).tap()
+//
+//        let e = app.collectionViews["TabTrayController.collectionView"].exists
+//        NSLog("TabTrayController.collectionView.exists = \(e)")
+//
+////        print(app.collectionViews["TabTrayController.collectionView"].exists)
+////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0))
+////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).buttons["TabCell.closeButton"])
+//        //app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).swipeLeft()
+//    }
+
+    func test05Tabs() {
         let tabsPerLocale: [String: [String]] = [
             "*": [
                 "https://www.twitter.com",
@@ -80,7 +107,7 @@ class MarketingSnapshotTests: XCTestCase {
         ]
 
         for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
-            // Open a new tab, load the page. Reuse the existing tab that we already have.
+            // Open a new tab, load the page.
             if index != 0 {
                 app.buttons["URLBarView.tabsButton"].tap()
                 app.buttons["TabTrayController.addTabButton"].tap()
@@ -95,7 +122,7 @@ class MarketingSnapshotTests: XCTestCase {
         snapshot("Tabs")
     }
 
-    func test04PrivateBrowsing() {
+    func test06PrivateBrowsing() {
         // Enter private mode
         app.buttons["URLBarView.tabsButton"].tap()
         app.buttons["TabTrayController.togglePrivateMode"].tap()
@@ -106,7 +133,7 @@ class MarketingSnapshotTests: XCTestCase {
         app.buttons["TabTrayController.togglePrivateMode"].tap()
     }
 
-            //    func test05PrivateBrowsingWithTabs() {
+            //    func test07PrivateBrowsingWithTabs() {
             //        let tabsPerLocale: [String: [String]] = [
             //            "*": [
             //                "https://www.mozilla.org/firefox/private-browsing",
@@ -149,25 +176,11 @@ class MarketingSnapshotTests: XCTestCase {
             //        app.buttons["TabTrayController.togglePrivateMode"].tap()
             //    }
 
-    func test06ClearPrivateData() {
-        // Open the settings
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.buttons["TabTrayController.settingsButton"].tap()
-
-        // Open CPD Settings
-        let clearPrivateDataCell = app.tables.cells["ClearPrivateData"]
-        clearPrivateDataCell.tap()
-
-        // Press CPD Button
-        let clearPrivateDataButton = app.tables.cells["ClearPrivateData"]
-        clearPrivateDataButton.tap()
-
-        // Confirm dialog
-        let button = app.alerts.elementBoundByIndex(0).collectionViews.buttons.elementBoundByIndex(1)
-        button.tap()
+    func test08ClearPrivateData() {
+        clearPrivateData()
     }
 
-    func test07History() {
+    func test09History() {
 
         // TODO Needs a Clear Private Data first
 
@@ -189,6 +202,11 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://search.yahoo.com/mobile/s?p=privatsphäre",
                 "https://www.eff.org/issues/privacy",
                 "http://de.reuters.com",
+                "https://support.mozilla.org",
+                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+            ],
+            "es": [
+                // TODO
                 "https://support.mozilla.org",
                 "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
             ],
@@ -220,6 +238,14 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://support.mozilla.org/products/ios",
                 "https://search.yahoo.com/mobile/s?p=firefox"
             ],
+            "es": [
+                "https://www.mozilla.org",
+                "https://www.youtube.com",
+                "https://www.twitter.com",
+                "http://www.elmundo.es",
+                "https://support.mozilla.org/products/ios",
+                "https://search.yahoo.com/mobile/s?p=firefox"
+            ],
             "fr": [
                 "https://www.mozilla.org",
                 "https://www.youtube.com",
@@ -247,6 +273,24 @@ class MarketingSnapshotTests: XCTestCase {
         sleep(3)
 
         snapshot("History")
+    }
+
+    private func clearPrivateData() {
+        // Open the settings
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.buttons["TabTrayController.settingsButton"].tap()
+
+        // Open CPD Settings
+        let clearPrivateDataCell = app.tables.cells["ClearPrivateData"]
+        clearPrivateDataCell.tap()
+
+        // Press CPD Button
+        let clearPrivateDataButton = app.tables.cells["ClearPrivateData"]
+        clearPrivateDataButton.tap()
+
+        // Confirm dialog
+        let button = app.alerts.elementBoundByIndex(0).collectionViews.buttons.elementBoundByIndex(1)
+        button.tap()
     }
 
     private func loadWebPage(url: String, waitForLoadToFinish: Bool = true) {
