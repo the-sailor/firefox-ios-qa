@@ -19,20 +19,140 @@ class MarketingSnapshotTests: XCTestCase {
         }
     }
 
-    func test01Homescreen() {
+    func test01HomescreenAlexaTopFive() {
         app.buttons["IntroViewController.startBrowsingButton"].tap()
-        snapshot("01-HomeScreen")
+        snapshot("HomescreenAlexaTopFive")
     }
 
-//    func test02HomescreenWithTiles() {
-//        app.buttons["IntroViewController.startBrowsingButton"].tap()
-//        snapshot("01-HomeScreen")
+    func test02SearchResults() {
+        let searchResultsPerLocale: [String: [String]] = [
+            "*": [
+                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "https://www.twitter.com/firefox",
+                "https://www.mozilla.org/firefox/ios",
+                "https://en.wikipedia.org/wiki/Firefox",
+                "https://support.mozilla.org/en-US/products/ios",
+                "https://www.mozilla.org"
+            ],
+            "de": [
+                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "https://www.twitter.com/firefox",
+                "https://www.mozilla.org/firefox/ios",
+                "https://de.wikipedia.org/wiki/Firefox",
+                "https://support.mozilla.org/de/products/ios",
+                "https://www.mozilla.org"
+            ],
+            "fr": [
+                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "https://www.twitter.com/firefox",
+                "https://www.mozilla.org/firefox/ios",
+                "https://fr.wikipedia.org/wiki/Firefox",
+                "https://support.mozilla.org/fr/products/ios",
+                "https://www.mozilla.org"
+            ],
+        ]
+
+        for url in (searchResultsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? searchResultsPerLocale["*"]!).reverse() {
+            loadWebPage(url, waitForLoadToFinish: false)
+            sleep(3) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+        }
+
+        app.textFields["url"].tap()
+        app.textFields["address"].typeText("firefox") // TODO Needs to be localized
+        app.buttons["SearchViewController.promptYesButton"].tap()
+
+        // TODO This does not work?
+        let _ = NSData(contentsOfURL: NSURL(string: "http://localhost:6571/snapshottest/hidekeyboard")!)
+        sleep(3)
+
+        snapshot("SearchResults")
+    }
+
+    func test03Tabs() {
+        let tabsPerLocale: [String: [String]] = [
+            "*": [
+                "https://www.twitter.com",
+                "https://www.mozilla.org/firefox/desktop",
+                "https://www.flickr.com",
+                "https://www.mozilla.org",
+                "https://www.mozilla.org/firefox/developer/",
+            ],
+        ]
+
+        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+            // Open a new tab, load the page. Reuse the existing tab that we already have.
+            if index != 0 {
+                app.buttons["URLBarView.tabsButton"].tap()
+                app.buttons["TabTrayController.addTabButton"].tap()
+            }
+            loadWebPage(url, waitForLoadToFinish: false)
+            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+        }
+
+        // Go back to the tabs tray, swipe it back to the top
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+        snapshot("Tabs")
+    }
+
+    func test04PrivateBrowsing() {
+        // Enter private mode
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.buttons["TabTrayController.togglePrivateMode"].tap()
+
+        snapshot("PrivateBrowsingEmptyState")
+
+        // Leave private mode
+        app.buttons["TabTrayController.togglePrivateMode"].tap()
+    }
+
+//    func test05PrivateBrowsingWithTabs() {
+//        let tabsPerLocale: [String: [String]] = [
+//            "*": [
+//                "https://www.mozilla.org/firefox/private-browsing",
+//                "https://www.ebay.com",
+//                "https://www.amazon.com",
+//                "https://www.expedia.com",
+//            ],
+//            "de": [
+//                "https://www.mozilla.org/firefox/private-browsing",
+//                "https://www.ebay.de",
+//                "https://www.amazon.de",
+//                "https://www.expedia.de",
+//            ],
+//            "fr": [
+//                "https://www.mozilla.org/firefox/private-browsing",
+//                "https://www.ebay.fr",
+//                "https://www.amazon.fr",
+//                "https://www.expedia.fr",
+//            ],
+//        ]
+//
+//        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+//            // Open a new tab, load the page
+//            app.buttons["URLBarView.tabsButton"].tap()
+//            if index == 0 {
+//                app.buttons["TabTrayController.togglePrivateMode"].tap()
+//            }
+//            app.buttons["TabTrayController.addTabButton"].tap()
+//            loadWebPage(url, waitForLoadToFinish: false)
+//            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+//        }
+//
+//        // Go back to the tabs tray, swipe it back to the top
+//        app.buttons["URLBarView.tabsButton"].tap()
+//        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+//
+//        snapshot("PrivateBrowsingWithTabs")
+//
+//        // Leave private mode
+//        app.buttons["TabTrayController.togglePrivateMode"].tap()
 //    }
 
-//    func test02Bookmarks() {
-//    }
+    func test06History() {
 
-    func test03History() {
+        // TODO Needs a Clear Private Data first
+
         let historyLastMonthPerLocale: [String: [String]] = [
             "*": [
                 "http://www.techcrunch.com",
@@ -58,12 +178,12 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://support.mozilla.org",
                 "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
             ],
-            ]
+        ]
 
-        //        for url in (historyLastMonthPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyLastMonthPerLocale["*"]!).reverse() {
-        //            loadWebPage(url, waitForLoadToFinish: false)
-        //            sleep(5)
-        //        }
+        for url in (historyLastMonthPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyLastMonthPerLocale["*"]!).reverse() {
+            loadWebPage(url, waitForLoadToFinish: false)
+            sleep(5)
+        }
 
         let historyTodayPerLocale: [String: [String]] = [
             "*": [
@@ -97,83 +217,18 @@ class MarketingSnapshotTests: XCTestCase {
             sleep(5)
         }
 
+        // Create a new tab so that the location bar shows the placeholder
+        app.buttons["URLBarView.tabsButton"].tap()
+        app.buttons["TabTrayController.addTabButton"].tap()
+
+        // Select the history panel
         app.textFields["url"].tap()
         app.buttons["HomePanels.History"].tap()
 
-        snapshot("03-History")
-    }
-
-//    func test04Sync() {
-//    }
-//
-//    func test05ReadingList() {
-//    }
-
-    func test06Tabs() {
-        let tabsPerLocale: [String: [String]] = [
-            "*": [
-                "https://www.twitter.com",
-                "https://www.mozilla.org/firefox/desktop",
-                "https://www.flickr.com",
-                "https://www.mozilla.org",
-                "https://www.mozilla.org/firefox/developer/",
-            ],
-        ]
-
-        for url in tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]! {
-            // Open a new tab, load the page
-            app.buttons["URLBarView.tabsButton"].tap()
-            app.buttons["TabTrayController.addTabButton"].tap()
-            loadWebPage(url, waitForLoadToFinish: false)
-            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
-        }
-
-        // Go back to the tabs tray, swipe it back to the top
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.collectionViews["TabTrayController.collectionView"].swipeDown()
-        snapshot("06-Tabs")
-    }
-
-    func test07PrivateBrowsing() {
-        let app = XCUIApplication()
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.buttons["TabTrayController.togglePrivateMode"].tap()
-        snapshot("07-PrivateBrowsing")
-        app.buttons["TabTrayController.togglePrivateMode"].tap()
-    }
-
-//    func test08PrivateBrowsingWithTabs() {
-//        let tabsPerLocale: [String: [String]] = [
-//            "*": [
-//                "https://www.mozilla.org",
-//            ],
-//        ]
-//
-//        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
-//            // Open a new tab, load the page
-//            app.buttons["URLBarView.tabsButton"].tap()
-//            if index == 0 {
-//                app.buttons["TabTrayController.togglePrivateMode"].tap()
-//            }
-//            app.buttons["TabTrayController.addTabButton"].tap()
-//            loadWebPage(url, waitForLoadToFinish: false)
-//            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
-//        }
-//
-//        // Go back to the tabs tray, swipe it back to the top
-//        app.buttons["URLBarView.tabsButton"].tap()
-//        app.collectionViews["TabTrayController.collectionView"].swipeDown()
-//        snapshot("08-PrivateBrowsingWithTabs")
-//        app.buttons["TabTrayController.togglePrivateMode"].tap()
-//    }
-
-    func test09SearchResults() {
-        app.textFields["url"].tap()
-        app.textFields["address"].typeText("firefox") // TODO Needs to be localized
-        app.buttons["SearchViewController.promptYesButton"].tap()
         let _ = NSData(contentsOfURL: NSURL(string: "http://localhost:6571/snapshottest/hidekeyboard")!)
         sleep(3)
-        snapshot("08-SearchResults")
+
+        snapshot("History")
     }
 
     private func loadWebPage(url: String, waitForLoadToFinish: Bool = true) {
