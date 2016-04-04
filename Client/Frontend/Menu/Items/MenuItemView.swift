@@ -47,6 +47,8 @@ public class MenuItemView: UIView {
             make.left.lessThanOrEqualTo(self).offset(padding)
             make.right.lessThanOrEqualTo(self).offset(-padding)
         }
+
+        self.userInteractionEnabled = true
     }
 
     required public init?(coder aDecoder: NSCoder) {
