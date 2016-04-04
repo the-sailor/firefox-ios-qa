@@ -27,7 +27,7 @@ class MarketingSnapshotTests: XCTestCase {
     func test02SearchResults() {
         let searchResultsPerLocale: [String: [String]] = [
             "*": [
-                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "firefox",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://en.wikipedia.org/wiki/Firefox",
@@ -35,7 +35,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.mozilla.org"
             ],
             "de": [
-                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "firefox",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://de.wikipedia.org/wiki/Firefox",
@@ -43,7 +43,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.mozilla.org"
             ],
             "es": [
-                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "firefox",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://es.wikipedia.org/wiki/Firefox",
@@ -51,7 +51,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.mozilla.org"
             ],
             "fr": [
-                "https://search.yahoo.com/yhs/search?ei=UTF-8&p=firefox",
+                "firefox",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://fr.wikipedia.org/wiki/Firefox",
@@ -66,7 +66,7 @@ class MarketingSnapshotTests: XCTestCase {
         }
 
         app.textFields["url"].tap()
-        app.textFields["address"].typeText("firefox") // TODO Needs to be localized
+        app.textFields["address"].typeText("firefox") // TODO Needs to be localized?
         app.buttons["SearchViewController.promptYesButton"].tap()
 
         // TODO This does not work?
@@ -188,7 +188,7 @@ class MarketingSnapshotTests: XCTestCase {
             "*": [
                 "http://www.techcrunch.com",
                 "http://www.bbc.com/news",
-                "https://search.yahoo.com/mobile/s?p=privacy",
+                "privacy",
                 "https://www.eff.org/issues/privacy",
                 "http://www.reuters.com/news",
                 "https://www.nasa.gov",
@@ -199,7 +199,7 @@ class MarketingSnapshotTests: XCTestCase {
             "de": [
                 "http://www.spiegel.de",
                 "http://www.ebay.de",
-                "https://search.yahoo.com/mobile/s?p=privatsphäre",
+                "privatsphäre",
                 "https://www.eff.org/issues/privacy",
                 "http://de.reuters.com",
                 "https://support.mozilla.org",
@@ -228,7 +228,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.twitter.com",
                 "https://www.reddit.com",
                 "https://support.mozilla.org/products/ios",
-                "https://search.yahoo.com/mobile/s?p=firefox"
+                "firefox"
             ],
             "de": [
                 "https://www.mozilla.org",
@@ -236,7 +236,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.twitter.com",
                 "https://www.wikipedia.org",
                 "https://support.mozilla.org/products/ios",
-                "https://search.yahoo.com/mobile/s?p=firefox"
+                "firefox"
             ],
             "es": [
                 "https://www.mozilla.org",
@@ -244,7 +244,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.twitter.com",
                 "http://www.elmundo.es",
                 "https://support.mozilla.org/products/ios",
-                "https://search.yahoo.com/mobile/s?p=firefox"
+                "firefox"
             ],
             "fr": [
                 "https://www.mozilla.org",
@@ -252,7 +252,7 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://www.twitter.com",
                 "https://www.wikipedia.org",
                 "https://support.mozilla.org/products/ios",
-                "https://search.yahoo.com/mobile/s?p=firefox",
+                "firefox",
             ]
         ]
 
