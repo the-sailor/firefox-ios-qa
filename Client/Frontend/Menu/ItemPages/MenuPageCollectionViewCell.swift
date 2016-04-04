@@ -82,7 +82,6 @@ extension MenuPageCollectionViewCell: UICollectionViewDelegateFlowLayout {
     }
 
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        print("selected item at index \(indexPath)")
         let selectedItemIndex = indexPath.item
         menuItemDelegate?.menuPageView(self, didSelectMenuItem: items[selectedItemIndex], atIndexPath: NSIndexPath(forItem: selectedItemIndex, inSection: pageIndex))
     }
