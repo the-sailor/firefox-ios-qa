@@ -4,11 +4,18 @@
 
 import UIKit
 
+
+class MenuItemCollectionViewCell: UICollectionViewCell {
+    override func prepareForReuse() {
+        self.contentView.subviews.forEach { $0.removeFromSuperview() }
+    }
+}
+
 /**
  * creates a view that consists of an image and a title.
  * the image view is displayed at the center top of the
  **/
-public class MenuItemView: UIButton {
+public class MenuItemView: UIView {
 
     var padding: CGFloat = 5.0
 

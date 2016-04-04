@@ -35,7 +35,10 @@ class MenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: "dismissMenu:"))
+        let gesture = UITapGestureRecognizer(target: self, action: #selector(self.dismissMenu(_:)))
+        gesture.delegate = self
+        gesture.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(gesture)
 
         // Do any additional setup after loading the view.
         menuView = MenuView(presentationStyle: self.presentationStyle)
@@ -93,9 +96,6 @@ class MenuViewController: UIViewController {
     }
 
     @objc private func dismissMenu(recognizer: UITapGestureRecognizer) {
-        let gestureView = recognizer.view
-        let loc = recognizer.locationInView(gestureView)
-        guard let tappedView = gestureView?.hitTest(loc, withEvent: nil) where tappedView == view else { return }
         if recognizer.state == UIGestureRecognizerState.Ended {
             view.backgroundColor = UIColor.clearColor()
             self.dismissViewControllerAnimated(true, completion: {
@@ -184,6 +184,20 @@ extension MenuViewController: MenuToolbarDataSource {
 
 extension MenuViewController: MenuToolbarItemDelegate {
     func menuView(menuView: MenuView, didSelectItemAtIndex index: Int) {
+        let selectedMenuItem = menuConfig.menuItems[index]
+        print("Selected menu item '\(selectedMenuItem.title)")
+    }
+}
+
+extension MenuViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldReceiveTouch touch: UITouch) -> Bool {
+        let gestureView = gestureRecognizer.view
+        let loc = touch.locationInView(gestureView)
+        guard let tappedView = gestureView?.hitTest(loc, withEvent: nil) where tappedView == view || tappedView == menuView.openMenuImage else {
+            return false
+        }
+
+        return true
     }
 }
 

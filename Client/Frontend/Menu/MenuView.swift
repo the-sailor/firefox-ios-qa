@@ -336,7 +336,7 @@ class MenuView: UIView {
 }
 
 extension  MenuView: MenuPageViewDelegate {
-    func menuPageView(menuPageView: MenuPageView, didSelectMenuItem menuItem: MenuItemView, atIndexPath indexPath: NSIndexPath) {
+    func menuPageView(menuPageView: MenuPageCollectionViewCell, didSelectMenuItem menuItem: MenuItemView, atIndexPath indexPath: NSIndexPath) {
         menuItemDelegate?.menuView(self, didSelectItemAtIndexPath: indexPath)
     }
 }
@@ -353,11 +353,10 @@ extension MenuView: UICollectionViewDataSource {
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(pagingCellReuseIdentifier, forIndexPath: indexPath) as! MenuPageCollectionViewCell
-        cell.pageView.setItems(itemsForPageIndex(indexPath.row), forPageIndex: indexPath.row)
-        cell.pageView.delegate = self
-        cell.pageView.numberOfItemsInRow = CGFloat(menuItemDataSource?.numberOfItemsPerRowInMenuView(self) ?? 0)
-        cell.pageView.itemPadding = itemPadding
-        cell.pageView.menuRowHeight = CGFloat(menuRowHeight)
+        cell.pageIndex = indexPath.row
+        cell.items = itemsForPageIndex(indexPath.row)
+        cell.menuItemDelegate = self
+        cell.numberOfItemsInRow = CGFloat(menuItemDataSource?.numberOfItemsPerRowInMenuView(self) ?? 0)
         return cell
     }
 
@@ -387,6 +386,14 @@ extension MenuView: UICollectionViewDelegateFlowLayout {
         let menuHeight = itemPadding + (numberOfRows * (CGFloat(menuRowHeight) + itemPadding))
         let size = CGSizeMake(collectionView.bounds.size.width - itemPadding, menuHeight)
         return size
+    }
+
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        print("did select item at index path \(indexPath)")
+    }
+
+    func collectionView(collectionView: UICollectionView, shouldSelectItemAtIndexPath indexPath: NSIndexPath) -> Bool {
+        return false
     }
 
 }
