@@ -34,24 +34,32 @@ class MarketingSnapshotTests: XCTestCase {
                 "https://support.mozilla.org/en-US/products/ios",
                 "https://www.mozilla.org"
             ],
-            "de": [
-                "firefox",
+            "de_DE": [
+                "https://www.google.de/search?q=firefox&hl=de",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://de.wikipedia.org/wiki/Firefox",
                 "https://support.mozilla.org/de/products/ios",
                 "https://www.mozilla.org"
             ],
-            "es": [
-                "firefox",
+            "es_ES": [
+                "https://www.google.es/search?q=firefox&hl=es",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://es.wikipedia.org/wiki/Firefox",
                 "https://support.mozilla.org/de/products/ios",
                 "https://www.mozilla.org"
             ],
-            "fr": [
-                "firefox",
+            "es_MX": [
+                "https://www.google.com.mx/search?q=firefox&hl=es",
+                "https://www.twitter.com/firefox",
+                "https://www.mozilla.org/firefox/ios",
+                "https://es.wikipedia.org/wiki/Firefox",
+                "https://support.mozilla.org/de/products/ios",
+                "https://www.mozilla.org"
+            ],
+            "fr_FR": [
+                "https://www.google.fr/search?q=firefox&hl=fr",
                 "https://www.twitter.com/firefox",
                 "https://www.mozilla.org/firefox/ios",
                 "https://fr.wikipedia.org/wiki/Firefox",
@@ -66,6 +74,15 @@ class MarketingSnapshotTests: XCTestCase {
         }
 
         app.textFields["url"].tap()
+
+        if NSLocale.currentLocale().localeIdentifier == "fr_FR" {
+            switchKeyboardToFrench(app)
+        }
+
+        if NSLocale.currentLocale().localeIdentifier == "de_DE" {
+            switchKeyboardToGerman(app)
+        }
+
         app.textFields["address"].typeText("firefox") // TODO Needs to be localized?
         app.buttons["SearchViewController.promptYesButton"].tap()
 
@@ -76,204 +93,218 @@ class MarketingSnapshotTests: XCTestCase {
         snapshot("SearchResults")
     }
 
-//    func test04CloseAllTabs() {
-//        loadWebPage("http://www.mozilla.org", waitForLoadToFinish: false)
+////    func test04CloseAllTabs() {
+////        loadWebPage("http://www.mozilla.org", waitForLoadToFinish: false)
+////        sleep(3)
+////
+////        // Open the tab tray and close the one tab we have open now
+////        app.buttons["URLBarView.tabsButton"].tap()
+////
+//////        //app.buttons["TabCell.closeButton"].tap()
+//////        app.collectionViews["TabTrayController.collectionView"].buttons.elementBoundByIndex(0).tap()
+////
+////        let e = app.collectionViews["TabTrayController.collectionView"].exists
+////        NSLog("TabTrayController.collectionView.exists = \(e)")
+////
+//////        print(app.collectionViews["TabTrayController.collectionView"].exists)
+//////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0))
+//////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).buttons["TabCell.closeButton"])
+////        //app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).swipeLeft()
+////    }
+//
+//    func test05Tabs() {
+//        let tabsPerLocale: [String: [String]] = [
+//            "*": [
+//                "https://www.twitter.com",
+//                "https://www.mozilla.org/firefox/desktop",
+//                "https://www.flickr.com",
+//                "https://www.mozilla.org",
+//                "https://www.mozilla.org/firefox/developer/",
+//            ],
+//        ]
+//
+//        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+//            // Open a new tab, load the page.
+//            if index != 0 {
+//                app.buttons["URLBarView.tabsButton"].tap()
+//                app.buttons["TabTrayController.addTabButton"].tap()
+//            }
+//            loadWebPage(url, waitForLoadToFinish: false)
+//            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+//        }
+//
+//        // Go back to the tabs tray, swipe it back to the top
+//        app.buttons["URLBarView.tabsButton"].tap()
+//        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+//        snapshot("Tabs")
+//    }
+//
+//    func test06PrivateBrowsing() {
+//        // Enter private mode
+//        app.buttons["URLBarView.tabsButton"].tap()
+//        app.buttons["TabTrayController.togglePrivateMode"].tap()
+//
+//        snapshot("PrivateBrowsingEmptyState")
+//
+//        // Leave private mode
+//        app.buttons["TabTrayController.togglePrivateMode"].tap()
+//    }
+//
+//    //    func test07PrivateBrowsingWithTabs() {
+//    //        let tabsPerLocale: [String: [String]] = [
+//    //            "*": [
+//    //                "https://www.mozilla.org/firefox/private-browsing",
+//    //                "https://www.ebay.com",
+//    //                "https://www.amazon.com",
+//    //                "https://www.expedia.com",
+//    //            ],
+//    //            "de_DE": [
+//    //                "https://www.mozilla.org/firefox/private-browsing",
+//    //                "https://www.ebay.de",
+//    //                "https://www.amazon.de",
+//    //                "https://www.expedia.de",
+//    //            ],
+//    //            "fr_FR": [
+//    //                "https://www.mozilla.org/firefox/private-browsing",
+//    //                "https://www.ebay.fr",
+//    //                "https://www.amazon.fr",
+//    //                "https://www.expedia.fr",
+//    //            ],
+//    //        ]
+//    //
+//    //        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
+//    //            // Open a new tab, load the page
+//    //            app.buttons["URLBarView.tabsButton"].tap()
+//    //            if index == 0 {
+//    //                app.buttons["TabTrayController.togglePrivateMode"].tap()
+//    //            }
+//    //            app.buttons["TabTrayController.addTabButton"].tap()
+//    //            loadWebPage(url, waitForLoadToFinish: false)
+//    //            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
+//    //        }
+//    //
+//    //        // Go back to the tabs tray, swipe it back to the top
+//    //        app.buttons["URLBarView.tabsButton"].tap()
+//    //        app.collectionViews["TabTrayController.collectionView"].swipeDown()
+//    //
+//    //        snapshot("PrivateBrowsingWithTabs")
+//    //
+//    //        // Leave private mode
+//    //        app.buttons["TabTrayController.togglePrivateMode"].tap()
+//    //    }
+//
+//    func test08ClearPrivateData() {
+//        clearPrivateData()
+//    }
+//
+//    func test09History() {
+//
+//        // TODO Needs a Clear Private Data first
+//
+//        let historyLastMonthPerLocale: [String: [String]] = [
+//            "*": [
+//                "http://www.techcrunch.com",
+//                "http://www.bbc.com/news",
+//                "privacy",
+//                "https://www.eff.org/issues/privacy",
+//                "http://www.reuters.com/news",
+//                "https://www.nasa.gov",
+//                "https://support.mozilla.org",
+//                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/",
+//                "https://www.smashingmagazine.com"
+//            ],
+//            "de_DE": [
+//                "http://www.spiegel.de",
+//                "http://www.ebay.de",
+//                "https://www.google.de/search?q=privatsph%e4re&hl=de",
+//                "https://www.eff.org/issues/privacy",
+//                "http://de.reuters.com",
+//                "https://support.mozilla.org",
+//                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+//            ],
+//            "es_ES": [
+//                // TODO
+//                "https://support.mozilla.org",
+//                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+//            ],
+//            "es_MX": [
+//                // TODO
+//                "https://support.mozilla.org",
+//                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+//            ],
+//            "fr_FR": [
+//                // TODO
+//                "https://support.mozilla.org",
+//                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
+//            ],
+//        ]
+//
+//        for url in (historyLastMonthPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyLastMonthPerLocale["*"]!).reverse() {
+//            loadWebPage(url, waitForLoadToFinish: false)
+//            sleep(5)
+//        }
+//
+//        let historyTodayPerLocale: [String: [String]] = [
+//            "*": [
+//                "https://www.mozilla.org",
+//                "https://www.youtube.com",
+//                "https://www.twitter.com",
+//                "https://www.reddit.com",
+//                "https://support.mozilla.org/products/ios",
+//                "firefox"
+//            ],
+//            "de_DE": [
+//                "https://www.mozilla.org",
+//                "https://www.youtube.com",
+//                "https://www.twitter.com",
+//                "https://www.wikipedia.org",
+//                "https://support.mozilla.org/products/ios",
+//                "https://www.google.de/search?q=firefox&hl=de"
+//            ],
+//            "es_ES": [
+//                "https://www.mozilla.org",
+//                "https://www.youtube.com",
+//                "https://www.twitter.com",
+//                "http://www.elmundo.es",
+//                "https://support.mozilla.org/products/ios",
+//                "https://www.google.es/search?q=firefox&hl=es"
+//            ],
+//            "es_MX": [
+//                "https://www.mozilla.org",
+//                "https://www.youtube.com",
+//                "https://www.twitter.com",
+//                "http://www.elmundo.es",
+//                "https://support.mozilla.org/products/ios",
+//                "https://www.google.com.mx/search?q=firefox&hl=es"
+//            ],
+//            "fr_FR": [
+//                "https://www.mozilla.org",
+//                "https://www.youtube.com",
+//                "https://www.twitter.com",
+//                "https://www.wikipedia.org",
+//                "https://support.mozilla.org/products/ios",
+//                "https://www.google.fr/search?q=firefox&hl=fr",
+//            ]
+//        ]
+//
+//        for url in (historyTodayPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyTodayPerLocale["*"]!).reverse() {
+//            loadWebPage(url, waitForLoadToFinish: false)
+//            sleep(5)
+//        }
+//
+//        // Create a new tab so that the location bar shows the placeholder
+//        app.buttons["URLBarView.tabsButton"].tap()
+//        app.buttons["TabTrayController.addTabButton"].tap()
+//
+//        // Select the history panel
+//        app.textFields["url"].tap()
+//        app.buttons["HomePanels.History"].tap()
+//
+//        let _ = NSData(contentsOfURL: NSURL(string: "http://localhost:6571/snapshottest/hidekeyboard")!)
 //        sleep(3)
 //
-//        // Open the tab tray and close the one tab we have open now
-//        app.buttons["URLBarView.tabsButton"].tap()
-//
-////        //app.buttons["TabCell.closeButton"].tap()
-////        app.collectionViews["TabTrayController.collectionView"].buttons.elementBoundByIndex(0).tap()
-//
-//        let e = app.collectionViews["TabTrayController.collectionView"].exists
-//        NSLog("TabTrayController.collectionView.exists = \(e)")
-//
-////        print(app.collectionViews["TabTrayController.collectionView"].exists)
-////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0))
-////        print(app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).buttons["TabCell.closeButton"])
-//        //app.collectionViews["TabTrayController.collectionView"].cells.elementBoundByIndex(0).swipeLeft()
+//        snapshot("History")
 //    }
-
-    func test05Tabs() {
-        let tabsPerLocale: [String: [String]] = [
-            "*": [
-                "https://www.twitter.com",
-                "https://www.mozilla.org/firefox/desktop",
-                "https://www.flickr.com",
-                "https://www.mozilla.org",
-                "https://www.mozilla.org/firefox/developer/",
-            ],
-        ]
-
-        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
-            // Open a new tab, load the page.
-            if index != 0 {
-                app.buttons["URLBarView.tabsButton"].tap()
-                app.buttons["TabTrayController.addTabButton"].tap()
-            }
-            loadWebPage(url, waitForLoadToFinish: false)
-            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
-        }
-
-        // Go back to the tabs tray, swipe it back to the top
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.collectionViews["TabTrayController.collectionView"].swipeDown()
-        snapshot("Tabs")
-    }
-
-    func test06PrivateBrowsing() {
-        // Enter private mode
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.buttons["TabTrayController.togglePrivateMode"].tap()
-
-        snapshot("PrivateBrowsingEmptyState")
-
-        // Leave private mode
-        app.buttons["TabTrayController.togglePrivateMode"].tap()
-    }
-
-            //    func test07PrivateBrowsingWithTabs() {
-            //        let tabsPerLocale: [String: [String]] = [
-            //            "*": [
-            //                "https://www.mozilla.org/firefox/private-browsing",
-            //                "https://www.ebay.com",
-            //                "https://www.amazon.com",
-            //                "https://www.expedia.com",
-            //            ],
-            //            "de": [
-            //                "https://www.mozilla.org/firefox/private-browsing",
-            //                "https://www.ebay.de",
-            //                "https://www.amazon.de",
-            //                "https://www.expedia.de",
-            //            ],
-            //            "fr": [
-            //                "https://www.mozilla.org/firefox/private-browsing",
-            //                "https://www.ebay.fr",
-            //                "https://www.amazon.fr",
-            //                "https://www.expedia.fr",
-            //            ],
-            //        ]
-            //
-            //        for (index, url) in (tabsPerLocale[NSLocale.currentLocale().localeIdentifier] ?? tabsPerLocale["*"]!).enumerate() {
-            //            // Open a new tab, load the page
-            //            app.buttons["URLBarView.tabsButton"].tap()
-            //            if index == 0 {
-            //                app.buttons["TabTrayController.togglePrivateMode"].tap()
-            //            }
-            //            app.buttons["TabTrayController.addTabButton"].tap()
-            //            loadWebPage(url, waitForLoadToFinish: false)
-            //            sleep(5) // TODO Need better mechanism to find out if page has finished loading. Also, mozilla.org/firefox/desktop will need more time to settle because it does animations.
-            //        }
-            //
-            //        // Go back to the tabs tray, swipe it back to the top
-            //        app.buttons["URLBarView.tabsButton"].tap()
-            //        app.collectionViews["TabTrayController.collectionView"].swipeDown()
-            //
-            //        snapshot("PrivateBrowsingWithTabs")
-            //
-            //        // Leave private mode
-            //        app.buttons["TabTrayController.togglePrivateMode"].tap()
-            //    }
-
-    func test08ClearPrivateData() {
-        clearPrivateData()
-    }
-
-    func test09History() {
-
-        // TODO Needs a Clear Private Data first
-
-        let historyLastMonthPerLocale: [String: [String]] = [
-            "*": [
-                "http://www.techcrunch.com",
-                "http://www.bbc.com/news",
-                "privacy",
-                "https://www.eff.org/issues/privacy",
-                "http://www.reuters.com/news",
-                "https://www.nasa.gov",
-                "https://support.mozilla.org",
-                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/",
-                "https://www.smashingmagazine.com"
-            ],
-            "de": [
-                "http://www.spiegel.de",
-                "http://www.ebay.de",
-                "privatsphäre",
-                "https://www.eff.org/issues/privacy",
-                "http://de.reuters.com",
-                "https://support.mozilla.org",
-                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
-            ],
-            "es": [
-                // TODO
-                "https://support.mozilla.org",
-                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
-            ],
-            "fr": [
-                "https://support.mozilla.org",
-                "https://blog.mozilla.org/blog/2016/02/25/mozilla-introduces-surveillance-principles-for-a-secure-trusted-internet-2/"
-            ],
-        ]
-
-        for url in (historyLastMonthPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyLastMonthPerLocale["*"]!).reverse() {
-            loadWebPage(url, waitForLoadToFinish: false)
-            sleep(5)
-        }
-
-        let historyTodayPerLocale: [String: [String]] = [
-            "*": [
-                "https://www.mozilla.org",
-                "https://www.youtube.com",
-                "https://www.twitter.com",
-                "https://www.reddit.com",
-                "https://support.mozilla.org/products/ios",
-                "firefox"
-            ],
-            "de": [
-                "https://www.mozilla.org",
-                "https://www.youtube.com",
-                "https://www.twitter.com",
-                "https://www.wikipedia.org",
-                "https://support.mozilla.org/products/ios",
-                "firefox"
-            ],
-            "es": [
-                "https://www.mozilla.org",
-                "https://www.youtube.com",
-                "https://www.twitter.com",
-                "http://www.elmundo.es",
-                "https://support.mozilla.org/products/ios",
-                "firefox"
-            ],
-            "fr": [
-                "https://www.mozilla.org",
-                "https://www.youtube.com",
-                "https://www.twitter.com",
-                "https://www.wikipedia.org",
-                "https://support.mozilla.org/products/ios",
-                "firefox",
-            ]
-        ]
-
-        for url in (historyTodayPerLocale[NSLocale.currentLocale().localeIdentifier] ?? historyTodayPerLocale["*"]!).reverse() {
-            loadWebPage(url, waitForLoadToFinish: false)
-            sleep(5)
-        }
-
-        // Create a new tab so that the location bar shows the placeholder
-        app.buttons["URLBarView.tabsButton"].tap()
-        app.buttons["TabTrayController.addTabButton"].tap()
-
-        // Select the history panel
-        app.textFields["url"].tap()
-        app.buttons["HomePanels.History"].tap()
-
-        let _ = NSData(contentsOfURL: NSURL(string: "http://localhost:6571/snapshottest/hidekeyboard")!)
-        sleep(3)
-
-        snapshot("History")
-    }
 
     private func clearPrivateData() {
         // Open the settings
@@ -310,5 +341,15 @@ class MarketingSnapshotTests: XCTestCase {
             expectationForPredicate(loaded, evaluatedWithObject: progressIndicator, handler: nil)
             waitForExpectationsWithTimeout(LoadingTimeout, handler: nil)
         }
+    }
+
+    private func switchKeyboardToFrench(app: XCUIApplication) {
+        app.keyboards.buttons["Clavier suivant"].pressForDuration(0.7);
+        app.staticTexts["Français (France)"].tap()
+    }
+
+    private func switchKeyboardToGerman(app: XCUIApplication) {
+        app.keyboards.buttons["Nächste Tastatur"].pressForDuration(1.0);
+        app.cells["Deutsch"].tap()
     }
 }
