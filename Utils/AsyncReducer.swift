@@ -7,7 +7,7 @@ import Deferred
 
 private let DefaultDispatchQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
 
-public func asyncReducer<T, U>(initialValue: T, combine: (T, U) -> Deferred<Maybe<T>>) -> AsyncReducer<T, U> {
+public func asyncReducer<T, U>(initialValue: T, combine: (T, U) -> Deferred) -> AsyncReducer<T, U> {
     return AsyncReducer(initialValue: initialValue, combine: combine)
 }
 
@@ -27,14 +27,14 @@ public func asyncReducer<T, U>(initialValue: T, combine: (T, U) -> Deferred<Mayb
  */
 public class AsyncReducer<T, U> {
     // T is the accumulator. U is the input value. The returned T is the new accumulated value.
-    public typealias Combine = (T, U) -> Deferred<Maybe<T>>
+    public typealias Combine = (T, U) -> Deferred
     private let lock = NSRecursiveLock()
 
     private let dispatchQueue: dispatch_queue_t
     private let combine: Combine
 
-    private let initialValueDeferred: Deferred<Maybe<T>>
-    public let terminal: Deferred<Maybe<T>> = Deferred()
+    private let initialValueDeferred: Deferred
+    public let terminal: Deferred = Deferred()
 
     private var queuedItems: [U] = []
 
@@ -54,7 +54,7 @@ public class AsyncReducer<T, U> {
         self.init(initialValue: deferMaybe(initialValue), queue: queue, combine: combine)
     }
 
-    public init(initialValue: Deferred<Maybe<T>>, queue: dispatch_queue_t = DefaultDispatchQueue, combine: Combine) {
+    public init(initialValue: Deferred, queue: dispatch_queue_t = DefaultDispatchQueue, combine: Combine) {
         self.dispatchQueue = queue
         self.combine = combine
         self.initialValueDeferred = initialValue
@@ -67,7 +67,7 @@ public class AsyncReducer<T, U> {
             return
         }
 
-        func queueNext(deferredValue: Deferred<Maybe<T>>) {
+        func queueNext(deferredValue: Deferred) {
             deferredValue.uponQueue(dispatchQueue, block: continueMaybe)
         }
 
@@ -110,7 +110,7 @@ public class AsyncReducer<T, U> {
      *
      * @throws AlreadyFilled if the queue has finished already.
      */
-    public func append(items: U...) throws -> Deferred<Maybe<T>> {
+    public func append(items: U...) throws -> Deferred {
         return try append(items)
     }
 
@@ -119,7 +119,7 @@ public class AsyncReducer<T, U> {
      *
      * @throws AlreadyFilled if the queue has already finished.
      */
-    public func append(items: [U]) throws -> Deferred<Maybe<T>> {
+    public func append(items: [U]) throws -> Deferred {
         lock.lock()
         defer { lock.unlock() }
 

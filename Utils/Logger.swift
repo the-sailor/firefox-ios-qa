@@ -51,7 +51,7 @@ public extension Logger {
     }
 
     static private func fileLoggerWithName(name: String) -> XCGLogger {
-        let log = XCGLogger()
+        let log = XCGLogger
         if let logFileURL = urlForLogNamed(name) {
             let fileDestination = XCGFileLogDestination(
                 owner: log,
@@ -90,7 +90,7 @@ public extension Logger {
         } catch _ {
         }
 
-        return filenamesAndURLs.map { ($0, NSData(contentsOfFile: $1.absoluteString)) }
+        return filenamesAndURLs.map { ($0, NSData(contentsOfFile: $1.absoluteString!)) }
     }
 }
 

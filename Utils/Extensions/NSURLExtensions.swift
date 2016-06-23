@@ -157,12 +157,12 @@ extension NSURL {
     public func absoluteDisplayString() -> String? {
         var urlString = self.absoluteString
         // For http URLs, get rid of the trailing slash if the path is empty or '/'
-        if (self.scheme == "http" || self.scheme == "https") && (self.path == "/" || self.path == nil) && urlString.endsWith("/") {
-            urlString = urlString.substringToIndex(urlString.endIndex.advancedBy(-1))
+        if (self.scheme == "http" || self.scheme == "https") && (self.path == "/" || self.path == nil) && urlString!.endsWith("/") {
+            urlString = urlString!.substringToIndex(urlString!.endIndex.advancedBy(-1))
         }
         // If it's basic http, strip out the string but leave anything else in
-        if urlString.hasPrefix("http://") ?? false {
-            return urlString.substringFromIndex(urlString.startIndex.advancedBy(7))
+        if urlString!.hasPrefix("http://") ?? false {
+            return urlString!.substringFromIndex(urlString!.startIndex.advancedBy(7))
         } else {
             return urlString
         }
@@ -237,7 +237,7 @@ extension NSURL {
         let httpSchemes = ["http", "https"]
         let dataSchemes = ["data"]
 
-        if httpSchemes.contains(scheme) || includeDataURIs && dataSchemes.contains(scheme) {
+        if let _ = httpSchemes.indexOf(scheme!) where includeDataURIs && dataSchemes.contains(scheme) {
             return true
         }
 
