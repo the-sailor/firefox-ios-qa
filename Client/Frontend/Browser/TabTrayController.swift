@@ -1244,6 +1244,7 @@ class TrayToolbar: UIView {
         let button = ToggleButton()
         button.accessibilityLabel = PrivateModeStrings.toggleAccessibilityLabel
         button.accessibilityHint = PrivateModeStrings.toggleAccessibilityHint
+        button.accessibilityIdentifier = "TabTrayController.maskButton"
         return button
     }()
 
