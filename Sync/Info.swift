@@ -50,3 +50,49 @@ public class InfoCollections {
         return ours.sameElements(theirs, f: ==) && same(other, collections: ours)
     }
 }
+
+// Data structure containing information from the /info/configuration endpoint
+// for various limits and sizes the server supports with regards to uploading.
+public struct InfoConfiguration {
+    // Maximum size in bytes of the overall HTTP request body that will be accepted by the server.
+    public let maxRequestBytes: Int
+
+    // Maximum number of records that can be uploaded to a collection in a single POST request.
+    public let maxPostRecords: Int
+
+    // Maximum combined size in bytes of the record payloads that can be uploaded to a
+    // collection in a single POST request.
+    public let maxPostBytes: Int
+
+    // Maximum number of records that can be uploaded to a collection as part of a batched upload.
+    public let maxTotalRecords: Int
+
+    // Maximum combined size in bytes of the record payloads that can be uploaded 
+    // to a collection as part of a batched upload.
+    public let maxTotalBytes: Int
+
+    static func fromJSON(json: JSON) -> InfoConfiguration? {
+        // Convert for easier handling.
+        guard let dict = json.asDictionary else {
+            return nil
+        }
+
+        // Extract required fields
+        guard let maxPostRecords = dict["max_post_records"]?.asInt,
+              let maxRequestBytes = dict["max_request_bytes"]?.asInt,
+              let maxPostBytes = dict["max_post_bytes"]?.asInt,
+              let maxTotalRecords = dict["max_total_records"]?.asInt,
+              let maxTotalBytes = dict["max_total_bytes"]?.asInt
+        else {
+            return nil
+        }
+
+        return InfoConfiguration(
+            maxRequestBytes: maxRequestBytes,
+            maxPostRecords: maxPostRecords,
+            maxPostBytes: maxPostBytes,
+            maxTotalRecords: maxTotalRecords,
+            maxTotalBytes: maxTotalBytes
+        )
+    }
+}
