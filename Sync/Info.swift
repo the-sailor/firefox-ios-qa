@@ -96,3 +96,9 @@ public struct InfoConfiguration {
         )
     }
 }
+
+//public static let maxRecordSizeBytes: Int = 262_140       // A shade under 256KB.
+//public static let maxPayloadSizeBytes: Int = 1_000_000    // A shade under 1MB.
+//public static let maxPayloadItemCount: Int = 100          // Bug 1250747 will raise this.
+
+//public static let DefaultInfoConfiguration = InfoConfiguration(maxRequestBytes: <#T##Int#>, maxPostRecords: <#T##Int#>, maxPostBytes: <#T##Int#>, maxTotalRecords: <#T##Int#>, maxTotalBytes: <#T##Int#>)
