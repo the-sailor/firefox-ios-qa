@@ -9,10 +9,9 @@
 import Shared
 import UIKit
 
-class ActivityStreamPanel: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ActivityStreamPanel: UIViewController, UITableViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let tableView = UITableView()
-
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -26,7 +25,6 @@ class ActivityStreamPanel: UIViewController, UITableViewDelegate, UITableViewDat
         super.viewDidLoad()
 
         configureTableView()
-
     }
 
     func configureTableView() {
@@ -47,9 +45,15 @@ class ActivityStreamPanel: UIViewController, UITableViewDelegate, UITableViewDat
         }
     }
 
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
-    }
+
+
+
+
+}
+
+
+//TopSites data source
+extension ActivityStreamPanel: UITableViewDataSource, UICollectionViewDataSource {
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("ASRow", forIndexPath: indexPath) as! AStreamRowCell
@@ -59,16 +63,12 @@ class ActivityStreamPanel: UIViewController, UITableViewDelegate, UITableViewDat
         return cell
     }
 
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return 100
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 4
     }
 
-}
-
-extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return CGSize(width:100, height:100)
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return 100
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -79,15 +79,19 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         return 1
     }
 
-
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath)
         cell.backgroundColor = UIColor.blueColor()
         return cell
     }
 
-    
+}
 
+extension ActivityStreamPanel: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        return CGSize(width:100, height:100)
+    }
 
 }
 
@@ -118,5 +122,25 @@ class AStreamRowCell: UITableViewCell {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+}
+
+struct ActivityStreamDataSource {
+    //var content = []
+    var profile: Profile
+
+
+    init(profile: Profile) {
+        self.profile = profile
+    }
+
+    private func reloadTopSitesWithLimit(limit: Int) -> Success {
+        return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
+//            self.updateDataSourceWithSites(result)
+//            self.collection?.reloadData()
+            return succeed()
+        }
+    }
+
+
 }
 
