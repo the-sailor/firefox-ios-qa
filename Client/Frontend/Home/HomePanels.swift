@@ -19,6 +19,13 @@ class HomePanels {
     let enabledPanels = [
         HomePanelDescriptor(
             makeViewController: { profile in
+                ActivityStreamPanel()
+            },
+            imageName: "TopSites",
+            accessibilityLabel: NSLocalizedString("Top sites", comment: "Panel accessibility label"),
+            accessibilityIdentifier: "HomePanels.AStream"),
+        HomePanelDescriptor(
+            makeViewController: { profile in
                 TopSitesPanel(profile: profile)
             },
             imageName: "TopSites",
