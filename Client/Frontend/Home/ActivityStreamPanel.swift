@@ -11,9 +11,15 @@ import UIKit
 
 class ActivityStreamPanel: UIViewController, UITableViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
+    let profile: Profile
+
+    private lazy var dataSource: ActivityStreamDataSource = {
+        return ActivityStreamDataSource(profile: self.profile)
+    }()
     let tableView = UITableView()
 
-    init() {
+    init(profile: Profile) {
+        self.profile = profile
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -44,11 +50,6 @@ class ActivityStreamPanel: UIViewController, UITableViewDelegate {
             tableView.cellLayoutMarginsFollowReadableWidth = false
         }
     }
-
-
-
-
-
 }
 
 
