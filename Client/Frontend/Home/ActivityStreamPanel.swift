@@ -8,15 +8,23 @@
 
 import Shared
 import UIKit
+import Deferred
+import Storage
 
-class ActivityStreamPanel: UIViewController, UITableViewDelegate {
+
+class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let profile: Profile
+    var collectionView: UICollectionView!
 
-    private lazy var dataSource: ActivityStreamDataSource = {
-        return ActivityStreamDataSource(profile: self.profile)
-    }()
-    let tableView = UITableView()
+    //once things get fleshed out we can refactor and find a better home for these
+    var topSites: [Site] = []
+    var highlights: [Site] = []
+    var history: [Site] = []
+
+//    private lazy var dataSource: ActivityStreamDataSource = {
+//        return ActivityStreamDataSource(profile: self.profile)
+//    }()
 
     init(profile: Profile) {
         self.profile = profile
@@ -29,119 +37,115 @@ class ActivityStreamPanel: UIViewController, UITableViewDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        configureTableView()
+        reloadTopSitesWithLimit(10)
+        reloadRecentHistoryWithLimit(10)
+        reloadHighlights(3)
+        configureCollectionView()
     }
 
-    func configureTableView() {
-        view.addSubview(tableView)
-        tableView.snp_makeConstraints { (make) in
+
+
+    func configureCollectionView() {
+        let layout  = UICollectionViewFlowLayout()
+        layout.sectionInset = UIEdgeInsetsMake(0, 5, 0, 5)
+        collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
+        collectionView.backgroundColor = UIColor.whiteColor()
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        view.addSubview(collectionView)
+        collectionView.snp_makeConstraints { (make) in
             make.edges.equalTo(self.view)
-        }
-
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.registerClass(AStreamRowCell.self, forCellReuseIdentifier: "ASRow")
-        tableView.layoutMargins = UIEdgeInsetsZero
-        tableView.backgroundColor = UIConstants.PanelBackgroundColor
-        tableView.separatorColor = UIConstants.PanelBackgroundColor
-
-        if #available(iOS 9.0, *) {
-            tableView.cellLayoutMarginsFollowReadableWidth = false
         }
     }
 }
 
 
 //TopSites data source
-extension ActivityStreamPanel: UITableViewDataSource, UICollectionViewDataSource {
+extension ActivityStreamPanel: UICollectionViewDataSource {
 
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("ASRow", forIndexPath: indexPath) as! AStreamRowCell
-        cell.collectionView.delegate = self
-        cell.collectionView.dataSource = self
 
-        return cell
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        return 3
     }
 
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
-    }
-
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        return 100
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        switch indexPath.section {
+            case 0:
+                return CGSize(width: 100, height: 100)
+            case 1:
+                return CGSize(width: 200, height: 100)
+            default:
+                return CGSize(width: self.view.frame.width, height: 50)
+        }
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 40
-    }
-
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        return 1
+        //The number of items in a specfic row
+        switch section {
+            case 0:
+                return self.topSites.count
+            case 1:
+                return self.highlights.count
+            default:
+                return self.history.count
+        }
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath)
+
+        var site: Site!
+        switch indexPath.section {
+        case 0:
+             site = self.topSites[indexPath.row]
+        case 1:
+            site = self.highlights[indexPath.row]
+        default:
+            site = self.history[indexPath.row]
+        }
+
+        let label = UILabel(frame: cell.bounds)
+        label.text = site.title
+        cell.addSubview(label)
         cell.backgroundColor = UIColor.blueColor()
         return cell
     }
 
-}
-
-extension ActivityStreamPanel: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        return CGSize(width:100, height:100)
-    }
-
-}
-
-class AStreamRowCell: UITableViewCell {
-    var collectionView: UICollectionView!
-
-    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        selectionStyle = .None
-        let layout  = UICollectionViewFlowLayout()
-        layout.sectionInset = UIEdgeInsetsMake(0, 5, 0, 5)
-        layout.scrollDirection = .Horizontal
-        collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
-        collectionView.backgroundColor = UIColor.redColor()
-        addSubview(collectionView)
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-
-        collectionView.snp_makeConstraints { (make) in
-            make.edges.equalTo(self)
-        }
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-struct ActivityStreamDataSource {
-    //var content = []
-    var profile: Profile
-
-
-    init(profile: Profile) {
-        self.profile = profile
-    }
-
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
-//            self.updateDataSourceWithSites(result)
-//            self.collection?.reloadData()
+            //call the datasource updated with the specific wat? I dunno
+            if let data = result.successValue {
+                self.topSites = data.asArray() //weak?
+                self.collectionView.reloadData()
+            }
+            return succeed()
+        }
+    }
+
+    private func reloadRecentHistoryWithLimit(limit: Int) -> Success {
+        return self.profile.history.getSitesByLastVisit(limit).bindQueue(dispatch_get_main_queue()) { result in
+            if let data = result.successValue {
+                self.history = data.asArray()
+                self.collectionView.reloadData()
+            }
+            return succeed()
+        }
+    }
+
+    private func reloadHighlights(limit: Int) -> Success {
+        return self.profile.history.getSitesByFrecencyWithHistoryLimit(limit).bindQueue(dispatch_get_main_queue()) {result in
+            if let data = result.successValue {
+                self.highlights = data.asArray()
+                self.collectionView.reloadData()
+            }
             return succeed()
         }
     }
 
 
 }
+
+
 
