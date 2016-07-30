@@ -1,15 +1,12 @@
-//
-//  ActivityStreamPanel.swift
-//  Client
-//
-//  Created by Farhan Patel on 7/27/16.
-//  Copyright © 2016 Mozilla. All rights reserved.
-//
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import Shared
 import UIKit
 import Deferred
 import Storage
+import WebImage
 
 
 class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
@@ -21,10 +18,6 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     var topSites: [Site] = []
     var highlights: [Site] = []
     var history: [Site] = []
-
-//    private lazy var dataSource: ActivityStreamDataSource = {
-//        return ActivityStreamDataSource(profile: self.profile)
-//    }()
 
     init(profile: Profile) {
         self.profile = profile
@@ -47,10 +40,10 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
 
     func configureCollectionView() {
         let layout  = UICollectionViewFlowLayout()
-        layout.sectionInset = UIEdgeInsetsMake(0, 5, 0, 5)
+
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
-        collectionView.showsHorizontalScrollIndicator = false
         collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
+        collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSite")
         collectionView.backgroundColor = UIColor.whiteColor()
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -63,12 +56,17 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
 
 
 //TopSites data source
-extension ActivityStreamPanel: UICollectionViewDataSource {
+extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
+
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAtIndex section: Int) -> CGFloat {
+        return 2
+    }
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         return 3
     }
+
 
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
         switch indexPath.section {
@@ -82,10 +80,12 @@ extension ActivityStreamPanel: UICollectionViewDataSource {
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        //The number of items in a specfic row
         switch section {
             case 0:
                 return self.topSites.count
+                //we need to only load enough for one row. This varies on different devices
+                let screenMax = Int(view.frame.width/100)
+                return screenMax < self.topSites.count ? screenMax : self.topSites.count
             case 1:
                 return self.highlights.count
             default:
@@ -94,12 +94,20 @@ extension ActivityStreamPanel: UICollectionViewDataSource {
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath)
+        var identifier = "Cell"
+        switch indexPath.section {
+            case 0:
+                identifier = "TopSite"
+            default:
+                identifier = "Cell"
+        }
+
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(identifier, forIndexPath: indexPath)
 
         var site: Site!
         switch indexPath.section {
         case 0:
-             site = self.topSites[indexPath.row]
+            return configureTopSitesCell(cell, forIndexPath: indexPath)
         case 1:
             site = self.highlights[indexPath.row]
         default:
@@ -113,9 +121,42 @@ extension ActivityStreamPanel: UICollectionViewDataSource {
         return cell
     }
 
+    func configureTopSitesCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let site  = self.topSites[indexPath.row]
+        let topSiteCell = cell as! TopSiteCell
+        topSiteCell.backgroundColor = UIColor.blueColor()
+        if let icon = site.icon {
+           let url = icon.url
+            topSiteCell.setImageWithURL(NSURL(string: url)!)
+        }
+        topSiteCell.titleLabel.text = site.url
+        return cell
+    }
+
+
+    private func setDefaultThumbnailBackgroundForCell(cell: ThumbnailCell) {
+        cell.imageView.image = UIImage(named: "defaultTopSiteIcon")!
+        cell.imageView.contentMode = UIViewContentMode.Center
+    }
+
+    private func setBlurredBackground(image: UIImage, withURL url: NSURL, forCell cell: ThumbnailCell) {
+        let blurredKey = "\(url.absoluteString)!blurred"
+        if let blurredImage = SDImageCache.sharedImageCache().imageFromMemoryCacheForKey(blurredKey) {
+            cell.backgroundImage.image = blurredImage
+        } else {
+            let blurredImage = image.applyLightEffect()
+            SDImageCache.sharedImageCache().storeImage(blurredImage, forKey: blurredKey, toDisk: false)
+            cell.backgroundImage.alpha = 0
+            cell.backgroundImage.image = blurredImage
+//            UIView.animateWithDuration(self.BackgroundFadeInDuration) {
+//                cell.backgroundImage.alpha = 1
+//            }
+        }
+    }
+
+
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
-            //call the datasource updated with the specific wat? I dunno
             if let data = result.successValue {
                 self.topSites = data.asArray() //weak?
                 self.collectionView.reloadData()
