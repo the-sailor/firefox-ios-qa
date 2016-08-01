@@ -243,6 +243,13 @@ class HighlightCell: UICollectionViewCell {
         textWrapper.addSubview(statusIcon)
         contentView.addSubview(removeButton)
 
+        imageView.snp_makeConstraints { (make) in
+            make.height.equalTo(self.frame.height/2)
+            make.width.equalTo(self.frame.width/2)
+            make.center.equalTo(self.snp_center)
+            //move it up a bit. Not centered correctly
+        }
+        
         textWrapper.snp_makeConstraints { make in
             make.bottom.equalTo(self.imageWrapper.snp_bottom) // .offset(HighlightCellUX.BorderWidth)
             make.left.right.equalTo(self.imageWrapper) // .offset(HighlightCellUX.BorderWidth)
@@ -296,6 +303,23 @@ class HighlightCell: UICollectionViewCell {
         removeButton.hidden = true
         imageWrapper.backgroundColor = UIColor.clearColor()
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+    }
+
+    func setImageWithURL(url: NSURL) {
+        self.backgroundColor = UIColor.whiteColor()
+        self.contentView.backgroundColor = UIColor.whiteColor()
+        imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
+            guard let img = img else {
+                return
+            }
+            //intensive. dont calculate here. this needs to be cached
+            img.getColors { colors in
+                self.contentView.backgroundColor = colors.backgroundColor
+                self.backgroundColor = colors.backgroundColor
+            }
+
+        }
+        imageView.layer.masksToBounds = true
     }
 
     func SELdidRemove() {
