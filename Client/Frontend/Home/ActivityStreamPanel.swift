@@ -8,7 +8,6 @@ import Deferred
 import Storage
 import WebImage
 
-
 class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let profile: Profile
@@ -44,6 +43,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSite")
+        collectionView.registerClass(HighlightCell.self, forCellWithReuseIdentifier: "Highlight")
         collectionView.backgroundColor = UIColor.whiteColor()
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -54,11 +54,8 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     }
 }
 
-
 //TopSites data source
 extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
-
-
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAtIndex section: Int) -> CGFloat {
         return 2
     }
@@ -66,7 +63,6 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         return 3
     }
-
 
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
         switch indexPath.section {
@@ -98,6 +94,8 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         switch indexPath.section {
             case 0:
                 identifier = "TopSite"
+            case 1:
+                identifier = "Highlight"
             default:
                 identifier = "Cell"
         }
@@ -109,7 +107,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         case 0:
             return configureTopSitesCell(cell, forIndexPath: indexPath)
         case 1:
-            site = self.highlights[indexPath.row]
+            return configureHighlightCell(cell, forIndexPath: indexPath)
         default:
             site = self.history[indexPath.row]
         }
@@ -122,7 +120,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     }
 
     func configureTopSitesCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let site  = self.topSites[indexPath.row]
+        let site = self.topSites[indexPath.row]
         let topSiteCell = cell as! TopSiteCell
         topSiteCell.backgroundColor = UIColor.blueColor()
         if let icon = site.icon {
@@ -130,6 +128,20 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             topSiteCell.setImageWithURL(NSURL(string: url)!)
         }
         topSiteCell.titleLabel.text = site.url
+        return cell
+    }
+
+    func configureHighlightCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let site = self.highlights[indexPath.row]
+        let topSiteCell = cell as! HighlightCell
+        if let icon = site.icon {
+            let url = icon.url
+            topSiteCell.setImageWithURL(NSURL(string: url)!)
+        }
+        topSiteCell.backgroundColor = UIColor.blueColor()
+
+        topSiteCell.textLabel.text = site.url
+        topSiteCell.statusText.text = "Bookmarked"
         return cell
     }
 
@@ -148,12 +160,11 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             SDImageCache.sharedImageCache().storeImage(blurredImage, forKey: blurredKey, toDisk: false)
             cell.backgroundImage.alpha = 0
             cell.backgroundImage.image = blurredImage
-//            UIView.animateWithDuration(self.BackgroundFadeInDuration) {
-//                cell.backgroundImage.alpha = 1
-//            }
+            UIView.animateWithDuration(0.3) {
+                cell.backgroundImage.alpha = 1
+            }
         }
     }
-
 
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
@@ -184,9 +195,4 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             return succeed()
         }
     }
-
-
 }
-
-
-
