@@ -8,6 +8,14 @@ import Deferred
 import Storage
 import WebImage
 
+/*
+ Section headers
+ only show a single row of highlights
+ general reorg
+ remove all magic numbers in favor of a struct
+ fonts
+ */
+
 class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let profile: Profile
@@ -44,6 +52,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSite")
         collectionView.registerClass(HighlightCell.self, forCellWithReuseIdentifier: "Highlight")
+        collectionView.registerClass(ActivityStreamHeaderView.self, forSupplementaryViewOfKind: "UICollectionElementKindSectionHeader", withReuseIdentifier: "ASHeader")
         collectionView.backgroundColor = UIColor.whiteColor()
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -52,6 +61,36 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
             make.edges.equalTo(self.view)
         }
     }
+}
+
+
+//Headers layout
+extension ActivityStreamPanel {
+
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        switch section {
+        case 0:
+            return CGSize(width: self.view.frame.width, height: 50)
+        case 1:
+            return CGSize(width: self.view.frame.width, height: 50)
+        default:
+            return CGSize(width: 0, height: 0)
+        }
+    }
+
+    func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
+        let cell = collectionView.dequeueReusableSupplementaryViewOfKind(kind, withReuseIdentifier: "ASHeader", forIndexPath: indexPath) as! ActivityStreamHeaderView
+        switch indexPath.section {
+        case 0:
+            cell.titleLabel.text = "Top Sites"
+        default:
+           cell.titleLabel.text = "Highlights"
+        }
+        return cell
+
+    }
+
+
 }
 
 //TopSites data source
@@ -69,7 +108,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             case 0:
                 return CGSize(width: 100, height: 100)
             case 1:
-                return CGSize(width: 200, height: 100)
+                return CGSize(width: (self.view.frame.width/2)-5, height: 100)
             default:
                 return CGSize(width: self.view.frame.width, height: 50)
         }
@@ -147,6 +186,12 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         return cell
     }
 
+    func configureRecentCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let site = self.highlights[indexPath.row]
+
+        return cell
+    }
+
 
     private func setDefaultThumbnailBackgroundForCell(cell: ThumbnailCell) {
         cell.imageView.image = UIImage(named: "defaultTopSiteIcon")!
@@ -168,6 +213,10 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         }
     }
 
+
+    /*
+     Simple methods to fetch some data from the DB
+     */
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
@@ -196,5 +245,25 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             }
             return succeed()
         }
+    }
+
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        var site: Site!
+        switch indexPath.section {
+            case 0:
+                site = self.topSites[indexPath.row]
+            case 1:
+                site = self.highlights[indexPath.row]
+            default:
+                site = self.history[indexPath.row]
+        }
+        let visitType = VisitType.Bookmark
+        homePanelDelegate?.homePanel(self, didSelectURL: site.tileURL, visitType: visitType)
+
+    }
+}
+
+extension ActivityStreamPanel: HomePanel {
+    func endEditing() {
     }
 }
