@@ -73,14 +73,7 @@ struct HighlightCellUX {
     static let NearestNeighbordScalingThreshold: CGFloat = 24
 }
 
-@objc protocol HighlightCellDelegate {
-    func didRemoveThumbnail(highlightCell: HighlightCell)
-    func didLongPressThumbnail(highlightCell: HighlightCell)
-}
-
 class HighlightCell: UICollectionViewCell {
-    weak var delegate: HighlightCellDelegate?
-
     var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
     var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
 
@@ -125,10 +118,6 @@ class HighlightCell: UICollectionViewCell {
             }
         }
     }
-
-    lazy var longPressGesture: UILongPressGestureRecognizer = {
-        return UILongPressGestureRecognizer(target: self, action: #selector(HighlightCell.SELdidLongPress))
-    }()
 
     lazy var textWrapper: UIView = {
         let wrapper = UIView()
@@ -194,7 +183,6 @@ class HighlightCell: UICollectionViewCell {
         let removeButton = UIButton()
         removeButton.exclusiveTouch = true
         removeButton.setImage(UIImage(named: "TileCloseButton"), forState: UIControlState.Normal)
-        removeButton.addTarget(self, action: #selector(HighlightCell.SELdidRemove), forControlEvents: UIControlEvents.TouchUpInside)
         removeButton.accessibilityLabel = NSLocalizedString("Remove page", comment: "Button shown in editing mode to remove this site from the top sites panel.")
         removeButton.hidden = true
         removeButton.imageEdgeInsets = HighlightCellUX.RemoveButtonInsets
@@ -227,15 +215,11 @@ class HighlightCell: UICollectionViewCell {
         layer.rasterizationScale = UIScreen.mainScreen().scale
 
         isAccessibilityElement = true
-        addGestureRecognizer(longPressGesture)
 
         contentView.addSubview(imageWrapper)
+        contentView.addSubview(textWrapper)
         imageWrapper.addSubview(backgroundImage)
-        backgroundImage.snp_remakeConstraints { make in
-            make.top.bottom.left.right.equalTo(self.imageWrapper)
-        }
         imageWrapper.addSubview(imageView)
-        imageWrapper.addSubview(textWrapper)
         imageWrapper.addSubview(selectedOverlay)
         textWrapper.addSubview(textLabel)
         textWrapper.addSubview(timeStamp)
@@ -243,41 +227,52 @@ class HighlightCell: UICollectionViewCell {
         textWrapper.addSubview(statusIcon)
         contentView.addSubview(removeButton)
 
-        imageView.snp_makeConstraints { (make) in
-            make.height.equalTo(self.frame.height/2)
-            make.width.equalTo(self.frame.width/2)
-            make.center.equalTo(self.snp_center)
+        imageView.snp_makeConstraints { make in
+            make.top.equalTo(contentView).offset(10)
+            make.leading.equalTo(contentView).offset(10)
+            make.size.equalTo(30)
             //move it up a bit. Not centered correctly
         }
-        
         textWrapper.snp_makeConstraints { make in
-            make.bottom.equalTo(self.imageWrapper.snp_bottom) // .offset(HighlightCellUX.BorderWidth)
-            make.left.right.equalTo(self.imageWrapper) // .offset(HighlightCellUX.BorderWidth)
+            make.left.right.bottom.equalTo(self.contentView)
+            make.top.equalTo(imageWrapper.snp_bottom)
         }
 
-        selectedOverlay.snp_makeConstraints { make in
+        imageWrapper.snp_makeConstraints { make in
+            make.top.left.right.equalTo(self.contentView)
+            make.bottom.equalTo(textWrapper.snp_top)
+        }
+
+        backgroundImage.snp_makeConstraints { make in
             make.edges.equalTo(self.imageWrapper)
         }
+//        selectedOverlay.snp_makeConstraints { make in
+//            make.edges.equalTo(self.imageWrapper)
+//        }
 
         textLabel.snp_remakeConstraints { make in
-            make.edges.equalTo(self.textWrapper).inset(HighlightCellUX.LabelInsets) // TODO swift-2.0 I changes insets to inset - how can that be right?
+            make.leading.equalTo(textWrapper) // TODO swift-2.0 I changes insets to inset - how can that be right?
+            make.trailing.equalTo(timeStamp.snp_leading)
+            make.bottom.equalTo(statusText.snp_top)
         }
 
         // Prevents the textLabel from getting squished in relation to other view priorities.
         textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         timeStamp.snp_makeConstraints { make in
-            make.leading.equalTo(textLabel)
+            make.leading.equalTo(textLabel.snp_trailing)
+            make.top.equalTo(textLabel)
+            make.trailing.equalTo(contentView)
         }
 
         statusText.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom)
+            make.bottom.equalTo(textWrapper)
         }
 
-        statusIcon.snp_makeConstraints { make in
-            make.trailing.equalTo(statusText.snp_leading)
-        }
-
+//        statusIcon.snp_makeConstraints { make in
+//            make.trailing.equalTo(statusText.snp_leading)
+//        }
     }
 
 
@@ -306,87 +301,15 @@ class HighlightCell: UICollectionViewCell {
     }
 
     func setImageWithURL(url: NSURL) {
-        self.backgroundColor = UIColor.whiteColor()
-        self.contentView.backgroundColor = UIColor.whiteColor()
         imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
             guard let img = img else {
                 return
             }
-            //intensive. dont calculate here. this needs to be cached
-            img.getColors { colors in
-                self.contentView.backgroundColor = colors.backgroundColor
-                self.backgroundColor = colors.backgroundColor
-            }
-
+//            img.getColors { colors in
+//                self.backgroundImage.backgroundColor = colors.backgroundColor
+//            }
+            self.image = img
         }
         imageView.layer.masksToBounds = true
-    }
-
-    func SELdidRemove() {
-        delegate?.didRemoveThumbnail(self)
-    }
-
-
-    func SELdidLongPress() {
-        delegate?.didLongPressThumbnail(self)
-    }
-
-    func toggleRemoveButton(show: Bool) {
-        // Only toggle if we change state
-        if removeButton.hidden != show {
-            return
-        }
-
-        if show {
-            removeButton.hidden = false
-        }
-
-        let scaleTransform = CGAffineTransformMakeScale(0.01, 0.01)
-        removeButton.transform = show ? scaleTransform : CGAffineTransformIdentity
-        UIView.animateWithDuration(HighlightCellUX.RemoveButtonAnimationDuration,
-                                   delay: 0,
-                                   usingSpringWithDamping: HighlightCellUX.RemoveButtonAnimationDamping,
-                                   initialSpringVelocity: 0,
-                                   options: [UIViewAnimationOptions.AllowUserInteraction, UIViewAnimationOptions.CurveEaseInOut],
-                                   animations: {
-                                    self.removeButton.transform = show ? CGAffineTransformIdentity : scaleTransform
-            }, completion: { _ in
-                if !show {
-                    self.removeButton.hidden = true
-                }
-        })
-    }
-
-    /**
-     Updates the insets and padding of the cell based on the size of the container collection view
-
-     - parameter size: Size of the container collection view
-     */
-    func updateLayoutForCollectionViewSize(size: CGSize, traitCollection: UITraitCollection, forSuggestedSite: Bool) {
-        let cellInsets = HighlightCellUX.insetsForCollectionViewSize(size,
-                                                                     traitCollection: traitCollection)
-        let imageInsets = HighlightCellUX.imageInsetsForCollectionViewSize(size,
-                                                                           traitCollection: traitCollection)
-
-        if cellInsets != self.cellInsets {
-            self.cellInsets = cellInsets
-            imageWrapper.snp_remakeConstraints { make in
-                make.edges.equalTo(self.contentView).inset(cellInsets)
-            }
-        }
-
-        if forSuggestedSite {
-            self.imagePadding = 0.0
-            return
-        }
-        
-        if imageInsets != self.imageInsets {
-            imageView.snp_remakeConstraints { make in
-                make.top.equalTo(self.imageWrapper).inset(imageInsets.top)
-                make.left.right.equalTo(self.imageWrapper).inset(imageInsets.left)
-                make.right.equalTo(self.imageWrapper).inset(imageInsets.right)
-                make.bottom.equalTo(textWrapper.snp_top).offset(-imageInsets.top)
-            }
-        }
     }
 }

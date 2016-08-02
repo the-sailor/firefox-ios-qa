@@ -133,15 +133,17 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
 
     func configureHighlightCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let site = self.highlights[indexPath.row]
-        let topSiteCell = cell as! HighlightCell
+        let highlightCell = cell as! HighlightCell
         if let icon = site.icon {
             let url = icon.url
-            topSiteCell.setImageWithURL(NSURL(string: url)!)
+            highlightCell.setImageWithURL(NSURL(string: url)!)
         }
-        topSiteCell.backgroundColor = UIColor.blueColor()
-
-        topSiteCell.textLabel.text = site.url
-        topSiteCell.statusText.text = "Bookmarked"
+        highlightCell.textLabel.text = site.title
+        highlightCell.textLabel.textColor = UIColor.blackColor()
+        highlightCell.statusText.text = "Bookmarked"
+        highlightCell.statusText.textColor = UIColor.blackColor()
+        highlightCell.textWrapper.backgroundColor = UIColor.greenColor()
+        highlightCell.timeStamp.text = "3 hrs"
         return cell
     }
 
