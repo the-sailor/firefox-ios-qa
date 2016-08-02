@@ -1,11 +1,3 @@
-//
-//  TopSiteCell.swift
-//  Client
-//
-//  Created by Farhan Patel on 7/29/16.
-//  Copyright © 2016 Mozilla. All rights reserved.
-//
-
 import Foundation
 import Shared
 import WebImage
@@ -76,5 +68,32 @@ class TopSiteCell: UICollectionViewCell {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+}
+
+class ActivityStreamHeaderView: UICollectionReusableView {
+    var titleLabel: UILabel!
+    var moreLabel: UIButton!
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+        titleLabel = UILabel()
+        titleLabel.text = "Top Sites"
+        addSubview(titleLabel)
+
+        titleLabel.snp_makeConstraints {(make) in
+            make.width.equalTo(100)
+            make.height.equalTo(40)
+            make.left.equalTo(self.snp_left)
+            make.centerY.equalTo(self.snp_centerY)
+        }
+
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
 
 }
