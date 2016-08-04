@@ -49,7 +49,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         let layout  = UICollectionViewFlowLayout()
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
-        collectionView.registerClass(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
+        collectionView.registerClass(SimpleHighlightCell.self, forCellWithReuseIdentifier: "Cell")
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSite")
         collectionView.registerClass(HighlightCell.self, forCellWithReuseIdentifier: "Highlight")
         collectionView.registerClass(ActivityStreamHeaderView.self, forSupplementaryViewOfKind: "UICollectionElementKindSectionHeader", withReuseIdentifier: "ASHeader")
@@ -145,21 +145,14 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
 
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(identifier, forIndexPath: indexPath)
 
-        var site: Site!
         switch identifier {
         case "TopSite":
             return configureTopSitesCell(cell, forIndexPath: indexPath)
         case "Highlight":
             return configureHighlightCell(cell, forIndexPath: indexPath)
         default:
-            site = self.history[indexPath.row]
+            return configureSimpleHighlightCell(cell, forIndexPath: indexPath)
         }
-
-        let label = UILabel(frame: cell.bounds)
-        label.text = site.title
-        cell.addSubview(label)
-        cell.backgroundColor = UIColor.blueColor()
-        return cell
     }
 
     func configureTopSitesCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
@@ -184,16 +177,23 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.textColor = UIColor.blackColor()
-        highlightCell.statusText.text = "Bookmarked"
-        highlightCell.statusText.textColor = UIColor.blackColor()
         highlightCell.textWrapper.backgroundColor = UIColor.greenColor()
         highlightCell.timeStamp.text = "3 hrs"
         return cell
     }
 
-    func configureRecentCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let site = self.highlights[indexPath.row]
-
+    func configureSimpleHighlightCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let site = self.topSites[indexPath.row]
+        let highlightCell = cell as! SimpleHighlightCell
+        if let icon = site.icon {
+            let url = icon.url
+            highlightCell.setImageWithURL(NSURL(string: url)!)
+        }
+        highlightCell.textLabel.text = site.title
+        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
+        highlightCell.descriptionLabel.text = "description"
+        highlightCell.textLabel.textColor = UIColor.blackColor()
+        highlightCell.timeStamp.text = "5 hrs"
         return cell
     }
 
