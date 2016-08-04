@@ -83,7 +83,6 @@ class ActivityStreamHeaderView: UICollectionReusableView {
         super.init(frame: frame)
 
         titleLabel = UILabel()
-        titleLabel.text = "Top Sites"
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumFont
         addSubview(titleLabel)
 
@@ -93,12 +92,10 @@ class ActivityStreamHeaderView: UICollectionReusableView {
             make.left.equalTo(self.snp_left).offset(5)
             make.centerY.equalTo(self.snp_centerY)
         }
-
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
 
 }
