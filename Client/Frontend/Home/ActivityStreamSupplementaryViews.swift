@@ -24,18 +24,15 @@ class TopSiteCell: UICollectionViewCell {
         contentView.layer.masksToBounds = true
         layer.cornerRadius = 4
         layer.masksToBounds = true
-        layer.borderColor = UIColor.blackColor().colorWithAlphaComponent(0.1).CGColor
-        layer.borderWidth = 1
 
         titleLabel = UILabel()
-        titleLabel.backgroundColor = UIColor.whiteColor()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.textColor = UIColor.blackColor()
+        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
         contentView.addSubview(titleLabel)
+
         let heightInset = Int(frame.height * 0.8)
-
-
         titleLabel.snp_makeConstraints { (make) in
             //the titlelabel should take up the bottom 20 percent of the frame
             make.edges.equalTo(self).inset(UIEdgeInsetsMake(CGFloat(heightInset), 0, 0, 0))
@@ -46,17 +43,16 @@ class TopSiteCell: UICollectionViewCell {
         imageView.snp_makeConstraints { (make) in
             make.height.equalTo(self.frame.height/2)
             make.width.equalTo(self.frame.width/2)
-           // make.center.equalTo(self.snp_center).priority(0.5)
             let offset = Int(self.frame.height) - heightInset
             make.centerX.equalTo(self.snp_centerX)
             make.centerY.equalTo(self.snp_centerY).offset(CGFloat(-offset/2))
-            //move it up a bit. Not centered correctly
         }
     }
 
     override func prepareForReuse() {
         self.backgroundColor = UIColor.whiteColor()
         self.contentView.backgroundColor = UIColor.whiteColor()
+        titleLabel.textColor = UIColor.blackColor()
     }
 
     func setImageWithURL(url: NSURL) {
@@ -64,12 +60,11 @@ class TopSiteCell: UICollectionViewCell {
             guard let img = img else {
                 return
             }
-            //intensive. dont calculate here. this needs to be cached
-            img.getColors { colors in
+            img.getColors(CGSize(width: 50, height:50)) { colors in
                 self.contentView.backgroundColor = colors.backgroundColor
                 self.backgroundColor = colors.backgroundColor
+                self.titleLabel.textColor = colors.detailColor
             }
-
         }
         imageView.layer.masksToBounds = true
     }
@@ -89,12 +84,13 @@ class ActivityStreamHeaderView: UICollectionReusableView {
 
         titleLabel = UILabel()
         titleLabel.text = "Top Sites"
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumFont
         addSubview(titleLabel)
 
         titleLabel.snp_makeConstraints {(make) in
             make.width.equalTo(100)
             make.height.equalTo(40)
-            make.left.equalTo(self.snp_left)
+            make.left.equalTo(self.snp_left).offset(5)
             make.centerY.equalTo(self.snp_centerY)
         }
 
