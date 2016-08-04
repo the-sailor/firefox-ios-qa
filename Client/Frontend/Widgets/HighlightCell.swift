@@ -128,16 +128,7 @@ class HighlightCell: UICollectionViewCell {
     lazy var textLabel: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        textLabel.textColor = HighlightCellUX.LabelColor
-        textLabel.textAlignment = HighlightCellUX.LabelAlignment
-        return textLabel
-    }()
-
-    lazy var statusText: UILabel = {
-        let textLabel = UILabel()
-        textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
         textLabel.textColor = HighlightCellUX.LabelColor
         textLabel.textAlignment = HighlightCellUX.LabelAlignment
         return textLabel
@@ -179,14 +170,13 @@ class HighlightCell: UICollectionViewCell {
         return imageWrapper
     }()
 
-    lazy var removeButton: UIButton = {
-        let removeButton = UIButton()
-        removeButton.exclusiveTouch = true
-        removeButton.setImage(UIImage(named: "TileCloseButton"), forState: UIControlState.Normal)
-        removeButton.accessibilityLabel = NSLocalizedString("Remove page", comment: "Button shown in editing mode to remove this site from the top sites panel.")
-        removeButton.hidden = true
-        removeButton.imageEdgeInsets = HighlightCellUX.RemoveButtonInsets
-        return removeButton
+    lazy var descriptionLabel: UILabel = {
+        let textLabel = UILabel()
+        textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
+        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        textLabel.textColor = SimpleHighlightCellUX.LabelColor
+        textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
+        return textLabel
     }()
 
     lazy var backgroundImage: UIImageView = {
@@ -223,9 +213,8 @@ class HighlightCell: UICollectionViewCell {
         imageWrapper.addSubview(selectedOverlay)
         textWrapper.addSubview(textLabel)
         textWrapper.addSubview(timeStamp)
-        textWrapper.addSubview(statusText)
+        textWrapper.addSubview(descriptionLabel)
         textWrapper.addSubview(statusIcon)
-        contentView.addSubview(removeButton)
 
         imageView.snp_makeConstraints { make in
             make.top.equalTo(contentView).offset(10)
@@ -253,7 +242,7 @@ class HighlightCell: UICollectionViewCell {
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(textWrapper) // TODO swift-2.0 I changes insets to inset - how can that be right?
             make.trailing.equalTo(timeStamp.snp_leading)
-            make.bottom.equalTo(statusText.snp_top)
+            make.bottom.equalTo(descriptionLabel.snp_top)
         }
 
         // Prevents the textLabel from getting squished in relation to other view priorities.
@@ -265,37 +254,24 @@ class HighlightCell: UICollectionViewCell {
             make.trailing.equalTo(contentView)
         }
 
-        statusText.snp_makeConstraints { make in
+        descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom)
             make.bottom.equalTo(textWrapper)
         }
 
-//        statusIcon.snp_makeConstraints { make in
-//            make.trailing.equalTo(statusText.snp_leading)
-//        }
+        statusIcon.snp_makeConstraints { make in
+            make.leading.equalTo(textLabel.snp_trailing)
+        }
     }
-
 
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-
-        // TODO: We can avoid creating this button at all if we're not in editing mode.
-        var frame = removeButton.frame
-        let insets = cellInsets
-        frame.size = CGSize(width: HighlightCellUX.RemoveButtonSize, height: HighlightCellUX.RemoveButtonSize)
-        frame.center = CGPoint(x: insets.left, y: insets.top)
-        removeButton.frame = frame
-    }
-
     override func prepareForReuse() {
         super.prepareForReuse()
         backgroundImage.image = nil
-        removeButton.hidden = true
         imageWrapper.backgroundColor = UIColor.clearColor()
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
     }
