@@ -166,7 +166,8 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
            let url = icon.url
             topSiteCell.setImageWithURL(NSURL(string: url)!)
         }
-        topSiteCell.titleLabel.text = site.url
+        
+        topSiteCell.titleLabel.text = extractDomainURL(site.url)
         return cell
     }
 
@@ -190,6 +191,10 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         let site = self.highlights[indexPath.row]
 
         return cell
+    }
+
+    private func extractDomainURL(url: String) -> String {
+        return NSURL(string: url)?.normalizedHost() ?? url
     }
 
 
