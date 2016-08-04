@@ -58,7 +58,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         collectionView.dataSource = self
         view.addSubview(collectionView)
         collectionView.snp_makeConstraints { (make) in
-            make.edges.equalTo(self.view)
+            make.edges.equalTo(self.view).inset(UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5))
         }
     }
 }
@@ -84,7 +84,7 @@ extension ActivityStreamPanel {
         case 0:
             cell.titleLabel.text = "Top Sites"
         default:
-           cell.titleLabel.text = "Highlights"
+            cell.titleLabel.text = "Highlights"
         }
         return cell
 
@@ -100,29 +100,30 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     }
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        return 3
+        return 2
     }
 
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
         switch indexPath.section {
             case 0:
                 return CGSize(width: 100, height: 100)
-            case 1:
-                return CGSize(width: (self.view.frame.width/2)-5, height: 100)
             default:
-                return CGSize(width: self.view.frame.width, height: 50)
+                //for now every other cell will have a full image
+                if indexPath.row % 3 == 0 {
+                    return CGSize(width: self.view.frame.width, height: 100)
+                }
+                else {
+                    return CGSize(width: self.view.frame.width, height: 50)
+                }
         }
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch section {
             case 0:
-                return self.topSites.count
                 //we need to only load enough for one row. This varies on different devices
                 let screenMax = Int(view.frame.width/100)
                 return screenMax < self.topSites.count ? screenMax : self.topSites.count
-            case 1:
-                return self.highlights.count
             default:
                 return self.history.count
         }
@@ -133,19 +134,22 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         switch indexPath.section {
             case 0:
                 identifier = "TopSite"
-            case 1:
-                identifier = "Highlight"
             default:
-                identifier = "Cell"
+                if indexPath.row % 3 == 0 {
+                    identifier = "Highlight"
+                }
+                else {
+                    identifier = "Cell"
+                }
         }
 
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(identifier, forIndexPath: indexPath)
 
         var site: Site!
-        switch indexPath.section {
-        case 0:
+        switch identifier {
+        case "TopSite":
             return configureTopSitesCell(cell, forIndexPath: indexPath)
-        case 1:
+        case "Highlight":
             return configureHighlightCell(cell, forIndexPath: indexPath)
         default:
             site = self.history[indexPath.row]
@@ -172,7 +176,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     }
 
     func configureHighlightCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let site = self.highlights[indexPath.row]
+        let site = self.history[indexPath.row]
         let highlightCell = cell as! HighlightCell
         if let icon = site.icon {
             let url = icon.url
