@@ -12,7 +12,7 @@ struct SimpleHighlightCellUX {
     static let BorderWidth: CGFloat = 1
     static let LabelColor = UIAccessibilityDarkerSystemColorsEnabled() ? UIColor.blackColor() : UIColor(rgb: 0x353535)
     static let LabelBackgroundColor = UIColor(white: 1.0, alpha: 0.5)
-    static let LabelAlignment: NSTextAlignment = .Center
+    static let LabelAlignment: NSTextAlignment = .Left
     static let SelectedOverlayColor = UIColor(white: 0.0, alpha: 0.25)
     static let InsetSize: CGFloat = 20
     static let InsetSizeCompact: CGFloat = 6
@@ -125,6 +125,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
         textLabel.textColor = SimpleHighlightCellUX.LabelColor
         textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
+        textLabel.numberOfLines = 0
         return textLabel
     }()
 
@@ -203,22 +204,19 @@ class SimpleHighlightCell: UICollectionViewCell {
         }
 
         textLabel.snp_remakeConstraints { make in
-            make.leading.equalTo(imageView.snp_trailing) // TODO swift-2.0 I changes insets to inset - how can that be right?
-//            make.trailing.equalTo(statusIcon.snp_leading)
-            make.top.equalTo(contentView).offset(20)
+            make.leading.equalTo(imageView.snp_trailing).offset(10)
+            make.top.equalTo(imageView)
         }
 
         // Prevents the textLabel from getting squished in relation to other view priorities.
         textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(textLabel.snp_bottom)
-            make.leading.equalTo(imageView.snp_trailing)
-            make.bottom.equalTo(contentView)
+            make.top.equalTo(textLabel.snp_bottom).offset(5)
+            make.leading.equalTo(imageView.snp_trailing).offset(10)
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.leading.equalTo(descriptionLabel.snp_trailing)
             make.trailing.equalTo(contentView)
             make.top.equalTo(descriptionLabel)
         }
