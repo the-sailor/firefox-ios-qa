@@ -194,7 +194,6 @@ class HighlightCell: UICollectionViewCell {
         layer.rasterizationScale = UIScreen.mainScreen().scale
 
         isAccessibilityElement = true
-
         contentView.addSubview(selectedOverlay)
         contentView.addSubview(backgroundImage)
         contentView.addSubview(imageView)
@@ -211,7 +210,7 @@ class HighlightCell: UICollectionViewCell {
 
         backgroundImage.snp_makeConstraints { make in
             make.top.leading.trailing.equalTo(contentView)
-            make.bottom.equalTo(textLabel.snp_top)
+//            make.bottom.equalTo(textLabel.snp_top)
         }
 
         selectedOverlay.snp_makeConstraints { make in
@@ -220,11 +219,8 @@ class HighlightCell: UICollectionViewCell {
 
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
-            make.bottom.equalTo(descriptionLabel.snp_top)
+            make.top.equalTo(backgroundImage.snp_bottom).offset(5)
         }
-
-        // Prevents the textLabel from getting squished in relation to other view priorities.
-        textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         timeStamp.snp_makeConstraints { make in
             make.leading.equalTo(descriptionLabel.snp_trailing)
@@ -233,9 +229,9 @@ class HighlightCell: UICollectionViewCell {
         }
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(textLabel.snp_bottom)
+            make.top.equalTo(textLabel.snp_bottom).offset(3)
             make.leading.equalTo(contentView).offset(10)
-            make.bottom.equalTo(contentView)
+            make.bottom.equalTo(contentView).offset(-5)
         }
 
         statusIcon.snp_makeConstraints { make in

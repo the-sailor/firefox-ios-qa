@@ -115,7 +115,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             default:
                 //for now every other cell will have a full image
                 if indexPath.row % 3 == 0 {
-                    return CGSize(width: self.view.frame.width, height: 150)
+                    return CGSize(width: self.view.frame.width, height: 250)
                 }
                 else {
                     return CGSize(width: self.view.frame.width, height: 50)
