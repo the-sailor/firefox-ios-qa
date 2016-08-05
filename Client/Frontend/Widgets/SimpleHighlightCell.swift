@@ -193,9 +193,9 @@ class SimpleHighlightCell: UICollectionViewCell {
         contentView.addSubview(statusIcon)
 
         imageView.snp_makeConstraints { make in
-            make.leading.equalTo(contentView).offset(10)
+            make.leading.equalTo(contentView)
             make.centerY.equalTo(contentView)
-            make.size.equalTo(45)
+            make.size.equalTo(30)
         }
 
         selectedOverlay.snp_makeConstraints { make in

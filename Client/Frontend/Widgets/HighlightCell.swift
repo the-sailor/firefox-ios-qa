@@ -77,26 +77,26 @@ class HighlightCell: UICollectionViewCell {
     var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
     var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
 
-    var imagePadding: CGFloat = 0 {
-        didSet {
-            // Find out if our image is going to have fractional pixel width.
-            // If so, we inset by a tiny extra amount to get it down to an integer for better
-            // image scaling.
-            let parentWidth = self.imageWrapper.frame.width
-            let width = (parentWidth - imagePadding)
-            let fractionalW = width - floor(width)
-            let additionalW = fractionalW / 2
-
-            imageView.snp_remakeConstraints { make in
-                let insets = UIEdgeInsets(top: imagePadding, left: imagePadding, bottom: imagePadding, right: imagePadding)
-                make.top.equalTo(self.imageWrapper).inset(insets.top)
-                make.bottom.equalTo(textWrapper.snp_top).offset(-imagePadding)
-                make.left.equalTo(self.imageWrapper).inset(insets.left + additionalW)
-                make.right.equalTo(self.imageWrapper).inset(insets.right + additionalW)
-            }
-            imageView.setNeedsUpdateConstraints()
-        }
-    }
+//    var imagePadding: CGFloat = 0 {
+//        didSet {
+//            // Find out if our image is going to have fractional pixel width.
+//            // If so, we inset by a tiny extra amount to get it down to an integer for better
+//            // image scaling.
+//            let parentWidth = self.imageWrapper.frame.width
+//            let width = (parentWidth - imagePadding)
+//            let fractionalW = width - floor(width)
+//            let additionalW = fractionalW / 2
+//
+//            imageView.snp_remakeConstraints { make in
+//                let insets = UIEdgeInsets(top: imagePadding, left: imagePadding, bottom: imagePadding, right: imagePadding)
+//                make.top.equalTo(self.imageWrapper).inset(insets.top)
+//                make.bottom.equalTo(textWrapper.snp_top).offset(-imagePadding)
+//                make.left.equalTo(self.imageWrapper).inset(insets.left + additionalW)
+//                make.right.equalTo(self.imageWrapper).inset(insets.right + additionalW)
+//            }
+//            imageView.setNeedsUpdateConstraints()
+//        }
+//    }
 
     var image: UIImage? = nil {
         didSet {
@@ -118,12 +118,6 @@ class HighlightCell: UICollectionViewCell {
             }
         }
     }
-
-    lazy var textWrapper: UIView = {
-        let wrapper = UIView()
-        wrapper.backgroundColor = HighlightCellUX.LabelBackgroundColor
-        return wrapper
-    }()
 
     lazy var textLabel: UILabel = {
         let textLabel = UILabel()
@@ -161,15 +155,6 @@ class HighlightCell: UICollectionViewCell {
         return imageView
     }()
 
-    lazy var imageWrapper: UIView = {
-        let imageWrapper = UIView()
-        imageWrapper.layer.borderColor = HighlightCellUX.BorderColor.CGColor
-        imageWrapper.layer.borderWidth = HighlightCellUX.BorderWidth
-        imageWrapper.layer.cornerRadius = HighlightCellUX.CornerRadius
-        imageWrapper.clipsToBounds = true
-        return imageWrapper
-    }()
-
     lazy var descriptionLabel: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
@@ -182,6 +167,10 @@ class HighlightCell: UICollectionViewCell {
     lazy var backgroundImage: UIImageView = {
         let backgroundImage = UIImageView()
         backgroundImage.contentMode = UIViewContentMode.ScaleAspectFill
+        backgroundImage.layer.borderColor = HighlightCellUX.BorderColor.CGColor
+        backgroundImage.layer.borderWidth = HighlightCellUX.BorderWidth
+        backgroundImage.layer.cornerRadius = HighlightCellUX.CornerRadius
+        backgroundImage.clipsToBounds = true
         return backgroundImage
     }()
 
@@ -206,42 +195,31 @@ class HighlightCell: UICollectionViewCell {
 
         isAccessibilityElement = true
 
-        contentView.addSubview(imageWrapper)
-        contentView.addSubview(textWrapper)
-        imageWrapper.addSubview(backgroundImage)
-        imageWrapper.addSubview(imageView)
-        imageWrapper.addSubview(selectedOverlay)
-        textWrapper.addSubview(textLabel)
-        textWrapper.addSubview(timeStamp)
-        textWrapper.addSubview(descriptionLabel)
-        textWrapper.addSubview(statusIcon)
+        contentView.addSubview(selectedOverlay)
+        contentView.addSubview(backgroundImage)
+        contentView.addSubview(imageView)
+        contentView.addSubview(textLabel)
+        contentView.addSubview(timeStamp)
+        contentView.addSubview(descriptionLabel)
+        contentView.addSubview(statusIcon)
 
         imageView.snp_makeConstraints { make in
-            make.top.equalTo(contentView).offset(10)
-            make.leading.equalTo(contentView).offset(10)
+            make.top.equalTo(contentView)
+            make.leading.equalTo(contentView)
             make.size.equalTo(30)
-            //move it up a bit. Not centered correctly
-        }
-        textWrapper.snp_makeConstraints { make in
-            make.left.right.bottom.equalTo(self.contentView)
-            make.top.equalTo(imageWrapper.snp_bottom)
-        }
-
-        imageWrapper.snp_makeConstraints { make in
-            make.top.left.right.equalTo(self.contentView)
-            make.bottom.equalTo(textWrapper.snp_top)
         }
 
         backgroundImage.snp_makeConstraints { make in
-            make.edges.equalTo(self.imageWrapper)
+            make.top.leading.trailing.equalTo(contentView)
+            make.bottom.equalTo(textLabel.snp_top)
         }
-//        selectedOverlay.snp_makeConstraints { make in
-//            make.edges.equalTo(self.imageWrapper)
-//        }
+
+        selectedOverlay.snp_makeConstraints { make in
+            make.edges.equalTo(contentView)
+        }
 
         textLabel.snp_remakeConstraints { make in
-            make.leading.equalTo(textWrapper) // TODO swift-2.0 I changes insets to inset - how can that be right?
-            make.trailing.equalTo(timeStamp.snp_leading)
+            make.leading.equalTo(contentView).offset(10)
             make.bottom.equalTo(descriptionLabel.snp_top)
         }
 
@@ -249,14 +227,15 @@ class HighlightCell: UICollectionViewCell {
         textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         timeStamp.snp_makeConstraints { make in
-            make.leading.equalTo(textLabel.snp_trailing)
-            make.top.equalTo(textLabel)
+            make.leading.equalTo(descriptionLabel.snp_trailing)
+            make.top.equalTo(descriptionLabel)
             make.trailing.equalTo(contentView)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom)
-            make.bottom.equalTo(textWrapper)
+            make.leading.equalTo(contentView).offset(10)
+            make.bottom.equalTo(contentView)
         }
 
         statusIcon.snp_makeConstraints { make in
@@ -272,7 +251,6 @@ class HighlightCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         backgroundImage.image = nil
-        imageWrapper.backgroundColor = UIColor.clearColor()
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
     }
 
@@ -281,11 +259,9 @@ class HighlightCell: UICollectionViewCell {
             guard let img = img else {
                 return
             }
-//            img.getColors { colors in
-//                self.backgroundImage.backgroundColor = colors.backgroundColor
-//            }
             self.image = img
         }
+        backgroundImage.sd_setImageWithURL(NSURL(string: "http://lorempixel.com/640/480/?r=" + String(random())))
         imageView.layer.masksToBounds = true
     }
 }

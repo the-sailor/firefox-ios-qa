@@ -115,7 +115,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             default:
                 //for now every other cell will have a full image
                 if indexPath.row % 3 == 0 {
-                    return CGSize(width: self.view.frame.width, height: 100)
+                    return CGSize(width: self.view.frame.width, height: 150)
                 }
                 else {
                     return CGSize(width: self.view.frame.width, height: 50)
@@ -178,7 +178,9 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.textColor = UIColor.blackColor()
-        highlightCell.textWrapper.backgroundColor = UIColor.greenColor()
+        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.descriptionLabel.text = "descriptiondescriptiondescriptiondescription"
+        highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.timeStamp.text = "3 hrs"
         return cell
     }
@@ -191,8 +193,9 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             highlightCell.setImageWithURL(NSURL(string: url)!)
         }
         highlightCell.textLabel.text = site.title
-        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
-        highlightCell.descriptionLabel.text = "description"
+        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.descriptionLabel.text = "descriptiondescriptiondescriptiondescription"
+        highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.textLabel.textColor = UIColor.blackColor()
         highlightCell.timeStamp.text = "5 hrs"
         return cell
