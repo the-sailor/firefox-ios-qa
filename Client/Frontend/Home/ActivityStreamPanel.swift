@@ -20,9 +20,10 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let profile: Profile
     var collectionView: UICollectionView!
+    var topSiteHandler: ASVerticalScrollSource!
 
     //once things get fleshed out we can refactor and find a better home for these
-    var topSites: [Site] = []
+    var topSites: [TopSiteItem] = []
     var highlights: [Site] = []
     var history: [Site] = []
 
@@ -50,7 +51,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(SimpleHighlightCell.self, forCellWithReuseIdentifier: "Cell")
-        collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSite")
+        collectionView.registerClass(ASVerticalScrollCell.self, forCellWithReuseIdentifier: "TopSite")
         collectionView.registerClass(HighlightCell.self, forCellWithReuseIdentifier: "Highlight")
         collectionView.registerClass(ActivityStreamHeaderView.self, forSupplementaryViewOfKind: "UICollectionElementKindSectionHeader", withReuseIdentifier: "ASHeader")
         collectionView.backgroundColor = UIColor.whiteColor()
@@ -58,7 +59,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         collectionView.dataSource = self
         view.addSubview(collectionView)
         collectionView.snp_makeConstraints { (make) in
-            make.edges.equalTo(self.view).inset(UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5))
+            make.edges.equalTo(self.view)
         }
     }
 }
@@ -99,6 +100,10 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         return 2
     }
 
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAtIndex section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
+    }
+
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         return 2
     }
@@ -106,7 +111,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
         switch indexPath.section {
             case 0:
-                return CGSize(width: 100, height: 100)
+                return CGSize(width: self.view.frame.width, height: 100)
             default:
                 //for now every other cell will have a full image
                 if indexPath.row % 3 == 0 {
@@ -121,9 +126,12 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch section {
             case 0:
-                //we need to only load enough for one row. This varies on different devices
-                let screenMax = Int(view.frame.width/100)
-                return screenMax < self.topSites.count ? screenMax : self.topSites.count
+                if topSiteHandler != nil && topSiteHandler.content.count != 0 {
+                    return 1
+                }
+                else {
+                    return 0
+                }
             default:
                 return self.history.count
         }
@@ -156,15 +164,8 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     }
 
     func configureTopSitesCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let site = self.topSites[indexPath.row]
-        let topSiteCell = cell as! TopSiteCell
-        topSiteCell.backgroundColor = UIColor.blueColor()
-        if let icon = site.icon {
-           let url = icon.url
-            topSiteCell.setImageWithURL(NSURL(string: url)!)
-        }
-        
-        topSiteCell.titleLabel.text = extractDomainURL(site.url)
+        let topSiteCell = cell as! ASVerticalScrollCell
+        topSiteCell.setDelegate(self.topSiteHandler)
         return cell
     }
 
@@ -183,7 +184,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     }
 
     func configureSimpleHighlightCell(cell: UICollectionViewCell, forIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let site = self.topSites[indexPath.row]
+        let site = self.history[indexPath.row]
         let highlightCell = cell as! SimpleHighlightCell
         if let icon = site.icon {
             let url = icon.url
@@ -229,7 +230,23 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
-                self.topSites = data.asArray() //weak?
+
+                self.topSites = data.asArray().map { site in
+                    if let imgURL = site.icon?.url {
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: CGSize(width: 100, height: 100))
+                        return topSite
+                    }
+                    else {
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: CGSize(width: 100, height: 100))
+                        return topSite
+                    }
+
+
+                }
+                self.topSiteHandler = ASVerticalScrollSource()
+                self.topSiteHandler.content = self.topSites
+
+
                 self.collectionView.reloadData()
             }
             return succeed()
@@ -260,9 +277,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         var site: Site!
         switch indexPath.section {
             case 0:
-                site = self.topSites[indexPath.row]
-            case 1:
-                site = self.highlights[indexPath.row]
+                return
             default:
                 site = self.history[indexPath.row]
         }
