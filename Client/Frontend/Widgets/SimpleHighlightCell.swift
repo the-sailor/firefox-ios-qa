@@ -76,7 +76,6 @@ struct SimpleHighlightCellUX {
 class SimpleHighlightCell: UICollectionViewCell {
     var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
     var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
-
     var image: UIImage? = nil {
         didSet {
             if let image = image {
