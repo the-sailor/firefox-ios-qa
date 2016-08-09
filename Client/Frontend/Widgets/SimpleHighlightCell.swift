@@ -123,7 +123,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         textLabel.textColor = SimpleHighlightCellUX.LabelColor
-        textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
+        textLabel.textAlignment = .Right
         return textLabel
     }()
 
@@ -185,15 +185,16 @@ class SimpleHighlightCell: UICollectionViewCell {
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(imageView.snp_trailing).offset(10)
             make.top.equalTo(imageView)
+            make.width.equalTo(contentView.frame.width/1.25)
         }
 
         // Prevents the textLabel from getting squished in relation to other view priorities.
         textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(textLabel.snp_bottom).offset(5)
+            make.top.equalTo(textLabel.snp_bottom)
             make.leading.equalTo(imageView.snp_trailing).offset(10)
-            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
+            make.width.equalTo(textLabel)
         }
 
         timeStamp.snp_makeConstraints { make in
@@ -202,9 +203,8 @@ class SimpleHighlightCell: UICollectionViewCell {
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.leading.equalTo(textLabel.snp_trailing)
-            make.trailing.equalTo(contentView)
             make.top.equalTo(textLabel)
+            make.leading.equalTo(timeStamp).offset(4)
         }
     }
 

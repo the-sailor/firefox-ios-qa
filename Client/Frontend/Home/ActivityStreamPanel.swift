@@ -176,7 +176,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.image = UIImage(named: "defaultFavicon")
+            highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.textColor = UIColor.blackColor()
@@ -195,7 +195,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.image = UIImage(named: "defaultFavicon")
+            highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel

@@ -6,98 +6,18 @@ import UIKit
 import Shared
 
 struct HighlightCellUX {
-    /// Ratio of width:height of the thumbnail image.
-    static let ImageAspectRatio: Float = 1.0
     static let BorderColor = UIColor.blackColor().colorWithAlphaComponent(0.1)
     static let BorderWidth: CGFloat = 1
     static let LabelColor = UIAccessibilityDarkerSystemColorsEnabled() ? UIColor.blackColor() : UIColor(rgb: 0x353535)
     static let LabelBackgroundColor = UIColor(white: 1.0, alpha: 0.5)
-    static let LabelAlignment: NSTextAlignment = .Center
+    static let LabelAlignment: NSTextAlignment = .Left
     static let SelectedOverlayColor = UIColor(white: 0.0, alpha: 0.25)
-    static let InsetSize: CGFloat = 20
-    static let InsetSizeCompact: CGFloat = 6
-    static func insetsForCollectionViewSize(size: CGSize, traitCollection: UITraitCollection) -> UIEdgeInsets {
-        let largeInsets = UIEdgeInsets(
-            top: HighlightCellUX.InsetSize,
-            left: HighlightCellUX.InsetSize,
-            bottom: HighlightCellUX.InsetSize,
-            right: HighlightCellUX.InsetSize
-        )
-        let smallInsets = UIEdgeInsets(
-            top: HighlightCellUX.InsetSizeCompact,
-            left: HighlightCellUX.InsetSizeCompact,
-            bottom: HighlightCellUX.InsetSizeCompact,
-            right: HighlightCellUX.InsetSizeCompact
-        )
-
-        if traitCollection.horizontalSizeClass == .Compact {
-            return smallInsets
-        } else {
-            return largeInsets
-        }
-    }
-
-    static let ImagePaddingWide: CGFloat = 20
-    static let ImagePaddingCompact: CGFloat = 10
-    static func imageInsetsForCollectionViewSize(size: CGSize, traitCollection: UITraitCollection) -> UIEdgeInsets {
-        let largeInsets = UIEdgeInsets(
-            top: HighlightCellUX.ImagePaddingWide,
-            left: HighlightCellUX.ImagePaddingWide,
-            bottom: HighlightCellUX.ImagePaddingWide,
-            right: HighlightCellUX.ImagePaddingWide
-        )
-
-        let smallInsets = UIEdgeInsets(
-            top: HighlightCellUX.ImagePaddingCompact,
-            left: HighlightCellUX.ImagePaddingCompact,
-            bottom: HighlightCellUX.ImagePaddingCompact,
-            right: HighlightCellUX.ImagePaddingCompact
-        )
-        if traitCollection.horizontalSizeClass == .Compact {
-            return smallInsets
-        } else {
-            return largeInsets
-        }
-    }
-
-    static let LabelInsets = UIEdgeInsetsMake(10, 3, 10, 3)
     static let PlaceholderImage = UIImage(named: "defaultTopSiteIcon")
     static let CornerRadius: CGFloat = 3
-
-    // Make the remove button look 20x20 in size but have the clickable area be 44x44
-    static let RemoveButtonSize: CGFloat = 44
-    static let RemoveButtonInsets = UIEdgeInsets(top: 11, left: 11, bottom: 11, right: 11)
-    static let RemoveButtonAnimationDuration: NSTimeInterval = 0.4
-    static let RemoveButtonAnimationDamping: CGFloat = 0.6
-
     static let NearestNeighbordScalingThreshold: CGFloat = 24
 }
 
 class HighlightCell: UICollectionViewCell {
-    var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
-    var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
-
-//    var imagePadding: CGFloat = 0 {
-//        didSet {
-//            // Find out if our image is going to have fractional pixel width.
-//            // If so, we inset by a tiny extra amount to get it down to an integer for better
-//            // image scaling.
-//            let parentWidth = self.imageWrapper.frame.width
-//            let width = (parentWidth - imagePadding)
-//            let fractionalW = width - floor(width)
-//            let additionalW = fractionalW / 2
-//
-//            imageView.snp_remakeConstraints { make in
-//                let insets = UIEdgeInsets(top: imagePadding, left: imagePadding, bottom: imagePadding, right: imagePadding)
-//                make.top.equalTo(self.imageWrapper).inset(insets.top)
-//                make.bottom.equalTo(textWrapper.snp_top).offset(-imagePadding)
-//                make.left.equalTo(self.imageWrapper).inset(insets.left + additionalW)
-//                make.right.equalTo(self.imageWrapper).inset(insets.right + additionalW)
-//            }
-//            imageView.setNeedsUpdateConstraints()
-//        }
-//    }
-
     var image: UIImage? = nil {
         didSet {
             if let image = image {
@@ -125,6 +45,7 @@ class HighlightCell: UICollectionViewCell {
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
         textLabel.textColor = HighlightCellUX.LabelColor
         textLabel.textAlignment = HighlightCellUX.LabelAlignment
+        textLabel.numberOfLines = 2
         return textLabel
     }()
 
@@ -161,6 +82,7 @@ class HighlightCell: UICollectionViewCell {
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         textLabel.textColor = SimpleHighlightCellUX.LabelColor
         textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
+        textLabel.numberOfLines = 1
         return textLabel
     }()
 
@@ -203,14 +125,15 @@ class HighlightCell: UICollectionViewCell {
         contentView.addSubview(statusIcon)
 
         imageView.snp_makeConstraints { make in
-            make.top.equalTo(contentView)
-            make.leading.equalTo(contentView)
-            make.size.equalTo(30)
+            make.top.equalTo(backgroundImage)
+            make.leading.equalTo(backgroundImage)
+            make.size.equalTo(35)
         }
 
         backgroundImage.snp_makeConstraints { make in
-            make.top.leading.trailing.equalTo(contentView)
-//            make.bottom.equalTo(textLabel.snp_top)
+            make.top.equalTo(contentView)
+            make.leading.equalTo(contentView).offset(10)
+            make.trailing.equalTo(contentView).inset(10)
         }
 
         selectedOverlay.snp_makeConstraints { make in
@@ -220,23 +143,24 @@ class HighlightCell: UICollectionViewCell {
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
             make.top.equalTo(backgroundImage.snp_bottom).offset(5)
+            make.width.equalTo(contentView.frame.width/1.25 + imageView.frame.width)
         }
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(textLabel.snp_bottom).offset(3)
+            make.top.equalTo(textLabel.snp_bottom)
             make.leading.equalTo(contentView).offset(10)
             make.bottom.equalTo(contentView).offset(-5)
-            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
+            make.width.equalTo(textLabel)
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView)
+            make.trailing.equalTo(backgroundImage)
             make.top.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView)
             make.top.equalTo(textLabel)
+            make.trailing.equalTo(backgroundImage)
         }
     }
 
