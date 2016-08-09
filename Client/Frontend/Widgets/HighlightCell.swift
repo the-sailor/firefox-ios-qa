@@ -222,20 +222,21 @@ class HighlightCell: UICollectionViewCell {
             make.top.equalTo(backgroundImage.snp_bottom).offset(5)
         }
 
-        timeStamp.snp_makeConstraints { make in
-            make.leading.equalTo(descriptionLabel.snp_trailing)
-            make.top.equalTo(descriptionLabel)
-            make.trailing.equalTo(contentView)
-        }
-
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom).offset(3)
             make.leading.equalTo(contentView).offset(10)
             make.bottom.equalTo(contentView).offset(-5)
+            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
+        }
+
+        timeStamp.snp_makeConstraints { make in
+            make.trailing.equalTo(contentView)
+            make.top.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.leading.equalTo(textLabel.snp_trailing)
+            make.trailing.equalTo(contentView)
+            make.top.equalTo(textLabel)
         }
     }
 

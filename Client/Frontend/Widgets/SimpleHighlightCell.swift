@@ -77,27 +77,6 @@ class SimpleHighlightCell: UICollectionViewCell {
     var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
     var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
 
-//    var imagePadding: CGFloat = 0 {
-//        didSet {
-//            // Find out if our image is going to have fractional pixel width.
-//            // If so, we inset by a tiny extra amount to get it down to an integer for better
-//            // image scaling.
-//            let parentWidth = self.imageWrapper.frame.width
-//            let width = (parentWidth - imagePadding)
-//            let fractionalW = width - floor(width)
-//            let additionalW = fractionalW / 2
-//
-//            imageView.snp_remakeConstraints { make in
-//                let insets = UIEdgeInsets(top: imagePadding, left: imagePadding, bottom: imagePadding, right: imagePadding)
-//                make.top.equalTo(self.imageWrapper).inset(insets.top)
-//                make.bottom.equalTo(textWrapper.snp_top).offset(-imagePadding)
-//                make.left.equalTo(self.imageWrapper).inset(insets.left + additionalW)
-//                make.right.equalTo(self.imageWrapper).inset(insets.right + additionalW)
-//            }
-//            imageView.setNeedsUpdateConstraints()
-//        }
-//    }
-
     var image: UIImage? = nil {
         didSet {
             if let image = image {
@@ -125,7 +104,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
         textLabel.textColor = SimpleHighlightCellUX.LabelColor
         textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
-        textLabel.numberOfLines = 0
+        textLabel.numberOfLines = 2
         return textLabel
     }()
 
@@ -135,6 +114,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         textLabel.textColor = SimpleHighlightCellUX.LabelColor
         textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
+        textLabel.numberOfLines = 1
         return textLabel
     }()
 
@@ -159,7 +139,6 @@ class SimpleHighlightCell: UICollectionViewCell {
     lazy var statusIcon: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = UIViewContentMode.ScaleAspectFit
-
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = SimpleHighlightCellUX.CornerRadius
         return imageView
@@ -214,6 +193,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom).offset(5)
             make.leading.equalTo(imageView.snp_trailing).offset(10)
+            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
         }
 
         timeStamp.snp_makeConstraints { make in
@@ -221,9 +201,11 @@ class SimpleHighlightCell: UICollectionViewCell {
             make.top.equalTo(descriptionLabel)
         }
 
-//        statusIcon.snp_makeConstraints { make in
-//            make.trailing.equalTo(descriptionLabel.snp_leading)
-//        }
+        statusIcon.snp_makeConstraints { make in
+            make.leading.equalTo(textLabel.snp_trailing)
+            make.trailing.equalTo(contentView)
+            make.top.equalTo(textLabel)
+        }
     }
 
 
@@ -241,9 +223,6 @@ class SimpleHighlightCell: UICollectionViewCell {
             guard let img = img else {
                 return
             }
-            //            img.getColors { colors in
-            //                self.backgroundImage.backgroundColor = colors.backgroundColor
-            //            }
             self.image = img
         }
         imageView.layer.masksToBounds = true

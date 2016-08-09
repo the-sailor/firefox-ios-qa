@@ -181,8 +181,9 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.textColor = UIColor.blackColor()
         highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "descriptiondescriptiondescriptiondescription"
+        highlightCell.descriptionLabel.text = "description      description      description    description description    description description    description"
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
+        highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
         highlightCell.timeStamp.text = "3 hrs"
         return cell
     }
@@ -198,9 +199,10 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "descriptiondescriptiondescriptiondescription"
+        highlightCell.descriptionLabel.text = "description    description    description   description  description    description description    description"
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.textLabel.textColor = UIColor.blackColor()
+        highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
         highlightCell.timeStamp.text = "5 hrs"
         return cell
     }
