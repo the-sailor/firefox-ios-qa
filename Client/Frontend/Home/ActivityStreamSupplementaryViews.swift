@@ -21,7 +21,7 @@ class TopSiteCell: UICollectionViewCell {
         var squareFrame = CGRectMake(0, 0, self.frame.height, self.frame.height)
         squareFrame.center = self.frame.center
         self.contentView.frame = squareFrame
-        self.contentView.backgroundColor = UIColor.redColor()
+        self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     override init(frame: CGRect) {
@@ -34,7 +34,6 @@ class TopSiteCell: UICollectionViewCell {
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
         titleLabel.textColor = UIColor.grayColor()
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
         contentView.addSubview(titleLabel)
@@ -58,10 +57,15 @@ class TopSiteCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         self.backgroundColor = UIColor.whiteColor()
+        self.titleLabel.backgroundColor = UIColor.whiteColor()
+        self.imageView.image = nil
+        self.titleLabel.text = ""
      //   self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     func setImageWithURL(url: NSURL) {
+        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
+
         imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
             guard let img = img else {
                 return
@@ -91,11 +95,11 @@ class TopSiteCell: UICollectionViewCell {
 //
 //}
 
-class ASVerticalScrollCell: UICollectionViewCell {
+class ASHorizontalScrollCell: UITableViewCell {
     var collectionView: UICollectionView!
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
         let layout  = UICollectionViewFlowLayout()
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
         layout.minimumLineSpacing = 0
@@ -115,7 +119,7 @@ class ASVerticalScrollCell: UICollectionViewCell {
     }
 
 
-    func setDelegate(delegate: ASVerticalScrollSource) {
+    func setDelegate(delegate: ASHorizontalScrollSource) {
         collectionView.delegate = delegate
         collectionView.dataSource = delegate
         collectionView.reloadData()
@@ -141,7 +145,7 @@ struct ASAction {
     let image: UIImage
 }
 
-class ASVerticalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
     var content: [TopSiteItem] =  []
     var contentPerPage: Int = 1
@@ -166,6 +170,7 @@ class ASVerticalScrollSource: NSObject, UICollectionViewDelegate, UICollectionVi
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("TopSiteCell", forIndexPath: indexPath) as! TopSiteCell
         //empty cell
         if indexPath.row > content.count - 1 {
+
             return cell
         }
         //go through content and set stuff based on type of the struct provided
@@ -176,10 +181,6 @@ class ASVerticalScrollSource: NSObject, UICollectionViewDelegate, UICollectionVi
 //        cell.titleLabel.textColor = contentItem.textColor
         return cell
     }
-
-//    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAtIndex section: Int) -> CGFloat {
-//        return 22
-//    }
 
 
 }
