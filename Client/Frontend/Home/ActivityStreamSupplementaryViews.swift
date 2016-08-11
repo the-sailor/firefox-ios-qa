@@ -17,24 +17,31 @@ class TopSiteCell: UICollectionViewCell {
     var imageView: UIImageView!
     var titleLabel: UILabel!
 
+    override func layoutSubviews() {
+        var squareFrame = CGRectMake(0, 0, self.frame.height, self.frame.height)
+        squareFrame.center = self.frame.center
+        self.contentView.frame = squareFrame
+        self.contentView.backgroundColor = UIColor.redColor()
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
 
         contentView.layer.cornerRadius = 4
         contentView.layer.masksToBounds = true
-        layer.cornerRadius = 4
-        layer.masksToBounds = true
+
 
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
+        titleLabel.backgroundColor = UIColor.whiteColor()
+        titleLabel.textColor = UIColor.grayColor()
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
         contentView.addSubview(titleLabel)
 
-        let heightInset = Int(frame.height * 0.8)
+        let heightInset = Int(frame.height * 0.66)
         titleLabel.snp_makeConstraints { (make) in
-            //the titlelabel should take up the bottom 20 percent of the frame
+            //the titlelabel should take up the bottom 33 percent of the frame
             make.edges.equalTo(self).inset(UIEdgeInsetsMake(CGFloat(heightInset), 0, 0, 0))
         }
 
@@ -42,7 +49,7 @@ class TopSiteCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         imageView.snp_makeConstraints { (make) in
             make.height.equalTo(self.frame.height/2)
-            make.width.equalTo(self.frame.width/2)
+            make.width.equalTo(self.frame.height/2)
             let offset = Int(self.frame.height) - heightInset
             make.centerX.equalTo(self.snp_centerX)
             make.centerY.equalTo(self.snp_centerY).offset(CGFloat(-offset/2))
@@ -51,8 +58,7 @@ class TopSiteCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         self.backgroundColor = UIColor.whiteColor()
-        self.contentView.backgroundColor = UIColor.whiteColor()
-        titleLabel.textColor = UIColor.blackColor()
+     //   self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     func setImageWithURL(url: NSURL) {
@@ -62,8 +68,6 @@ class TopSiteCell: UICollectionViewCell {
             }
             img.getColors(CGSize(width: 50, height:50)) { colors in
                 self.contentView.backgroundColor = colors.backgroundColor
-                self.backgroundColor = colors.backgroundColor
-                self.titleLabel.textColor = colors.detailColor
             }
         }
         imageView.layer.masksToBounds = true
@@ -75,6 +79,17 @@ class TopSiteCell: UICollectionViewCell {
     
 }
 
+//I need this becuause spacing is hard in flow layout
+// http://stackoverflow.com/questions/13228600/uicollectionview-align-logic-missing-in-horizontal-paging-scrollview
+//class ASVerticalySpacedLayout: UICollectionViewFlowLayout {
+//    func collectionViewContentSize() -> CGSize {
+//
+//    }
+//
+////
+//
+//}
+
 class ASVerticalScrollCell: UICollectionViewCell {
     var collectionView: UICollectionView!
 
@@ -82,7 +97,8 @@ class ASVerticalScrollCell: UICollectionViewCell {
         super.init(frame: frame)
         let layout  = UICollectionViewFlowLayout()
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
-        layout.itemSize = CGSize(width: 100, height: 100)
+        layout.minimumLineSpacing = 0
+
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSiteCell")
@@ -94,6 +110,7 @@ class ASVerticalScrollCell: UICollectionViewCell {
         collectionView.snp_makeConstraints { make in
             make.edges.equalTo(self)
         }
+
     }
 
 
@@ -126,6 +143,10 @@ struct ASAction {
 class ASVerticalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
     var content: [TopSiteItem] =  []
+
+    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+
+    }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return content.count

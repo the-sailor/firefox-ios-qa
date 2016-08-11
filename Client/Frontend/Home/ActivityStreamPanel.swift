@@ -71,7 +71,7 @@ extension ActivityStreamPanel {
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         switch section {
         case 0:
-            return CGSize(width: self.view.frame.width, height: 50)
+            return CGSize(width: 0, height: 0)
         case 1:
             return CGSize(width: self.view.frame.width, height: 50)
         default:
@@ -234,19 +234,39 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
 
 
     /*
+     We use this to figure out how big a button in a TopSite should be. This tries to allow as many cells in a single page as possible.
+     */
+    func sizeForItemsInASScrollView() -> CGSize {
+        let width = self.view.frame.size.width
+        var maxHeight = 100.0
+        var numItems = Double(width) / maxHeight
+        if Int(numItems) <= 3 {
+            numItems = 4
+            maxHeight = Double(width) / numItems
+        }
+        if floor(numItems) == numItems {
+            //we have an exact fit. Make the cell slightly smaller.
+            maxHeight = maxHeight - 5
+        }
+        let cellWidth =  Double(width) / floor(numItems)
+
+        return CGSize(width: cellWidth, height: maxHeight)
+    }
+
+    /*
      Simple methods to fetch some data from the DB
      */
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
-
+                let rect = self.sizeForItemsInASScrollView()
                 self.topSites = data.asArray().map { site in
                     if let imgURL = site.icon?.url {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: CGSize(width: 100, height: 100))
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: rect)
                         return topSite
                     }
                     else {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: CGSize(width: 100, height: 100))
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: rect)
                         return topSite
                     }
 
