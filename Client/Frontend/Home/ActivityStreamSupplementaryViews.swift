@@ -34,7 +34,7 @@ class TopSiteCell: UICollectionViewCell {
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.backgroundColor = UIColor.whiteColor()
+        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
         titleLabel.textColor = UIColor.grayColor()
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
         contentView.addSubview(titleLabel)
@@ -68,6 +68,7 @@ class TopSiteCell: UICollectionViewCell {
             }
             img.getColors(CGSize(width: 50, height:50)) { colors in
                 self.contentView.backgroundColor = colors.backgroundColor
+                self.titleLabel.textColor = colors.detailColor
             }
         }
         imageView.layer.masksToBounds = true
@@ -143,22 +144,30 @@ struct ASAction {
 class ASVerticalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
     var content: [TopSiteItem] =  []
-
-    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-
-    }
+    var contentPerPage: Int = 1
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        let perPage = Double(content.count) / Double(contentPerPage)
+        if perPage != floor(perPage) {
+           return contentPerPage * Int(ceil(perPage))
+        }
         return content.count
     }
 
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        if indexPath.row > content.count - 1 {
+            return content[0].size
+        }
         let contentItem = content[indexPath.row]
         return contentItem.size
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("TopSiteCell", forIndexPath: indexPath) as! TopSiteCell
+        //empty cell
+        if indexPath.row > content.count - 1 {
+            return cell
+        }
         //go through content and set stuff based on type of the struct provided
         let contentItem = content[indexPath.row]
         cell.titleLabel.text = contentItem.urlTitle

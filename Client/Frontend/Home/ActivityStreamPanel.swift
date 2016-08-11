@@ -253,6 +253,16 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
         return CGSize(width: cellWidth, height: maxHeight)
     }
 
+    func numberOfItemsPerPageInASScrollView() -> Int {
+        let width = self.view.frame.size.width
+        var maxHeight = 100.0
+        var numItems = Double(width) / maxHeight
+        if Int(numItems) <= 3 {
+            numItems = 4
+        }
+        return Int(numItems)
+    }
+
     /*
      Simple methods to fetch some data from the DB
      */
@@ -273,6 +283,7 @@ extension ActivityStreamPanel: UICollectionViewDataSource, UICollectionViewDeleg
 
                 }
                 self.topSiteHandler = ASVerticalScrollSource()
+                self.topSiteHandler.contentPerPage = self.numberOfItemsPerPageInASScrollView()
                 self.topSiteHandler.content = self.topSites
 
 
