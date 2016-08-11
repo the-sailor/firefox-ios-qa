@@ -111,7 +111,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // will restore with.
         log.debug("Initing BVC…")
 
-        browserViewController = BrowserViewControllerV1(profile: self.profile!, tabManager: self.tabManager)
+
+        browserViewController = BrowserViewControllerV2Proxy(tabManager: self.tabManager)
+//        browserViewController = BrowserViewControllerV1(profile: self.profile!, tabManager: self.tabManager)
 
         // Note: Unable to pass in protocol here - need a concrete class.
         browserViewController.restorationIdentifier = NSStringFromClass(BrowserViewControllerV1)
@@ -127,7 +129,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             rootViewController = navigationController
         }
 
-        self.window!.rootViewController = rootViewController
+//        self.window!.rootViewController = rootViewController
+        self.window!.rootViewController = browserViewController.viewController
 
         do {
             log.debug("Configuring Crash Reporting...")
