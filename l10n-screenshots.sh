@@ -12,7 +12,14 @@ fi
 
 mkdir l10n-screenshots
 
-for d in firefox-ios-l10n/?? firefox-ios-l10n/??? firefox-ios-l10n/??-??; do
+SNAPSHOT=snapshot
+
+LOCALES=$@
+if [ "$LOCALES" == "" ]; then
+    LOCALES=`ls -d firefox-ios-l10n/?? firefox-ios-l10n/??? firefox-ios-l10n/??-??`
+fi
+
+for d in $LOCALES; do
     lang=$(basename $d)
     if [ "$lang" != "ar" ]; then
         echo "`date` Snapshotting $lang"
