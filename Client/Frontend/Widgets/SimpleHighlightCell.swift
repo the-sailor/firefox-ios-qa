@@ -172,7 +172,7 @@ class SimpleHighlightCell: UICollectionViewCell {
         contentView.addSubview(statusIcon)
 
         imageView.snp_makeConstraints { make in
-            make.leading.equalTo(contentView)
+            make.leading.equalTo(contentView).offset(10)
             make.centerY.equalTo(contentView)
             make.size.equalTo(30)
         }
@@ -183,12 +183,9 @@ class SimpleHighlightCell: UICollectionViewCell {
 
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(imageView.snp_trailing).offset(10)
-            make.top.equalTo(imageView)
-            make.width.equalTo(contentView.frame.width/1.25)
+            make.top.equalTo(imageView).offset(-2)
+            make.width.equalTo(contentView.frame.width/1.3)
         }
-
-        // Prevents the textLabel from getting squished in relation to other view priorities.
-        textLabel.setContentCompressionResistancePriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom)
@@ -197,13 +194,13 @@ class SimpleHighlightCell: UICollectionViewCell {
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView)
+            make.trailing.equalTo(contentView).inset(10)
             make.top.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
             make.top.equalTo(textLabel)
-            make.leading.equalTo(timeStamp).offset(4)
+            make.trailing.equalTo(timeStamp)
         }
     }
 

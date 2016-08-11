@@ -127,7 +127,7 @@ class HighlightCell: UICollectionViewCell {
         imageView.snp_makeConstraints { make in
             make.top.equalTo(backgroundImage)
             make.leading.equalTo(backgroundImage)
-            make.size.equalTo(35)
+            make.size.equalTo(30)
         }
 
         backgroundImage.snp_makeConstraints { make in
@@ -143,14 +143,14 @@ class HighlightCell: UICollectionViewCell {
         textLabel.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
             make.top.equalTo(backgroundImage.snp_bottom).offset(5)
-            make.width.equalTo(contentView.frame.width/1.25 + imageView.frame.width)
+            make.width.equalTo(contentView.frame.width/1.2 + 15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabel.snp_bottom)
             make.leading.equalTo(contentView).offset(10)
             make.bottom.equalTo(contentView).offset(-5)
-            make.width.equalTo(textLabel)
+            make.width.equalTo(contentView.frame.width/1.2 + 15)
         }
 
         timeStamp.snp_makeConstraints { make in

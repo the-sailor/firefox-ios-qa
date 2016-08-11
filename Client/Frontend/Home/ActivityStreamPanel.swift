@@ -87,7 +87,6 @@ extension ActivityStreamPanel {
                 return "Highlights"
         }
     }
-
 }
 
 //TopSites data source
@@ -165,6 +164,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
             highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.imageView.layer.borderWidth = 0.5
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.textColor = UIColor.blackColor()
@@ -184,6 +184,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
             highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.imageView.layer.borderWidth = 0.5
         }
         highlightCell.textLabel.text = site.title
         highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
