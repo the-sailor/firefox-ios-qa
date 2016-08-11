@@ -111,11 +111,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // will restore with.
         log.debug("Initing BVC…")
 
-        browserViewController = BrowserViewController(profile: self.profile!, tabManager: self.tabManager)
-        browserViewController.restorationIdentifier = NSStringFromClass(BrowserViewController.self)
+        browserViewController = BrowserViewControllerV1(profile: self.profile!, tabManager: self.tabManager)
+
+        // Note: Unable to pass in protocol here - need a concrete class.
+        browserViewController.restorationIdentifier = NSStringFromClass(BrowserViewControllerV1)
         browserViewController.restorationClass = AppDelegate.self
 
-        let navigationController = UINavigationController(rootViewController: browserViewController)
+        let navigationController = UINavigationController(rootViewController: browserViewController.viewController)
         navigationController.delegate = self
         navigationController.navigationBarHidden = true
 
@@ -525,7 +527,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, continueUserActivity userActivity: NSUserActivity, restorationHandler: ([AnyObject]?) -> Void) -> Bool {
         if let url = userActivity.webpageURL {
-            browserViewController.switchToTabForURLOrOpen(url)
+            browserViewController.switchToTabForURLOrOpen(url, isPrivate: false)
             return true
         }
         return false
@@ -534,7 +536,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func viewURLInNewTab(notification: UILocalNotification) {
         if let alertURL = notification.userInfo?[TabSendURLKey] as? String {
             if let urlToOpen = NSURL(string: alertURL) {
-                browserViewController.openURLInNewTab(urlToOpen)
+                browserViewController.openURLInNewTab(urlToOpen, isPrivate: false)
             }
         }
     }

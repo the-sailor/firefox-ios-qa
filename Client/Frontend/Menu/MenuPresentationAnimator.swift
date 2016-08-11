@@ -26,7 +26,7 @@ class MenuPresentationAnimator: NSObject, UIViewControllerAnimatedTransitioning 
             bottomViewController = navController.viewControllers.last ?? bottomViewController
         }
 
-        if bottomViewController.isKindOfClass(BrowserViewController) {
+        if bottomViewController is BrowserViewController {
             animateWithMenu(menuViewController, browserViewController: bottomViewController as! BrowserViewController, transitionContext: transitionContext)
         } else if bottomViewController.isKindOfClass(TabTrayController) {
             animateWithMenu(menuViewController, tabTrayController: bottomViewController as! TabTrayController, transitionContext: transitionContext)
@@ -66,7 +66,7 @@ extension MenuPresentationAnimator {
             rightViews = nil
         }
 
-        self.animateWithMenu(menu, baseController: bvc, viewsToAnimateLeft: leftViews, viewsToAnimateRight: rightViews, sourceView: sourceView, withTransitionContext: transitionContext)
+        self.animateWithMenu(menu, baseController: bvc.viewController, viewsToAnimateLeft: leftViews, viewsToAnimateRight: rightViews, sourceView: sourceView, withTransitionContext: transitionContext)
     }
 
     private func animateWithMenu(menu: MenuViewController, tabTrayController ttc: TabTrayController, transitionContext: UIViewControllerContextTransitioning) {

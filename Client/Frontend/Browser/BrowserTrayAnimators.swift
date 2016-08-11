@@ -27,7 +27,7 @@ private extension TrayToBrowserAnimator {
         let displayedTabs = selectedTab.isPrivate ? tabManager.privateTabs : tabManager.normalTabs
         guard let expandFromIndex = displayedTabs.indexOf(selectedTab) else { return }
 
-        bvc.view.frame = transitionContext.finalFrameForViewController(bvc)
+        bvc.view.frame = transitionContext.finalFrameForViewController(bvc.viewController)
 
         // Hide browser components
         bvc.toggleSnackBarVisibility(show: false)

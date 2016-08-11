@@ -36,6 +36,42 @@ private struct BrowserViewControllerUX {
 
 protocol BrowserViewController: class {
     var viewController: UIViewController { get }
+
+    // View Controller properties to satisfy existing uses
+    var restorationIdentifier: String? { get set }
+    var restorationClass: AnyObject.Type? { get set }
+    var traitCollection: UITraitCollection { get }
+    var view: UIView! { get }
+
+    var homePanelController: HomePanelViewController? { get }
+    var tabManager: TabManager { get }
+
+
+    // BrowserTrayAnimator uses these for frame references
+    var webViewContainerBackdrop: UIView! { get }
+    var urlBar: URLBarView! { get }
+    var header: BlurWrapper! { get }
+    var headerBackdrop: UIView! { get }
+    var footer: UIView! { get }
+    var footerBackdrop: UIView! { get }
+    var readerModeBar: ReaderModeBarView? { get }
+    var webViewContainer: UIView! { get }
+    var toolbar: TabToolbar? { get }
+
+
+    // Most of these seem pretty leaky and should not be exposed
+    func toggleSnackBarVisibility(show show: Bool)
+    func openBlankNewTabAndFocus(isPrivate isPrivate: Bool)
+    func presentIntroViewController(force: Bool) -> Bool
+    func switchToTabForURLOrOpen(url: NSURL, isPrivate: Bool)
+    func shouldShowFooterForTraitCollection(previousTraitCollection: UITraitCollection) -> Bool
+    func tabTrayDidDismiss(tabTray: TabTrayController)
+    func loadQueuedTabs()
+    func openURLInNewTab(url: NSURL?, isPrivate: Bool)
+    func addBookmark(tabState: TabState)
+
+    @available(iOS 9, *)
+    func switchToPrivacyMode(isPrivate isPrivate: Bool)
 }
 
 extension BrowserViewControllerV1: BrowserViewController {}
