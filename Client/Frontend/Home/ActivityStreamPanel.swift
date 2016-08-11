@@ -120,7 +120,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
                 return 250
             }
             else {
-                return 50
+                return 65
             }
         }
     }
@@ -163,12 +163,12 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.imageView.layer.borderWidth = 0.5
+            highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.imageView!.layer.borderWidth = 0.5
         }
-        highlightCell.textLabel.text = site.title
-        highlightCell.textLabel.textColor = UIColor.blackColor()
-        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.textLabelREPLACE.text = site.title
+        highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
+        highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "description      description      description    description description    description description    description"
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
@@ -183,14 +183,14 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.image = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.imageView.layer.borderWidth = 0.5
+            highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
         }
-        highlightCell.textLabel.text = site.title
-        highlightCell.textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.textLabelREPLACE.text = site.title
+        highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "description    description    description   description  description    description description    description"
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        highlightCell.textLabel.textColor = UIColor.blackColor()
+        highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
         highlightCell.timeStamp.text = "5 hrs"
         return cell

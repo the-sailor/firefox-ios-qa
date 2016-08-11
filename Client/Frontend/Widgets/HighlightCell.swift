@@ -17,29 +17,29 @@ struct HighlightCellUX {
     static let NearestNeighbordScalingThreshold: CGFloat = 24
 }
 
-class HighlightCell: UICollectionViewCell {
-    var image: UIImage? = nil {
+class HighlightCell: UITableViewCell {
+    var imageREPLACE: UIImage? = nil {
         didSet {
-            if let image = image {
-                imageView.image = image
-                imageView.contentMode = UIViewContentMode.ScaleAspectFit
+            if let image = imageREPLACE {
+                imageViewREPLACE.image = image
+                imageViewREPLACE.contentMode = UIViewContentMode.ScaleAspectFit
 
                 // Force nearest neighbor scaling for small favicons
                 if image.size.width < HighlightCellUX.NearestNeighbordScalingThreshold {
-                    imageView.layer.shouldRasterize = true
-                    imageView.layer.rasterizationScale = 2
-                    imageView.layer.minificationFilter = kCAFilterNearest
-                    imageView.layer.magnificationFilter = kCAFilterNearest
+                    imageViewREPLACE.layer.shouldRasterize = true
+                    imageViewREPLACE.layer.rasterizationScale = 2
+                    imageViewREPLACE.layer.minificationFilter = kCAFilterNearest
+                    imageViewREPLACE.layer.magnificationFilter = kCAFilterNearest
                 }
 
             } else {
-                imageView.image = HighlightCellUX.PlaceholderImage
-                imageView.contentMode = UIViewContentMode.Center
+                imageViewREPLACE.image = HighlightCellUX.PlaceholderImage
+                imageViewREPLACE.contentMode = UIViewContentMode.Center
             }
         }
     }
 
-    lazy var textLabel: UILabel = {
+    lazy var textLabelREPLACE: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
         textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
@@ -58,22 +58,22 @@ class HighlightCell: UICollectionViewCell {
         return textLabel
     }()
 
-    lazy var imageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = UIViewContentMode.ScaleAspectFit
+    lazy var imageViewREPLACE: UIImageView = {
+        let imageViewREPLACE = UIImageView()
+        imageViewREPLACE.contentMode = UIViewContentMode.ScaleAspectFit
 
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = HighlightCellUX.CornerRadius
-        return imageView
+        imageViewREPLACE.clipsToBounds = true
+        imageViewREPLACE.layer.cornerRadius = HighlightCellUX.CornerRadius
+        return imageViewREPLACE
     }()
 
     lazy var statusIcon: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = UIViewContentMode.ScaleAspectFit
+        let imageViewREPLACE = UIImageView()
+        imageViewREPLACE.contentMode = UIViewContentMode.ScaleAspectFit
 
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = HighlightCellUX.CornerRadius
-        return imageView
+        imageViewREPLACE.clipsToBounds = true
+        imageViewREPLACE.layer.cornerRadius = HighlightCellUX.CornerRadius
+        return imageViewREPLACE
     }()
 
     lazy var descriptionLabel: UILabel = {
@@ -109,8 +109,8 @@ class HighlightCell: UICollectionViewCell {
         }
     }
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
 
         layer.shouldRasterize = true
         layer.rasterizationScale = UIScreen.mainScreen().scale
@@ -118,13 +118,13 @@ class HighlightCell: UICollectionViewCell {
         isAccessibilityElement = true
         contentView.addSubview(selectedOverlay)
         contentView.addSubview(backgroundImage)
-        contentView.addSubview(imageView)
-        contentView.addSubview(textLabel)
+        contentView.addSubview(imageViewREPLACE)
+        contentView.addSubview(textLabelREPLACE)
         contentView.addSubview(timeStamp)
         contentView.addSubview(descriptionLabel)
         contentView.addSubview(statusIcon)
 
-        imageView.snp_makeConstraints { make in
+        imageViewREPLACE.snp_makeConstraints { make in
             make.top.equalTo(backgroundImage)
             make.leading.equalTo(backgroundImage)
             make.size.equalTo(30)
@@ -140,14 +140,14 @@ class HighlightCell: UICollectionViewCell {
             make.edges.equalTo(contentView)
         }
 
-        textLabel.snp_remakeConstraints { make in
+        textLabelREPLACE.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
             make.top.equalTo(backgroundImage.snp_bottom).offset(5)
             make.width.equalTo(contentView.frame.width/1.2 + 15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(textLabel.snp_bottom)
+            make.top.equalTo(textLabelREPLACE.snp_bottom)
             make.leading.equalTo(contentView).offset(10)
             make.bottom.equalTo(contentView).offset(-5)
             make.width.equalTo(contentView.frame.width/1.2 + 15)
@@ -159,7 +159,7 @@ class HighlightCell: UICollectionViewCell {
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.top.equalTo(textLabel)
+            make.top.equalTo(textLabelREPLACE)
             make.trailing.equalTo(backgroundImage)
         }
     }
@@ -172,17 +172,17 @@ class HighlightCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         backgroundImage.image = nil
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
     }
 
     func setImageWithURL(url: NSURL) {
-        imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
+        imageViewREPLACE.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
             guard let img = img else {
                 return
             }
-            self.image = img
+            self.imageREPLACE = img
         }
         backgroundImage.sd_setImageWithURL(NSURL(string: "http://lorempixel.com/640/480/?r=" + String(random())))
-        imageView.layer.masksToBounds = true
+        imageViewREPLACE.layer.masksToBounds = true
     }
 }
