@@ -210,7 +210,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
      We use this to figure out how big a button in a TopSite should be. This tries to allow as many cells in a single page as possible.
      */
     func sizeForItemsInASScrollView() -> CGSize {
-        let width = self.view.frame.size.width
+        let width = self.view.frame.size.width - 10
         var maxHeight = 100.0
         var numItems = Double(width) / maxHeight
         if Int(numItems) <= 3 {

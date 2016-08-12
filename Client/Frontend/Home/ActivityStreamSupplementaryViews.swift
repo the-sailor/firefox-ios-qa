@@ -112,6 +112,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         let layout  = UICollectionViewFlowLayout()
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
         layout.minimumLineSpacing = 0
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
         self.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
@@ -119,6 +120,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         collectionView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.pagingEnabled = true
+
 
         addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
@@ -159,7 +161,12 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
     var content: [TopSiteItem] =  []
     var contentPerPage: Int = 1
 
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        return 2
+    }
+
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return contentPerPage
         let perPage = Double(content.count) / Double(contentPerPage)
         if perPage != floor(perPage) {
            return contentPerPage * Int(ceil(perPage))

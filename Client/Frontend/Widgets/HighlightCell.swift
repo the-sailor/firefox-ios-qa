@@ -132,8 +132,8 @@ class HighlightCell: UITableViewCell {
 
         backgroundImage.snp_makeConstraints { make in
             make.top.equalTo(contentView)
-            make.leading.equalTo(contentView).offset(10)
-            make.trailing.equalTo(contentView).inset(10)
+            make.leading.equalTo(contentView).offset(5)
+            make.trailing.equalTo(contentView).inset(5)
         }
 
         selectedOverlay.snp_makeConstraints { make in
