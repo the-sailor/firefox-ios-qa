@@ -55,6 +55,8 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         tableView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 65
         view.addSubview(tableView)
         tableView.snp_makeConstraints { (make) in
             make.edges.equalTo(self.view)
@@ -109,20 +111,20 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        switch indexPath.section {
-        case 0:
-            return 120
-        default:
-            //for now every other cell will have a full image
-            if indexPath.row % 3 == 0 {
-                return 250
-            }
-            else {
-                return 65
-            }
-        }
-    }
+//    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+//        switch indexPath.section {
+//        case 0:
+//            return 120
+//        default:
+//            //for now every other cell will have a full image
+//            if indexPath.row % 3 == 0 {
+//                return 250
+//            }
+//            else {
+//                return 65
+//            }
+//        }
+//    }
 
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -141,11 +143,17 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCellWithIdentifier(identifier, forIndexPath: indexPath)
         switch identifier {
         case "TopSite":
-            return configureTopSitesCell(cell, forIndexPath: indexPath)
+            let blah = configureTopSitesCell(cell, forIndexPath: indexPath)
+            blah.layoutIfNeeded()
+            return blah
         case "Highlight":
-            return configureHighlightCell(cell, forIndexPath: indexPath)
+            let ugh = configureHighlightCell(cell, forIndexPath: indexPath)
+            ugh.layoutIfNeeded()
+            return ugh
         default:
-            return configureSimpleHighlightCell(cell, forIndexPath: indexPath)
+            let boo = configureSimpleHighlightCell(cell, forIndexPath: indexPath)
+            boo.layoutIfNeeded()
+            return boo
         }
     }
 

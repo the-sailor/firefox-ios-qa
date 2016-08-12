@@ -6,76 +6,18 @@ import UIKit
 import Shared
 
 struct SimpleHighlightCellUX {
-    /// Ratio of width:height of the thumbnail image.
-    static let ImageAspectRatio: Float = 1.0
     static let BorderColor = UIColor.blackColor().colorWithAlphaComponent(0.1)
     static let BorderWidth: CGFloat = 1
     static let LabelColor = UIAccessibilityDarkerSystemColorsEnabled() ? UIColor.blackColor() : UIColor(rgb: 0x353535)
     static let LabelBackgroundColor = UIColor(white: 1.0, alpha: 0.5)
     static let LabelAlignment: NSTextAlignment = .Left
     static let SelectedOverlayColor = UIColor(white: 0.0, alpha: 0.25)
-    static let InsetSize: CGFloat = 20
-    static let InsetSizeCompact: CGFloat = 6
-    static func insetsForCollectionViewSize(size: CGSize, traitCollection: UITraitCollection) -> UIEdgeInsets {
-        let largeInsets = UIEdgeInsets(
-            top: SimpleHighlightCellUX.InsetSize,
-            left: SimpleHighlightCellUX.InsetSize,
-            bottom: SimpleHighlightCellUX.InsetSize,
-            right: SimpleHighlightCellUX.InsetSize
-        )
-        let smallInsets = UIEdgeInsets(
-            top: SimpleHighlightCellUX.InsetSizeCompact,
-            left: SimpleHighlightCellUX.InsetSizeCompact,
-            bottom: SimpleHighlightCellUX.InsetSizeCompact,
-            right: SimpleHighlightCellUX.InsetSizeCompact
-        )
-
-        if traitCollection.horizontalSizeClass == .Compact {
-            return smallInsets
-        } else {
-            return largeInsets
-        }
-    }
-
-    static let ImagePaddingWide: CGFloat = 20
-    static let ImagePaddingCompact: CGFloat = 10
-    static func imageInsetsForCollectionViewSize(size: CGSize, traitCollection: UITraitCollection) -> UIEdgeInsets {
-        let largeInsets = UIEdgeInsets(
-            top: SimpleHighlightCellUX.ImagePaddingWide,
-            left: SimpleHighlightCellUX.ImagePaddingWide,
-            bottom: SimpleHighlightCellUX.ImagePaddingWide,
-            right: SimpleHighlightCellUX.ImagePaddingWide
-        )
-
-        let smallInsets = UIEdgeInsets(
-            top: SimpleHighlightCellUX.ImagePaddingCompact,
-            left: SimpleHighlightCellUX.ImagePaddingCompact,
-            bottom: SimpleHighlightCellUX.ImagePaddingCompact,
-            right: SimpleHighlightCellUX.ImagePaddingCompact
-        )
-        if traitCollection.horizontalSizeClass == .Compact {
-            return smallInsets
-        } else {
-            return largeInsets
-        }
-    }
-
-    static let LabelInsets = UIEdgeInsetsMake(10, 3, 10, 3)
     static let PlaceholderImage = UIImage(named: "defaultTopSiteIcon")
     static let CornerRadius: CGFloat = 3
-
-    // Make the remove button look 20x20 in size but have the clickable area be 44x44
-    static let RemoveButtonSize: CGFloat = 44
-    static let RemoveButtonInsets = UIEdgeInsets(top: 11, left: 11, bottom: 11, right: 11)
-    static let RemoveButtonAnimationDuration: NSTimeInterval = 0.4
-    static let RemoveButtonAnimationDamping: CGFloat = 0.6
-
     static let NearestNeighbordScalingThreshold: CGFloat = 24
 }
 
 class SimpleHighlightCell: UITableViewCell {
-    var imageInsets: UIEdgeInsets = UIEdgeInsetsZero
-    var cellInsets: UIEdgeInsets = UIEdgeInsetsZero
     var imageREPLACE: UIImage? = nil {
         didSet {
             if let image = imageREPLACE {
@@ -172,7 +114,8 @@ class SimpleHighlightCell: UITableViewCell {
         contentView.addSubview(statusIcon)
 
         imageViewREPLACE.snp_makeConstraints { make in
-            make.top.leading.equalTo(contentView).offset(10)
+            make.top.equalTo(contentView).offset(10)
+            make.leading.equalTo(contentView).offset(5)
             make.size.equalTo(30)
         }
 
@@ -190,6 +133,7 @@ class SimpleHighlightCell: UITableViewCell {
             make.top.equalTo(textLabelREPLACE.snp_bottom)
             make.leading.equalTo(imageViewREPLACE.snp_trailing).offset(10)
             make.width.equalTo(textLabelREPLACE)
+            make.bottom.equalTo(contentView).offset(-10)
         }
 
         timeStamp.snp_makeConstraints { make in

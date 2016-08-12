@@ -136,9 +136,10 @@ class ASHorizontalScrollCell: UITableViewCell {
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.pagingEnabled = true
 
-        addSubview(collectionView)
+        contentView.addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
-            make.edges.equalTo(self).offset(UIEdgeInsetsMake(20, 0, 0, 0))
+            make.edges.equalTo(contentView).offset(UIEdgeInsetsMake(20, 0, 0, 0))
+            make.height.equalTo(100)
         }
 
         pageControl = UIPageControl()
@@ -146,17 +147,17 @@ class ASHorizontalScrollCell: UITableViewCell {
         pageControl.pageIndicatorTintColor = UIColor.grayColor()
         pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
 //        pageControl.backgroundColor = UIColor.redColor()
-        addSubview(pageControl)
+        contentView.addSubview(pageControl)
         pageControl.snp_makeConstraints { make in
             make.width.equalTo(30)
             make.height.equalTo(20)
-            make.top.equalTo(self.snp_top)
+            make.top.equalTo(contentView)
             make.trailing.equalTo(self.snp_trailing).offset(-5)
         }
 
         let titleLabel = UILabel()
         titleLabel.text = "TOP SITES"
-        addSubview(titleLabel)
+        contentView.addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
             make.height.equalTo(pageControl.snp_height)
             make.leading.equalTo(self.snp_leading).offset(5)

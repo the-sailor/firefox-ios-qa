@@ -131,9 +131,10 @@ class HighlightCell: UITableViewCell {
         }
 
         backgroundImage.snp_makeConstraints { make in
-            make.top.equalTo(contentView)
+            make.top.equalTo(contentView).offset(5)
             make.leading.equalTo(contentView).offset(5)
             make.trailing.equalTo(contentView).inset(5)
+            make.height.equalTo(200)
         }
 
         selectedOverlay.snp_makeConstraints { make in
@@ -142,14 +143,14 @@ class HighlightCell: UITableViewCell {
 
         textLabelREPLACE.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
-            make.top.equalTo(backgroundImage.snp_bottom).offset(5)
+            make.top.equalTo(backgroundImage.snp_bottom)
             make.width.equalTo(contentView.frame.width/1.2 + 15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabelREPLACE.snp_bottom)
             make.leading.equalTo(contentView).offset(10)
-            make.bottom.equalTo(contentView).offset(-5)
+            make.bottom.equalTo(contentView).offset(-10)
             make.width.equalTo(contentView.frame.width/1.2 + 15)
         }
 
