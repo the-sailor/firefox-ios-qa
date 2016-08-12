@@ -4,8 +4,6 @@
 
 import Foundation
 import Shared
-import CoreSpotlight
-import MobileCoreServices
 import WebKit
 
 
@@ -48,56 +46,56 @@ class SpotlightHelper: NSObject {
     }
 
     func update(pageContent: [String: String], forURL url: NSURL) {
-        if !url.isWebPage() {
-            return
-        }
-
-        var activity: NSUserActivity
-        if let currentActivity = self.activity where currentActivity.webpageURL == url {
-            activity = currentActivity
-        } else {
-            activity = createUserActivity()
-            self.activity = activity
-            activity.webpageURL = url
-        }
-
-        activity.title = pageContent["title"]
-        if #available(iOS 9, *) {
-            if !(tab?.isPrivate ?? true) {
-                let attrs = CSSearchableItemAttributeSet(itemContentType: kUTTypeHTML as String)
-                attrs.contentDescription = pageContent["description"]
-                attrs.contentURL = url
-                activity.contentAttributeSet = attrs
-                activity.eligibleForSearch = true
-
-            }
-        }
-
-        // We can't be certain that the favicon isn't already available.
-        // If it is, for this URL, then update the activity with the favicon now.
-        if urlForThumbnail == url {
-            updateImage(thumbnailImage, forURL: url)
-        }
+//        if !url.isWebPage() {
+//            return
+//        }
+//
+//        var activity: NSUserActivity
+//        if let currentActivity = self.activity where currentActivity.webpageURL == url {
+//            activity = currentActivity
+//        } else {
+//            activity = createUserActivity()
+//            self.activity = activity
+//            activity.webpageURL = url
+//        }
+//
+//        activity.title = pageContent["title"]
+//        if #available(iOS 9, *) {
+//            if !(tab?.isPrivate ?? true) {
+//                let attrs = CSSearchableItemAttributeSet(itemContentType: kUTTypeHTML as String)
+//                attrs.contentDescription = pageContent["description"]
+//                attrs.contentURL = url
+//                activity.contentAttributeSet = attrs
+//                activity.eligibleForSearch = true
+//
+//            }
+//        }
+//
+//        // We can't be certain that the favicon isn't already available.
+//        // If it is, for this URL, then update the activity with the favicon now.
+//        if urlForThumbnail == url {
+//            updateImage(thumbnailImage, forURL: url)
+//        }
     }
 
     func updateImage(image: UIImage? = nil, forURL url: NSURL) {
-        guard let currentActivity = self.activity where currentActivity.webpageURL == url else {
-            // We've got a favicon, but not for this URL.
-            // Let's store it until we can get the title and description.
-            urlForThumbnail = url
-            thumbnailImage = image
-            return
-        }
-
-        if #available(iOS 9.0, *) {
-            if let image = image {
-                activity?.contentAttributeSet?.thumbnailData = UIImagePNGRepresentation(image)
-            }
-        }
-        urlForThumbnail = nil
-        thumbnailImage = nil
-
-        becomeCurrent()
+//        guard let currentActivity = self.activity where currentActivity.webpageURL == url else {
+//            // We've got a favicon, but not for this URL.
+//            // Let's store it until we can get the title and description.
+//            urlForThumbnail = url
+//            thumbnailImage = image
+//            return
+//        }
+//
+//        if #available(iOS 9.0, *) {
+//            if let image = image {
+//                activity?.contentAttributeSet?.thumbnailData = UIImagePNGRepresentation(image)
+//            }
+//        }
+//        urlForThumbnail = nil
+//        thumbnailImage = nil
+//
+//        becomeCurrent()
     }
 
     func becomeCurrent() {
