@@ -112,7 +112,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         switch indexPath.section {
         case 0:
-            return 100
+            return 120
         default:
             //for now every other cell will have a full image
             if indexPath.row % 3 == 0 {

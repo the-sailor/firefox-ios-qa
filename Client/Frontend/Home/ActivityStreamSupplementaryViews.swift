@@ -119,6 +119,7 @@ extension UIColor {
 
 class ASHorizontalScrollCell: UITableViewCell {
     var collectionView: UICollectionView!
+    var pageControl: UIPageControl!
 
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -137,13 +138,36 @@ class ASHorizontalScrollCell: UITableViewCell {
 
         addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
-            make.edges.equalTo(self)
+            make.edges.equalTo(self).offset(UIEdgeInsetsMake(20, 0, 0, 0))
+        }
+
+        pageControl = UIPageControl()
+        pageControl.numberOfPages = 2
+        pageControl.pageIndicatorTintColor = UIColor.grayColor()
+        pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
+//        pageControl.backgroundColor = UIColor.redColor()
+        addSubview(pageControl)
+        pageControl.snp_makeConstraints { make in
+            make.width.equalTo(30)
+            make.height.equalTo(20)
+            make.top.equalTo(self.snp_top)
+            make.trailing.equalTo(self.snp_trailing).offset(-5)
+        }
+
+        let titleLabel = UILabel()
+        titleLabel.text = "TOP SITES"
+        addSubview(titleLabel)
+        titleLabel.snp_makeConstraints { make in
+            make.height.equalTo(pageControl.snp_height)
+            make.leading.equalTo(self.snp_leading).offset(5)
+            make.width.equalTo(100)
         }
     }
 
     func setDelegate(delegate: ASHorizontalScrollSource) {
         collectionView.delegate = delegate
         collectionView.dataSource = delegate
+        delegate.pageControl = pageControl
         collectionView.reloadData()
     }
 
@@ -165,6 +189,7 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
     var content: [TopSiteItem] = []
     var contentPerPage: Int = 1
     var itemSize: CGSize = CGSize.zero
+    var pageControl: UIPageControl?
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         // The number of sections is equal to the number of pages we need to show all the content
@@ -202,6 +227,12 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
         cell.titleLabel.text = contentItem.urlTitle
         cell.setImageWithURL(contentItem.faviconURL)
         return cell
+    }
+
+    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+
+        let pageWidth = CGRectGetWidth(scrollView.frame)
+        pageControl?.currentPage = Int(scrollView.contentOffset.x / pageWidth)
     }
 
 }
