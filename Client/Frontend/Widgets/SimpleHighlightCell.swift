@@ -172,8 +172,7 @@ class SimpleHighlightCell: UITableViewCell {
         contentView.addSubview(statusIcon)
 
         imageViewREPLACE.snp_makeConstraints { make in
-            make.leading.equalTo(contentView).offset(10)
-            make.centerY.equalTo(contentView)
+            make.top.leading.equalTo(contentView).offset(10)
             make.size.equalTo(30)
         }
 

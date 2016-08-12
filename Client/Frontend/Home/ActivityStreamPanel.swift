@@ -163,7 +163,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
             highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.imageView!.layer.borderWidth = 0.5
+            highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
         }
         highlightCell.textLabelREPLACE.text = site.title
         highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
