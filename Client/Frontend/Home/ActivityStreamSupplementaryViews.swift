@@ -18,10 +18,10 @@ class TopSiteCell: UICollectionViewCell {
     var titleLabel: UILabel!
 
     override func layoutSubviews() {
+        //using autolayout on the contentView does not seem to work
         var squareFrame = CGRectMake(0, 0, self.frame.height, self.frame.height)
         squareFrame.center = self.frame.center
         self.contentView.frame = squareFrame
-        self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     override init(frame: CGRect) {
@@ -32,12 +32,11 @@ class TopSiteCell: UICollectionViewCell {
         contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
         contentView.layer.borderWidth = 1
 
-
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
-        self.titleLabel.textColor = UIColor.blackColor()
+        titleLabel.textColor = UIColor.blackColor()
         titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
         contentView.addSubview(titleLabel)
 
@@ -48,14 +47,21 @@ class TopSiteCell: UICollectionViewCell {
         }
 
         imageView = UIImageView()
+        imageView.layer.masksToBounds = true
         contentView.addSubview(imageView)
         imageView.snp_makeConstraints { (make) in
             make.height.equalTo(self.frame.height/2)
             make.width.equalTo(self.frame.height/2)
+
+            // Add an offset to the image to make it appear centered with the titleLabel
             let offset = Int(self.frame.height) - heightInset
             make.centerX.equalTo(self.snp_centerX)
             make.centerY.equalTo(self.snp_centerY).offset(CGFloat(-offset/2))
         }
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     override func prepareForReuse() {
@@ -63,19 +69,18 @@ class TopSiteCell: UICollectionViewCell {
         self.imageView.image = nil
         self.titleLabel.text = ""
         contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
-
-
-     //   self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     func setImageWithURL(url: NSURL) {
-
         imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
             guard let img = img else {
+                // No favicon found. Do something!
                 return
             }
+
             img.getColors(CGSize(width: 50, height:50)) { colors in
-                if colors.backgroundColor == UIColor.clearColor() {
+                //In cases where the background is white. Force the background color to a different color
+                if colors.backgroundColor.isEqualToColorRGBA(UIColor.whiteColor()) {
                     self.contentView.backgroundColor = colors.primaryColor
                 }
                 else {
@@ -84,31 +89,40 @@ class TopSiteCell: UICollectionViewCell {
 
             }
         }
-        imageView.layer.masksToBounds = true
     }
 
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
 }
 
-//I need this becuause spacing is hard in flow layout
-// http://stackoverflow.com/questions/13228600/uicollectionview-align-logic-missing-in-horizontal-paging-scrollview
-//class ASVerticalySpacedLayout: UICollectionViewFlowLayout {
-//    func collectionViewContentSize() -> CGSize {
-//
-//    }
-//
-////
-//
-//}
+/**
+ Extracts the RGBA values of the colors and check if the are the same.
+ http://stackoverflow.com/a/38324700
+ */
+
+extension UIColor {
+    public func isEqualToColorRGBA(color : UIColor) -> Bool {
+        //local type used for holding converted color values
+        typealias colorType = (red : CGFloat, green : CGFloat, blue : CGFloat, alpha : CGFloat)
+        var myColor         : colorType = (0,0,0,0)
+        var otherColor      : colorType = (0,0,0,0)
+        //getRed returns true if color could be converted so if one of them failed we assume that colors are not equal
+        guard getRed(&myColor.red, green: &myColor.green, blue: &myColor.blue, alpha: &myColor.alpha) &&
+            color.getRed(&otherColor.red, green: &otherColor.green, blue: &otherColor.blue, alpha: &otherColor.alpha)
+            else {
+                return false
+        }
+        //as of Swift 2.2 (Xcode 7.3.1), tuples up to arity 6 can be compared with == so this works nicely
+        return myColor == otherColor
+    }
+}
+
+
 
 class ASHorizontalScrollCell: UITableViewCell {
     var collectionView: UICollectionView!
 
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+
         let layout  = UICollectionViewFlowLayout()
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
         layout.minimumLineSpacing = 0
@@ -121,14 +135,11 @@ class ASHorizontalScrollCell: UITableViewCell {
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.pagingEnabled = true
 
-
         addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
             make.edges.equalTo(self)
         }
-
     }
-
 
     func setDelegate(delegate: ASHorizontalScrollSource) {
         collectionView.delegate = delegate
@@ -141,64 +152,57 @@ class ASHorizontalScrollCell: UITableViewCell {
     }
 }
 
-//both should conform to a protocol. Where the title is given. and the image is given? and other basic stuff is given
-//this will allow both to work in the ASVerticalScrollSource
+
 struct TopSiteItem {
     let urlTitle: String
     let faviconURL: NSURL
     let backgroundColor: UIColor
     let textColor: UIColor
-    let size: CGSize
-}
-
-struct ASAction {
-    let title: String
-    let image: UIImage
 }
 
 class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
-    var content: [TopSiteItem] =  []
+    var content: [TopSiteItem] = []
     var contentPerPage: Int = 1
+    var itemSize: CGSize = CGSize.zero
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        return 2
+        // The number of sections is equal to the number of pages we need to show all the content
+        let perPage = Double(content.count) / Double(contentPerPage)
+        return Int(ceil(perPage))
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return contentPerPage
-        let perPage = Double(content.count) / Double(contentPerPage)
-        if perPage != floor(perPage) {
-           return contentPerPage * Int(ceil(perPage))
+        // The number of items per section (page) is always the full page. This allows for the full page to change while swiping. The missing items on a page will be filled with empties.
+        if content.isEmpty {
+            return 0
+        } else {
+            return contentPerPage
         }
-        return content.count
     }
 
     func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        if indexPath.row > content.count - 1 {
-            return content[0].size
-        }
-        let contentItem = content[indexPath.row]
-        return contentItem.size
+        // All items are square and are exactly the same size.
+        return itemSize
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("TopSiteCell", forIndexPath: indexPath) as! TopSiteCell
-        //empty cell
-        if indexPath.row > content.count - 1 {
-            cell.contentView.layer.borderColor = UIColor.clearColor().CGColor
 
+        // We use sections to signify pages. But content is still stored in a single array. So add an offset based on the section.
+        let row = indexPath.row + (indexPath.section * contentPerPage)
+
+        // If the row is out of content index then we have an empty cell at an end of a page.
+        if row > content.count - 1 {
+            cell.contentView.layer.borderColor = UIColor.clearColor().CGColor
             return cell
         }
-        //go through content and set stuff based on type of the struct provided
-        let contentItem = content[indexPath.row]
+
+        let contentItem = content[row]
         cell.titleLabel.text = contentItem.urlTitle
         cell.setImageWithURL(contentItem.faviconURL)
-//        cell.backgroundColor = contentItem.backgroundColor
-//        cell.titleLabel.textColor = contentItem.textColor
         return cell
     }
-
 
 }
 

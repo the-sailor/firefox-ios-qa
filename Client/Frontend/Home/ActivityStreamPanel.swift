@@ -242,21 +242,22 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
     private func reloadTopSitesWithLimit(limit: Int) -> Success {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
-                let rect = self.sizeForItemsInASScrollView()
                 self.topSites = data.asArray().map { site in
                     if let imgURL = site.icon?.url {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: rect)
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor())
                         return topSite
                     }
                     else {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor(), size: rect)
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor())
                         return topSite
                     }
 
 
                 }
+
                 self.topSiteHandler = ASHorizontalScrollSource()
                 self.topSiteHandler.contentPerPage = self.numberOfItemsPerPageInASScrollView()
+                self.topSiteHandler.itemSize =  self.sizeForItemsInASScrollView()
                 self.topSiteHandler.content = self.topSites
 
 
