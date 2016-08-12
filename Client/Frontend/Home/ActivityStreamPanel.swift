@@ -52,8 +52,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         tableView.registerClass(SimpleHighlightCell.self, forCellReuseIdentifier: "Cell")
         tableView.registerClass(ASHorizontalScrollCell.self, forCellReuseIdentifier: "TopSite")
         tableView.registerClass(HighlightCell.self, forCellReuseIdentifier: "Highlight")
-//        collectionView.registerClass(ActivityStreamHeaderView.self, forSupplementaryViewOfKind: "UICollectionElementKindSectionHeader", withReuseIdentifier: "ASHeader")
-        tableView.backgroundColor = UIColor.whiteColor()
+        tableView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
         tableView.delegate = self
         tableView.dataSource = self
         view.addSubview(tableView)
@@ -197,7 +196,13 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
     }
 
     private func extractDomainURL(url: String) -> String {
-        return NSURL(string: url)?.normalizedHost() ?? url
+        let urlString =  NSURL(string: url)?.normalizedHost() ?? url
+        var arr = urlString.componentsSeparatedByString(".")
+        if (arr.count >= 2) {
+            arr.popLast()
+            return arr.joinWithSeparator(".")
+        }
+        return urlString
     }
 
 

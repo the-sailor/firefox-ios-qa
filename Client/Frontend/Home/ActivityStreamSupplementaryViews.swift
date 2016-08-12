@@ -29,13 +29,16 @@ class TopSiteCell: UICollectionViewCell {
 
         contentView.layer.cornerRadius = 4
         contentView.layer.masksToBounds = true
+        contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
+        contentView.layer.borderWidth = 1
 
 
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.textColor = UIColor.grayColor()
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
+        self.titleLabel.textColor = UIColor.blackColor()
+        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
         contentView.addSubview(titleLabel)
 
         let heightInset = Int(frame.height * 0.66)
@@ -57,22 +60,28 @@ class TopSiteCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         self.backgroundColor = UIColor.whiteColor()
-        self.titleLabel.backgroundColor = UIColor.whiteColor()
         self.imageView.image = nil
         self.titleLabel.text = ""
+        contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
+
+
      //   self.contentView.backgroundColor = UIColor.whiteColor()
     }
 
     func setImageWithURL(url: NSURL) {
-        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.5)
 
         imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
             guard let img = img else {
                 return
             }
             img.getColors(CGSize(width: 50, height:50)) { colors in
-                self.contentView.backgroundColor = colors.backgroundColor
-                self.titleLabel.textColor = colors.detailColor
+                if colors.backgroundColor == UIColor.clearColor() {
+                    self.contentView.backgroundColor = colors.primaryColor
+                }
+                else {
+                    self.contentView.backgroundColor = colors.backgroundColor
+                }
+
             }
         }
         imageView.layer.masksToBounds = true
@@ -103,11 +112,11 @@ class ASHorizontalScrollCell: UITableViewCell {
         let layout  = UICollectionViewFlowLayout()
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
         layout.minimumLineSpacing = 0
-
+        self.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSiteCell")
-        collectionView.backgroundColor = UIColor.whiteColor()
+        collectionView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.pagingEnabled = true
 
@@ -170,6 +179,7 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("TopSiteCell", forIndexPath: indexPath) as! TopSiteCell
         //empty cell
         if indexPath.row > content.count - 1 {
+            cell.contentView.layer.borderColor = UIColor.clearColor().CGColor
 
             return cell
         }
