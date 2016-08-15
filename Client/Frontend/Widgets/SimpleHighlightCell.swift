@@ -137,7 +137,7 @@ class SimpleHighlightCell: UITableViewCell {
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView).inset(10)
+            make.trailing.equalTo(contentView).inset(5)
             make.top.equalTo(descriptionLabel)
         }
 
