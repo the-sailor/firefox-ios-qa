@@ -184,12 +184,12 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
+            highlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.siteImageView.layer.borderWidth = 0.5
         }
-        highlightCell.textLabelREPLACE.text = site.title.characters.count <= 1 ? site.url : site.title
-        highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
-        highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
+        highlightCell.titleLabel.textColor = UIColor.blackColor()
+        highlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
@@ -204,14 +204,14 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             let url = icon.url
             highlightCell.setImageWithURL(NSURL(string: url)!)
         } else {
-            highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
+            highlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.siteImageView.layer.borderWidth = 0.5
         }
-        highlightCell.textLabelREPLACE.text = site.title.characters.count <= 1 ? site.url : site.title
-        highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
+        highlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
+        highlightCell.titleLabel.textColor = UIColor.blackColor()
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
         highlightCell.timeStamp.text = "5 hrs"
         return cell
