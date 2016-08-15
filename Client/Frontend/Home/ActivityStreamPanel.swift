@@ -73,7 +73,7 @@ extension ActivityStreamPanel {
         case 0:
             return 0
         case 1:
-            return 50
+            return 24
         default:
             return 0
         }
@@ -87,6 +87,34 @@ extension ActivityStreamPanel {
             default:
                 return "Highlights"
         }
+    }
+
+    func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 20))
+        view.backgroundColor = UIColor.whiteColor()
+        let titleLabel = UILabel()
+        titleLabel.text = "HIGHLIGHTS"
+        titleLabel.textColor = UIColor.grayColor()
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        view.addSubview(titleLabel)
+        titleLabel.snp_makeConstraints { make in
+            make.height.equalTo(20)
+            make.leading.equalTo(view.snp_leading).offset(5)
+            make.width.equalTo(100)
+        }
+
+
+        let seperatorLine = UIView()
+        seperatorLine.backgroundColor = UIColor.lightGrayColor()
+        view.addSubview(seperatorLine)
+        seperatorLine.snp_makeConstraints { make in
+            make.height.equalTo(1)
+            make.width.equalTo(view.snp_width).offset(5)
+            make.leading.equalTo(view.snp_leading).offset(5)
+            make.top.equalTo(titleLabel.snp_bottom).offset(2)
+        }
+
+        return view
     }
 }
 
@@ -176,7 +204,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         highlightCell.textLabelREPLACE.text = site.title
         highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
         highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "description      description      description    description description    description description    description"
+        highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
         highlightCell.timeStamp.text = "3 hrs"
@@ -195,7 +223,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         }
         highlightCell.textLabelREPLACE.text = site.title
         highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "description    description    description   description  description    description description    description"
+        highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
         highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")

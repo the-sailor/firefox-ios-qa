@@ -35,7 +35,7 @@ class TopSiteCell: UICollectionViewCell {
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         titleLabel.textColor = UIColor.blackColor()
         titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
         contentView.addSubview(titleLabel)
@@ -138,7 +138,7 @@ class ASHorizontalScrollCell: UITableViewCell {
 
         contentView.addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
-            make.edges.equalTo(contentView).offset(UIEdgeInsetsMake(20, 0, 0, 0))
+            make.edges.equalTo(contentView).offset(UIEdgeInsetsMake(18, 0, 0, 0))
             make.height.equalTo(100)
         }
 
@@ -157,12 +157,25 @@ class ASHorizontalScrollCell: UITableViewCell {
 
         let titleLabel = UILabel()
         titleLabel.text = "TOP SITES"
+        titleLabel.textColor = UIColor.grayColor()
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         contentView.addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
             make.height.equalTo(pageControl.snp_height)
             make.leading.equalTo(self.snp_leading).offset(5)
             make.width.equalTo(100)
         }
+
+        let seperatorLine = UIView()
+        seperatorLine.backgroundColor = UIColor.lightGrayColor()
+        contentView.addSubview(seperatorLine)
+        seperatorLine.snp_makeConstraints { make in
+            make.height.equalTo(1)
+            make.width.equalTo(self.snp_width).offset(5)
+            make.leading.equalTo(self.snp_leading).offset(5)
+            make.top.equalTo(titleLabel.snp_bottom).offset(2)
+        }
+
     }
 
     func setDelegate(delegate: ASHorizontalScrollSource) {
@@ -221,6 +234,10 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
         // If the row is out of content index then we have an empty cell at an end of a page.
         if row > content.count - 1 {
             cell.contentView.layer.borderColor = UIColor.clearColor().CGColor
+            cell.backgroundColor = UIColor.whiteColor()
+            cell.titleLabel.backgroundColor = UIColor.whiteColor()
+            cell.imageView.backgroundColor = UIColor.whiteColor()
+            cell.contentView.backgroundColor = UIColor.whiteColor()
             return cell
         }
 
@@ -234,6 +251,11 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 
         let pageWidth = CGRectGetWidth(scrollView.frame)
         pageControl?.currentPage = Int(scrollView.contentOffset.x / pageWidth)
+    }
+
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        print("tapped cell indexpaty\(indexPath.row)")
+
     }
 
 }
