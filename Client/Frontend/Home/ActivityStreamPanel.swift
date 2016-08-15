@@ -99,7 +99,7 @@ extension ActivityStreamPanel {
         view.addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
             make.height.equalTo(20)
-            make.leading.equalTo(view.snp_leading).offset(5)
+            make.leading.equalTo(view.snp_leading).offset(10)
             make.width.equalTo(100)
         }
 
@@ -110,7 +110,7 @@ extension ActivityStreamPanel {
         seperatorLine.snp_makeConstraints { make in
             make.height.equalTo(1)
             make.width.equalTo(view.snp_width).offset(5)
-            make.leading.equalTo(view.snp_leading).offset(5)
+            make.leading.equalTo(view.snp_leading).offset(10)
             make.top.equalTo(titleLabel.snp_bottom).offset(2)
         }
 

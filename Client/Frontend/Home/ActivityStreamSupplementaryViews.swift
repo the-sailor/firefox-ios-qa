@@ -162,7 +162,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         contentView.addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
             make.height.equalTo(pageControl.snp_height)
-            make.leading.equalTo(self.snp_leading).offset(5)
+            make.leading.equalTo(self.snp_leading).offset(10)
             make.width.equalTo(100)
         }
 
@@ -172,7 +172,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         seperatorLine.snp_makeConstraints { make in
             make.height.equalTo(1)
             make.width.equalTo(self.snp_width).offset(5)
-            make.leading.equalTo(self.snp_leading).offset(5)
+            make.leading.equalTo(self.snp_leading).offset(10)
             make.top.equalTo(titleLabel.snp_bottom).offset(2)
         }
 
