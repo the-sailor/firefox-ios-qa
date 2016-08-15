@@ -91,30 +91,8 @@ extension ActivityStreamPanel {
     }
 
     func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 20))
-        view.backgroundColor = UIColor.whiteColor()
-        let titleLabel = UILabel()
-        titleLabel.text = "HIGHLIGHTS"
-        titleLabel.textColor = UIColor.grayColor()
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        view.addSubview(titleLabel)
-        titleLabel.snp_makeConstraints { make in
-            make.height.equalTo(20)
-            make.leading.equalTo(view.snp_leading).offset(10)
-            make.width.equalTo(100)
-        }
-
-
-        let seperatorLine = UIView()
-        seperatorLine.backgroundColor = UIColor.lightGrayColor()
-        view.addSubview(seperatorLine)
-        seperatorLine.snp_makeConstraints { make in
-            make.height.equalTo(1)
-            make.width.equalTo(view.snp_width).offset(5)
-            make.leading.equalTo(view.snp_leading).offset(10)
-            make.top.equalTo(titleLabel.snp_bottom).offset(2)
-        }
-
+        let view = ActivityStreamHeaderView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 24))
+        view.title = "Highlights"
         return view
     }
 }

@@ -146,7 +146,6 @@ class ASHorizontalScrollCell: UITableViewCell {
         pageControl.numberOfPages = 2
         pageControl.pageIndicatorTintColor = UIColor.grayColor()
         pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
-        //        pageControl.backgroundColor = UIColor.redColor()
         contentView.addSubview(pageControl)
         pageControl.snp_makeConstraints { make in
             make.width.equalTo(30)
@@ -155,25 +154,13 @@ class ASHorizontalScrollCell: UITableViewCell {
             make.trailing.equalTo(self.snp_trailing).offset(-5)
         }
 
-        let titleLabel = UILabel()
-        titleLabel.text = "TOP SITES"
-        titleLabel.textColor = UIColor.grayColor()
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        contentView.addSubview(titleLabel)
-        titleLabel.snp_makeConstraints { make in
-            make.height.equalTo(pageControl.snp_height)
-            make.leading.equalTo(self.snp_leading).offset(10)
-            make.width.equalTo(100)
-        }
-
-        let seperatorLine = UIView()
-        seperatorLine.backgroundColor = UIColor.lightGrayColor()
-        contentView.addSubview(seperatorLine)
-        seperatorLine.snp_makeConstraints { make in
-            make.height.equalTo(1)
-            make.width.equalTo(self.snp_width).offset(5)
-            make.leading.equalTo(self.snp_leading).offset(10)
-            make.top.equalTo(titleLabel.snp_bottom).offset(2)
+        let header = ActivityStreamHeaderView(frame: CGRect.zero)
+        header.title = "Top Sites"
+        contentView.addSubview(header)
+        header.snp_makeConstraints { make in
+            make.width.equalTo(self.snp_width)
+            make.top.equalTo(self.snp_top)
+            make.bottom.equalTo(collectionView.snp_top)
         }
 
     }
@@ -248,7 +235,6 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
     }
 
     func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
-
         let pageWidth = CGRectGetWidth(scrollView.frame)
         pageControl?.currentPage = Int(scrollView.contentOffset.x / pageWidth)
     }
@@ -261,25 +247,39 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 }
 
 
-class ActivityStreamHeaderView: UICollectionReusableView {
+class ActivityStreamHeaderView: UIView {
     var titleLabel: UILabel!
-    var moreLabel: UIButton!
+    var title: String = "" {
+        willSet(newTitle) {
+            titleLabel.text = newTitle
+        }
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
 
         titleLabel = UILabel()
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumFont
+        titleLabel.text = self.title
+        titleLabel.textColor = UIColor.grayColor()
+        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         addSubview(titleLabel)
-
-        titleLabel.snp_makeConstraints {(make) in
+        titleLabel.snp_makeConstraints { make in
+            make.height.equalTo(20)
+            make.leading.equalTo(self.snp_leading).offset(10)
             make.width.equalTo(100)
-            make.height.equalTo(40)
-            make.left.equalTo(self.snp_left).offset(5)
-            make.centerY.equalTo(self.snp_centerY)
+        }
+
+        let seperatorLine = UIView()
+        seperatorLine.backgroundColor = UIColor.lightGrayColor()
+        addSubview(seperatorLine)
+        seperatorLine.snp_makeConstraints { make in
+            make.height.equalTo(1)
+            make.width.equalTo(self.snp_width).offset(5)
+            make.leading.equalTo(self.snp_leading).offset(10)
+            make.top.equalTo(titleLabel.snp_bottom).offset(2)
         }
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
