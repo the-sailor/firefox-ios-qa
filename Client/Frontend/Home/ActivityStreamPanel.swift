@@ -56,6 +56,7 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.separatorInset = UIEdgeInsetsZero
         tableView.estimatedRowHeight = 65
         view.addSubview(tableView)
         tableView.snp_makeConstraints { (make) in
@@ -139,22 +140,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-//    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-//        switch indexPath.section {
-//        case 0:
-//            return 120
-//        default:
-//            //for now every other cell will have a full image
-//            if indexPath.row % 3 == 0 {
-//                return 250
-//            }
-//            else {
-//                return 65
-//            }
-//        }
-//    }
-
-
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         var identifier = "Cell"
         switch indexPath.section {
@@ -171,17 +156,18 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCellWithIdentifier(identifier, forIndexPath: indexPath)
         switch identifier {
         case "TopSite":
-            let blah = configureTopSitesCell(cell, forIndexPath: indexPath)
-            blah.layoutIfNeeded()
-            return blah
+            let cell = configureTopSitesCell(cell, forIndexPath: indexPath)
+            return cell
         case "Highlight":
-            let ugh = configureHighlightCell(cell, forIndexPath: indexPath)
-            ugh.layoutIfNeeded()
-            return ugh
+            let cell = configureHighlightCell(cell, forIndexPath: indexPath)
+            cell.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 0)
+            cell.preservesSuperviewLayoutMargins = false
+            return cell
         default:
-            let boo = configureSimpleHighlightCell(cell, forIndexPath: indexPath)
-            boo.layoutIfNeeded()
-            return boo
+            let cell = configureSimpleHighlightCell(cell, forIndexPath: indexPath)
+            cell.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 0)
+            cell.preservesSuperviewLayoutMargins = false
+            return cell
         }
     }
 
