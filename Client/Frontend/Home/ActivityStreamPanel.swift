@@ -187,7 +187,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
             highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
         }
-        highlightCell.textLabelREPLACE.text = site.title
+        highlightCell.textLabelREPLACE.text = site.title.characters.count <= 1 ? site.url : site.title
         highlightCell.textLabelREPLACE.textColor = UIColor.blackColor()
         highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
@@ -207,7 +207,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             highlightCell.imageREPLACE = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
             highlightCell.imageViewREPLACE.layer.borderWidth = 0.5
         }
-        highlightCell.textLabelREPLACE.text = site.title
+        highlightCell.textLabelREPLACE.text = site.title.characters.count <= 1 ? site.url : site.title
         highlightCell.textLabelREPLACE.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
         highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
         highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
@@ -250,7 +250,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
 
     func numberOfItemsPerPageInASScrollView() -> Int {
         let width = self.view.frame.size.width
-        var maxHeight = 100.0
+        let maxHeight = 100.0
         var numItems = Double(width) / maxHeight
         if Int(numItems) <= 3 {
             numItems = 4

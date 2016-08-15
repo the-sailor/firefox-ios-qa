@@ -117,6 +117,7 @@ class SimpleHighlightCell: UITableViewCell {
             make.top.equalTo(contentView).offset(10)
             make.leading.equalTo(contentView).offset(5)
             make.size.equalTo(30)
+            make.bottom.equalTo(contentView).offset(-10)
         }
 
         selectedOverlay.snp_makeConstraints { make in
@@ -125,20 +126,20 @@ class SimpleHighlightCell: UITableViewCell {
 
         textLabelREPLACE.snp_remakeConstraints { make in
             make.leading.equalTo(imageViewREPLACE.snp_trailing).offset(10)
-            make.top.equalTo(imageViewREPLACE).offset(-2)
-            make.width.equalTo(contentView.frame.width/1.3)
+            make.top.equalTo(imageViewREPLACE).offset(-3)
+            make.width.equalTo(contentView.frame.width/1.2)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabelREPLACE.snp_bottom)
             make.leading.equalTo(imageViewREPLACE.snp_trailing).offset(10)
             make.width.equalTo(textLabelREPLACE)
-            make.bottom.equalTo(contentView).offset(-10)
+            make.bottom.equalTo(imageViewREPLACE).offset(2)
         }
 
         timeStamp.snp_makeConstraints { make in
             make.trailing.equalTo(contentView).inset(5)
-            make.top.equalTo(descriptionLabel)
+            make.bottom.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in

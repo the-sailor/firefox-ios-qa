@@ -142,21 +142,21 @@ class HighlightCell: UITableViewCell {
         }
 
         textLabelREPLACE.snp_remakeConstraints { make in
-            make.leading.equalTo(contentView).offset(10)
-            make.top.equalTo(backgroundImage.snp_bottom)
-            make.width.equalTo(contentView.frame.width/1.2 + 15)
+            make.leading.equalTo(contentView).offset(5)
+            make.top.equalTo(backgroundImage.snp_bottom).offset(10)
+            make.width.equalTo(contentView.frame.width/1.1 + 15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(textLabelREPLACE.snp_bottom)
-            make.leading.equalTo(contentView).offset(10)
+            make.leading.equalTo(contentView).offset(5)
             make.bottom.equalTo(contentView).offset(-10)
-            make.width.equalTo(contentView.frame.width/1.2 + 15)
+            make.width.equalTo(contentView.frame.width/1.1 + 15)
         }
 
         timeStamp.snp_makeConstraints { make in
             make.trailing.equalTo(backgroundImage)
-            make.top.equalTo(descriptionLabel)
+            make.bottom.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
