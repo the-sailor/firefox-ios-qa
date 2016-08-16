@@ -151,7 +151,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
 
     func configureTopSitesCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let topSiteCell = cell as! ASHorizontalScrollCell
-        topSiteCell.headerView.title = "TOP SITES"
+        topSiteCell.headerTitle = "TOP SITES"
         topSiteCell.setDelegate(self.topSiteHandler)
         return cell
     }

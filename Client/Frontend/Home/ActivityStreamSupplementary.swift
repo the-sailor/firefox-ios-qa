@@ -25,9 +25,9 @@ class TopSiteCell: UICollectionViewCell {
 
     override func layoutSubviews() {
         //using autolayout on the contentView does not seem to work
-        var squareFrame = CGRectMake(0, 0, self.frame.height, self.frame.height)
-        squareFrame.center = self.frame.center
-        self.contentView.frame = squareFrame
+        var squareFrame = CGRectMake(0, 0, frame.height, frame.height)
+        squareFrame.center = frame.center
+        contentView.frame = squareFrame
     }
 
     override init(frame: CGRect) {
@@ -68,9 +68,9 @@ class TopSiteCell: UICollectionViewCell {
     }
 
     override func prepareForReuse() {
-        self.backgroundColor = UIColor.whiteColor()
-        self.imageView.image = nil
-        self.titleLabel.text = ""
+        backgroundColor = UIColor.whiteColor()
+        imageView.image = nil
+        titleLabel.text = ""
     }
 
     func setImageWithURL(url: NSURL) {
@@ -86,6 +86,7 @@ class TopSiteCell: UICollectionViewCell {
                 if colors.backgroundColor.isWhite {
                     let colorArr = [colors.detailColor, colors.primaryColor].filter {return !$0.isWhite}
                     if colorArr.isEmpty {
+                        ///need an array of default colors
                         bgColor = UIColor.greenColor()
                     }
                     else {
@@ -95,18 +96,36 @@ class TopSiteCell: UICollectionViewCell {
                 else {
                     bgColor = colors.backgroundColor
                 }
-                self.contentView.backgroundColor = bgColor
+                contentView.backgroundColor = bgColor
 
             }
         }
     }
 
+    func configureWithTopSiteItem(site: TopSiteItem) {
+        titleLabel.text = site.urlTitle
+        setImageWithURL(site.faviconURL)
+    }
+
+    func makeCellBlank() {
+        backgroundColor = UIColor.whiteColor()
+        titleLabel.backgroundColor = UIColor.whiteColor()
+        imageView.backgroundColor = UIColor.whiteColor()
+        contentView.backgroundColor = UIColor.whiteColor()
+    }
+
 }
 
 class ASHorizontalScrollCell: UITableViewCell {
-    var collectionView: UICollectionView!
-    var pageControl: UIPageControl!
-    var headerView: ASHeaderView!
+    private var collectionView: UICollectionView!
+    private var pageControl: UIPageControl!
+    private var headerView: ASHeaderView!
+
+    var headerTitle: String = "" {
+        didSet {
+            headerView.title = headerTitle
+        }
+    }
 
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -115,7 +134,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
         layout.minimumLineSpacing = 0
         layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
-        self.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
+        backgroundColor = UIColor(white: 1.0, alpha: 0.5)
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSiteCell")
@@ -148,14 +167,21 @@ class ASHorizontalScrollCell: UITableViewCell {
             make.top.equalTo(self.snp_top)
             make.bottom.equalTo(collectionView.snp_top)
         }
+    }
 
+    func numberOfPagesChanged(sections: Int) {
+        pageControl.numberOfPages = sections
+    }
+
+    func currentPageChanged(currentPage: Int) {
+        pageControl.currentPage = currentPage
     }
 
     func setDelegate(delegate: ASHorizontalScrollSource) {
         collectionView.delegate = delegate
         collectionView.dataSource = delegate
-        delegate.pageControl = pageControl
-        pageControl.numberOfPages = Int(delegate.content.count / delegate.contentPerPage)
+        delegate.numberOfPagesChangedHandler = numberOfPagesChanged
+        delegate.pageChangedHandler = currentPageChanged
         collectionView.reloadData()
     }
 
@@ -175,12 +201,22 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
     var content: [TopSiteItem] = []
     var contentPerPage: Int = 1
     var itemSize: CGSize = CGSize.zero
-    var pageControl: UIPageControl?
+
+    var numberOfPagesChangedHandler: ((Int) -> Void)?
+    var pageChangedHandler: ((Int) -> Void)?
+    var numberOfPages: Int = 0 {
+        didSet {
+            if oldValue != numberOfPages {
+                numberOfPagesChangedHandler?(numberOfPages)
+            }
+        }
+    }
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         // The number of sections is equal to the number of pages we need to show all the content
         let perPage = Double(content.count) / Double(contentPerPage)
-        return Int(ceil(perPage))
+        numberOfPages = Int(ceil(perPage))
+        return numberOfPages
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -205,23 +241,20 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 
         // If the row is out of content index then we have an empty cell at an end of a page.
         if row > content.count - 1 {
-            cell.backgroundColor = UIColor.whiteColor()
-            cell.titleLabel.backgroundColor = UIColor.whiteColor()
-            cell.imageView.backgroundColor = UIColor.whiteColor()
-            cell.contentView.backgroundColor = UIColor.whiteColor()
+            cell.makeCellBlank()
             return cell
         }
 
         let contentItem = content[row]
-        cell.titleLabel.text = contentItem.urlTitle
-        cell.setImageWithURL(contentItem.faviconURL)
+        cell.configureWithTopSiteItem(contentItem)
         return cell
     }
 
-    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+    func scrollViewDidScroll(scrollView: UIScrollView) {
         let pageWidth = CGRectGetWidth(scrollView.frame)
-        pageControl?.currentPage = Int(scrollView.contentOffset.x / pageWidth)
+        pageChangedHandler?(Int(scrollView.contentOffset.x / pageWidth))
     }
+
 
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         print("tapped cell indexpaty\(indexPath.row)")
@@ -249,7 +282,7 @@ class ASHeaderView: UIView {
         super.init(frame: frame)
 
         titleLabel = UILabel()
-        titleLabel.text = self.title
+        titleLabel.text = title
         titleLabel.textColor = ASHeaderViewUX.ContentColor
         titleLabel.font = ASHeaderViewUX.TextFont
         addSubview(titleLabel)
