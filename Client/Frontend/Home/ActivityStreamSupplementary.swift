@@ -116,6 +116,76 @@ class TopSiteCell: UICollectionViewCell {
 
 }
 
+class HorizontalFlowLayout: UICollectionViewLayout {
+    var itemSize = CGSizeZero {
+        didSet {
+            invalidateLayout()
+        }
+    }
+    private var cellCount = 0
+    private var boundsSize = CGSizeZero
+
+    override func prepareLayout() {
+        cellCount = self.collectionView!.numberOfItemsInSection(0)
+        boundsSize = self.collectionView!.bounds.size
+    }
+
+    override func collectionViewContentSize() -> CGSize {
+        let verticalItemsCount = Int(floor(boundsSize.height / itemSize.height))
+        let horizontalItemsCount = Int(floor(boundsSize.width / itemSize.width))
+
+        let itemsPerPage = verticalItemsCount * horizontalItemsCount
+        let numberOfItems = cellCount
+        let numberOfPages = Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
+
+        var size = boundsSize
+        size.width = CGFloat(numberOfPages) * boundsSize.width
+        return size
+    }
+
+    override func layoutAttributesForElementsInRect(rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+        var allAttributes = [UICollectionViewLayoutAttributes]()
+        for i in 0 ..< cellCount {
+            let indexPath = NSIndexPath(forRow: i, inSection: 0)
+            let attr = self.computeLayoutAttributesForCellAtIndexPath(indexPath)
+            allAttributes.append(attr)
+        }
+        return allAttributes
+    }
+
+    override func layoutAttributesForItemAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes? {
+        return self.computeLayoutAttributesForCellAtIndexPath(indexPath)
+    }
+
+    override func shouldInvalidateLayoutForBoundsChange(newBounds: CGRect) -> Bool {
+        return true
+    }
+
+    func computeLayoutAttributesForCellAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes {
+        let row = indexPath.row
+        let bounds = self.collectionView!.bounds
+
+        let verticalItemsCount = Int(floor(boundsSize.height / itemSize.height))
+        let horizontalItemsCount = Int(floor(boundsSize.width / itemSize.width))
+        let itemsPerPage = verticalItemsCount * horizontalItemsCount
+
+        let columnPosition = row % horizontalItemsCount
+        let rowPosition = (row/horizontalItemsCount)%verticalItemsCount
+        let itemPage = Int(floor(Double(row)/Double(itemsPerPage)))
+
+        let attr = UICollectionViewLayoutAttributes(forCellWithIndexPath: indexPath)
+
+        var frame = CGRectZero
+        frame.origin.x = CGFloat(itemPage) * bounds.size.width + CGFloat(columnPosition) * itemSize.width
+        frame.origin.y = CGFloat(rowPosition) * itemSize.height
+        frame.size = itemSize
+        frame = UIEdgeInsetsInsetRect(frame, UIEdgeInsetsMake(5, 5, 5, 5))
+        attr.frame = frame
+        
+        return attr
+    }
+}
+
 class ASHorizontalScrollCell: UITableViewCell {
     private var collectionView: UICollectionView!
     private var pageControl: UIPageControl!
@@ -130,10 +200,11 @@ class ASHorizontalScrollCell: UITableViewCell {
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        let layout  = UICollectionViewFlowLayout()
-        layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
-        layout.minimumLineSpacing = 0
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
+        let layout  = HorizontalFlowLayout()
+        layout.itemSize = CGSize(width: 100, height: 100)
+//        layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
+//        layout.minimumLineSpacing = 0
+//        layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
         backgroundColor = UIColor(white: 1.0, alpha: 0.5)
 
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
@@ -145,7 +216,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         contentView.addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
             make.edges.equalTo(contentView).offset(UIEdgeInsetsMake(18, 0, 0, 0))
-            make.height.equalTo(100)
+            make.height.equalTo(200)
         }
 
         //Page control will need to be swapped out with a thirdparty one. I cant customize the built in one at all
