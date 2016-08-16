@@ -71,7 +71,6 @@ class SimpleHighlightCell: UITableViewCell {
     lazy var siteImageView: UIImageView = {
         let siteImageView = UIImageView()
         siteImageView.contentMode = UIViewContentMode.ScaleAspectFit
-
         siteImageView.clipsToBounds = true
         siteImageView.layer.cornerRadius = SimpleHighlightCellUX.CornerRadius
         return siteImageView
@@ -147,7 +146,6 @@ class SimpleHighlightCell: UITableViewCell {
             make.trailing.equalTo(timeStamp)
         }
     }
-
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

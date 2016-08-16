@@ -60,7 +60,6 @@ class HighlightCell: UITableViewCell {
     lazy var siteImageView: UIImageView = {
         let siteImageView = UIImageView()
         siteImageView.contentMode = UIViewContentMode.ScaleAspectFit
-
         siteImageView.clipsToBounds = true
         siteImageView.layer.cornerRadius = HighlightCellUX.CornerRadius
         return siteImageView
@@ -69,7 +68,6 @@ class HighlightCell: UITableViewCell {
     lazy var statusIcon: UIImageView = {
         let siteImageView = UIImageView()
         siteImageView.contentMode = UIViewContentMode.ScaleAspectFit
-
         siteImageView.clipsToBounds = true
         siteImageView.layer.cornerRadius = HighlightCellUX.CornerRadius
         return siteImageView
@@ -163,7 +161,6 @@ class HighlightCell: UITableViewCell {
             make.trailing.equalTo(backgroundImage)
         }
     }
-
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
