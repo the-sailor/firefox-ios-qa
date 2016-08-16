@@ -134,18 +134,13 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCellWithIdentifier(identifier, forIndexPath: indexPath)
         switch identifier {
         case "TopSite":
-            let cell = configureTopSitesCell(cell, forIndexPath: indexPath)
-            return cell
+            return configureTopSitesCell(cell, forIndexPath: indexPath)
         case "Highlight":
-            let cell = configureHighlightCell(cell, forIndexPath: indexPath)
-            cell.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 0)
-            cell.preservesSuperviewLayoutMargins = false
-            return cell
+            let highlightCell = cell as! HighlightCell
+            return highlightCell.configureHighlightCell(history[indexPath.row], highlightCell: highlightCell)
         default:
-            let cell = configureSimpleHighlightCell(cell, forIndexPath: indexPath)
-            cell.layoutMargins = UIEdgeInsetsMake(0, 5, 0, 0)
-            cell.preservesSuperviewLayoutMargins = false
-            return cell
+            let simpleHighlightCell = cell as! SimpleHighlightCell
+            return simpleHighlightCell.configureSimpleHighlightCell(history[indexPath.row], simpleHighlightCell: simpleHighlightCell)
         }
     }
 
@@ -153,46 +148,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let topSiteCell = cell as! ASHorizontalScrollCell
         topSiteCell.headerTitle = "TOP SITES"
         topSiteCell.setDelegate(self.topSiteHandler)
-        return cell
-    }
-
-    func configureHighlightCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let site = self.history[indexPath.row]
-        let highlightCell = cell as! HighlightCell
-        if let icon = site.icon {
-            let url = icon.url
-            highlightCell.setImageWithURL(NSURL(string: url)!)
-        } else {
-            highlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.siteImageView.layer.borderWidth = 0.5
-        }
-        highlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        highlightCell.titleLabel.textColor = UIColor.blackColor()
-        highlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
-        highlightCell.timeStamp.text = "3 hrs"
-        return cell
-    }
-
-    func configureSimpleHighlightCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let site = self.history[indexPath.row]
-        let highlightCell = cell as! SimpleHighlightCell
-        if let icon = site.icon {
-            let url = icon.url
-            highlightCell.setImageWithURL(NSURL(string: url)!)
-        } else {
-            highlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            highlightCell.siteImageView.layer.borderWidth = 0.5
-        }
-        highlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        highlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
-        highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        highlightCell.titleLabel.textColor = UIColor.blackColor()
-        highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
-        highlightCell.timeStamp.text = "5 hrs"
         return cell
     }
 
@@ -205,7 +160,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         }
         return urlString
     }
-
 
     /*
      We use this to figure out how big a button in a TopSite should be. This tries to allow as many cells in a single page as possible.
@@ -252,16 +206,11 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
                         let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!)
                         return topSite
                     }
-
-
                 }
-
                 self.topSiteHandler = ASHorizontalScrollSource()
                 self.topSiteHandler.contentPerPage = self.numberOfItemsPerPageInASScrollView()
                 self.topSiteHandler.itemSize =  self.sizeForItemsInASScrollView()
                 self.topSiteHandler.content = self.topSites
-
-
                 self.tableView.reloadData()
             }
             return succeed()

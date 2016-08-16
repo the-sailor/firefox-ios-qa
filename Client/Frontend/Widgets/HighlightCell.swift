@@ -4,6 +4,7 @@
 
 import UIKit
 import Shared
+import Storage
 
 struct HighlightCellUX {
     static let BorderColor = UIColor.blackColor().colorWithAlphaComponent(0.1)
@@ -181,5 +182,23 @@ class HighlightCell: UITableViewCell {
         }
         backgroundImage.sd_setImageWithURL(NSURL(string: "http://lorempixel.com/640/480/?r=" + String(random())))
         siteImageView.layer.masksToBounds = true
+    }
+
+    func configureHighlightCell(site: Site, highlightCell: HighlightCell) -> HighlightCell {
+        if let icon = site.icon {
+            let url = icon.url
+            highlightCell.setImageWithURL(NSURL(string: url)!)
+        } else {
+            highlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            highlightCell.siteImageView.layer.borderWidth = 0.5
+        }
+        highlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
+        highlightCell.titleLabel.textColor = UIColor.blackColor()
+        highlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        highlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        highlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
+        highlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
+        highlightCell.timeStamp.text = "3 hrs"
+        return highlightCell
     }
 }
