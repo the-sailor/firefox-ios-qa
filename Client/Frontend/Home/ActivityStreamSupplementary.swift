@@ -7,11 +7,17 @@ import WebImage
  long press gesture
  remove button
  select overlay (isnt that automatic)
- handle resuse
  cache dominant image color
- fonts
  handle failure cases for no favicon
  */
+
+struct TopSiteCellUX {
+    static let TitleInsetPercent: CGFloat = 0.66
+    static let TitleBackgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
+    static let TitleTextColor = UIColor.blackColor()
+    static let TitleFont = DynamicFontHelper.defaultHelper.DefaultSmallFont
+    static let CellCornerRadius: CGFloat = 4
+}
 
 class TopSiteCell: UICollectionViewCell {
     var imageView: UIImageView!
@@ -27,29 +33,26 @@ class TopSiteCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        contentView.layer.cornerRadius = 4
+        contentView.layer.cornerRadius = TopSiteCellUX.CellCornerRadius
         contentView.layer.masksToBounds = true
-        contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
-        contentView.layer.borderWidth = 1
 
         titleLabel = UILabel()
         titleLabel.layer.masksToBounds = true
         titleLabel.textAlignment = .Center
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        titleLabel.font = TopSiteCellUX.TitleFont
         titleLabel.textColor = UIColor.blackColor()
-        titleLabel.backgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
+        titleLabel.backgroundColor = TopSiteCellUX.TitleBackgroundColor
         contentView.addSubview(titleLabel)
 
-        let heightInset = Int(frame.height * 0.66)
-        titleLabel.snp_makeConstraints { (make) in
-            //the titlelabel should take up the bottom 33 percent of the frame
+        let heightInset = Int(frame.height * TopSiteCellUX.TitleInsetPercent)
+        titleLabel.snp_makeConstraints { make in
             make.edges.equalTo(self).inset(UIEdgeInsetsMake(CGFloat(heightInset), 0, 0, 0))
         }
 
         imageView = UIImageView()
         imageView.layer.masksToBounds = true
         contentView.addSubview(imageView)
-        imageView.snp_makeConstraints { (make) in
+        imageView.snp_makeConstraints { make in
             make.height.equalTo(self.frame.height/2)
             make.width.equalTo(self.frame.height/2)
 
@@ -68,7 +71,6 @@ class TopSiteCell: UICollectionViewCell {
         self.backgroundColor = UIColor.whiteColor()
         self.imageView.image = nil
         self.titleLabel.text = ""
-        contentView.layer.borderColor = UIColor.lightGrayColor().CGColor
     }
 
     func setImageWithURL(url: NSURL) {
@@ -80,12 +82,20 @@ class TopSiteCell: UICollectionViewCell {
 
             img.getColors(CGSize(width: 50, height:50)) { colors in
                 //In cases where the background is white. Force the background color to a different color
-                if colors.backgroundColor.isEqualToColorRGBA(UIColor.whiteColor()) {
-                    self.contentView.backgroundColor = colors.primaryColor
+                var bgColor: UIColor
+                if colors.backgroundColor.isWhite {
+                    let colorArr = [colors.detailColor, colors.primaryColor].filter {return !$0.isWhite}
+                    if colorArr.isEmpty {
+                        bgColor = UIColor.greenColor()
+                    }
+                    else {
+                        bgColor = colorArr[0]
+                    }
                 }
                 else {
-                    self.contentView.backgroundColor = colors.backgroundColor
+                    bgColor = colors.backgroundColor
                 }
+                self.contentView.backgroundColor = bgColor
 
             }
         }
@@ -93,33 +103,10 @@ class TopSiteCell: UICollectionViewCell {
 
 }
 
-/**
- Extracts the RGBA values of the colors and check if the are the same.
- http://stackoverflow.com/a/38324700
- */
-
-extension UIColor {
-    public func isEqualToColorRGBA(color : UIColor) -> Bool {
-        //local type used for holding converted color values
-        typealias colorType = (red : CGFloat, green : CGFloat, blue : CGFloat, alpha : CGFloat)
-        var myColor         : colorType = (0,0,0,0)
-        var otherColor      : colorType = (0,0,0,0)
-        //getRed returns true if color could be converted so if one of them failed we assume that colors are not equal
-        guard getRed(&myColor.red, green: &myColor.green, blue: &myColor.blue, alpha: &myColor.alpha) &&
-            color.getRed(&otherColor.red, green: &otherColor.green, blue: &otherColor.blue, alpha: &otherColor.alpha)
-            else {
-                return false
-        }
-        //as of Swift 2.2 (Xcode 7.3.1), tuples up to arity 6 can be compared with == so this works nicely
-        return myColor == otherColor
-    }
-}
-
-
-
 class ASHorizontalScrollCell: UITableViewCell {
     var collectionView: UICollectionView!
     var pageControl: UIPageControl!
+    var headerView: ASHeaderView!
 
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -142,8 +129,8 @@ class ASHorizontalScrollCell: UITableViewCell {
             make.height.equalTo(100)
         }
 
+        //Page control will need to be swapped out with a thirdparty one. I cant customize the built in one at all
         pageControl = UIPageControl()
-        pageControl.numberOfPages = 2
         pageControl.pageIndicatorTintColor = UIColor.grayColor()
         pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
         contentView.addSubview(pageControl)
@@ -154,10 +141,9 @@ class ASHorizontalScrollCell: UITableViewCell {
             make.trailing.equalTo(self.snp_trailing).offset(-5)
         }
 
-        let header = ActivityStreamHeaderView(frame: CGRect.zero)
-        header.title = "Top Sites"
-        contentView.addSubview(header)
-        header.snp_makeConstraints { make in
+        headerView = ASHeaderView(frame: CGRect.zero)
+        contentView.addSubview(headerView)
+        headerView.snp_makeConstraints { make in
             make.width.equalTo(self.snp_width)
             make.top.equalTo(self.snp_top)
             make.bottom.equalTo(collectionView.snp_top)
@@ -169,6 +155,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         collectionView.delegate = delegate
         collectionView.dataSource = delegate
         delegate.pageControl = pageControl
+        pageControl.numberOfPages = Int(delegate.content.count / delegate.contentPerPage)
         collectionView.reloadData()
     }
 
@@ -181,8 +168,6 @@ class ASHorizontalScrollCell: UITableViewCell {
 struct TopSiteItem {
     let urlTitle: String
     let faviconURL: NSURL
-    let backgroundColor: UIColor
-    let textColor: UIColor
 }
 
 class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -220,7 +205,6 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 
         // If the row is out of content index then we have an empty cell at an end of a page.
         if row > content.count - 1 {
-            cell.contentView.layer.borderColor = UIColor.clearColor().CGColor
             cell.backgroundColor = UIColor.whiteColor()
             cell.titleLabel.backgroundColor = UIColor.whiteColor()
             cell.imageView.backgroundColor = UIColor.whiteColor()
@@ -241,13 +225,19 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         print("tapped cell indexpaty\(indexPath.row)")
-
     }
 
 }
 
+struct ASHeaderViewUX {
+    static let ContentColor = UIColor.grayColor()
+    static let TextFont = DynamicFontHelper.defaultHelper.DefaultSmallFont
+    static let SeperatorHeight = 1
+    static let Insets = 10
+    static let TitleHeight = 20
+}
 
-class ActivityStreamHeaderView: UIView {
+class ASHeaderView: UIView {
     var titleLabel: UILabel!
     var title: String = "" {
         willSet(newTitle) {
@@ -260,22 +250,22 @@ class ActivityStreamHeaderView: UIView {
 
         titleLabel = UILabel()
         titleLabel.text = self.title
-        titleLabel.textColor = UIColor.grayColor()
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        titleLabel.textColor = ASHeaderViewUX.ContentColor
+        titleLabel.font = ASHeaderViewUX.TextFont
         addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
-            make.height.equalTo(20)
-            make.leading.equalTo(self.snp_leading).offset(10)
-            make.width.equalTo(100)
+            make.height.equalTo(ASHeaderViewUX.TitleHeight)
+            make.leading.equalTo(self.snp_leading).offset(ASHeaderViewUX.Insets)
+            make.trailing.equalTo(self.snp_trailing).offset(-ASHeaderViewUX.Insets)
         }
 
         let seperatorLine = UIView()
-        seperatorLine.backgroundColor = UIColor.lightGrayColor()
+        seperatorLine.backgroundColor = ASHeaderViewUX.ContentColor
         addSubview(seperatorLine)
         seperatorLine.snp_makeConstraints { make in
-            make.height.equalTo(1)
-            make.width.equalTo(self.snp_width).offset(5)
-            make.leading.equalTo(self.snp_leading).offset(10)
+            make.height.equalTo(ASHeaderViewUX.SeperatorHeight)
+            make.leading.equalTo(self.snp_leading).offset(ASHeaderViewUX.Insets)
+            make.trailing.equalTo(self.snp_trailing).offset(-ASHeaderViewUX.Insets)
             make.top.equalTo(titleLabel.snp_bottom).offset(2)
         }
     }

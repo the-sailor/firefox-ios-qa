@@ -41,18 +41,18 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         reloadTopSitesWithLimit(10)
         reloadRecentHistoryWithLimit(10)
         reloadHighlights(3)
-        configureCollectionView()
+        configureTableView()
     }
 
 
 
-    func configureCollectionView() {
-
-        tableView = UITableView()
+    func configureTableView() {
+        tableView = UITableView(frame: CGRect.zero, style: .Grouped)
         tableView.registerClass(SimpleHighlightCell.self, forCellReuseIdentifier: "Cell")
         tableView.registerClass(ASHorizontalScrollCell.self, forCellReuseIdentifier: "TopSite")
         tableView.registerClass(HighlightCell.self, forCellReuseIdentifier: "Highlight")
         tableView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
+        tableView.separatorStyle = .None
         tableView.delegate = self
         tableView.dataSource = self
         tableView.rowHeight = UITableViewAutomaticDimension
@@ -91,7 +91,7 @@ extension ActivityStreamPanel {
     }
 
     func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let view = ActivityStreamHeaderView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 24))
+        let view = ASHeaderView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 24))
         view.title = "Highlights"
         return view
     }
@@ -151,6 +151,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
 
     func configureTopSitesCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let topSiteCell = cell as! ASHorizontalScrollCell
+        topSiteCell.headerView.title = "TOP SITES"
         topSiteCell.setDelegate(self.topSiteHandler)
         return cell
     }
@@ -244,11 +245,11 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             if let data = result.successValue {
                 self.topSites = data.asArray().map { site in
                     if let imgURL = site.icon?.url {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor())
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!)
                         return topSite
                     }
                     else {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, backgroundColor: UIColor.redColor(), textColor: UIColor.blueColor())
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!)
                         return topSite
                     }
 
