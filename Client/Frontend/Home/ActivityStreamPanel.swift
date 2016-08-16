@@ -137,10 +137,12 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             return configureTopSitesCell(cell, forIndexPath: indexPath)
         case "Highlight":
             let highlightCell = cell as! HighlightCell
-            return highlightCell.configureHighlightCell(history[indexPath.row], highlightCell: highlightCell)
+            highlightCell.configureHighlightCell(history[indexPath.row])
+            return highlightCell
         default:
             let simpleHighlightCell = cell as! SimpleHighlightCell
-            return simpleHighlightCell.configureSimpleHighlightCell(history[indexPath.row], simpleHighlightCell: simpleHighlightCell)
+            simpleHighlightCell.configureSimpleHighlightCell(history[indexPath.row])
+            return simpleHighlightCell
         }
     }
 

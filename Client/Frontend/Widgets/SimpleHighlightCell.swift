@@ -168,21 +168,20 @@ class SimpleHighlightCell: UITableViewCell {
         siteImageView.layer.masksToBounds = true
     }
 
-    func configureSimpleHighlightCell(site: Site, simpleHighlightCell: SimpleHighlightCell) -> SimpleHighlightCell {
+    func configureSimpleHighlightCell(site: Site) {
         if let icon = site.icon {
             let url = icon.url
-            simpleHighlightCell.setImageWithURL(NSURL(string: url)!)
+            self.setImageWithURL(NSURL(string: url)!)
         } else {
-            simpleHighlightCell.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
-            simpleHighlightCell.siteImageView.layer.borderWidth = 0.5
+            self.siteImage = FaviconFetcher.getDefaultFavicon(NSURL(string: site.url)!)
+            self.siteImageView.layer.borderWidth = 0.5
         }
-        simpleHighlightCell.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        simpleHighlightCell.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        simpleHighlightCell.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
-        simpleHighlightCell.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        simpleHighlightCell.titleLabel.textColor = UIColor.blackColor()
-        simpleHighlightCell.statusIcon.image = UIImage(named: "bookmarked_passive")
-        simpleHighlightCell.timeStamp.text = "5 hrs"
-        return simpleHighlightCell
+        self.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
+        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
+        self.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+        self.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
+        self.titleLabel.textColor = UIColor.blackColor()
+        self.statusIcon.image = UIImage(named: "bookmarked_passive")
+        self.timeStamp.text = "5 hrs"
     }
 }
