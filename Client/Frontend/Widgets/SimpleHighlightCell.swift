@@ -127,7 +127,7 @@ class SimpleHighlightCell: UITableViewCell {
         titleLabel.snp_remakeConstraints { make in
             make.leading.equalTo(siteImageView.snp_trailing).offset(10)
             make.top.equalTo(siteImageView).offset(-3)
-            make.width.equalTo(contentView.frame.width/1.2)
+            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
@@ -145,6 +145,7 @@ class SimpleHighlightCell: UITableViewCell {
         statusIcon.snp_makeConstraints { make in
             make.top.equalTo(titleLabel)
             make.trailing.equalTo(timeStamp)
+            make.size.equalTo(15)
         }
     }
 

@@ -142,24 +142,25 @@ class HighlightCell: UITableViewCell {
         titleLabel.snp_remakeConstraints { make in
             make.leading.equalTo(contentView).offset(5)
             make.top.equalTo(backgroundImage.snp_bottom).offset(10)
-            make.width.equalTo(contentView.frame.width/1.1 + 15)
+            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
         }
 
         descriptionLabel.snp_makeConstraints { make in
             make.top.equalTo(titleLabel.snp_bottom)
             make.leading.equalTo(contentView).offset(5)
             make.bottom.equalTo(contentView).offset(-10)
-            make.width.equalTo(contentView.frame.width/1.1 + 15)
+            make.width.equalTo(titleLabel)
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(backgroundImage)
+            make.trailing.equalTo(contentView).inset(5)
             make.bottom.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
             make.top.equalTo(titleLabel)
             make.trailing.equalTo(backgroundImage)
+            make.size.equalTo(15)
         }
     }
 
@@ -171,6 +172,7 @@ class HighlightCell: UITableViewCell {
         super.prepareForReuse()
         backgroundImage.image = nil
         titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
+        siteImageView.layer.borderWidth = 0
     }
 
     func setImageWithURL(url: NSURL) {

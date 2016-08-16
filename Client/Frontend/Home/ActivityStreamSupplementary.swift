@@ -96,7 +96,7 @@ class TopSiteCell: UICollectionViewCell {
                 else {
                     bgColor = colors.backgroundColor
                 }
-                contentView.backgroundColor = bgColor
+                self.contentView.backgroundColor = bgColor
 
             }
         }
