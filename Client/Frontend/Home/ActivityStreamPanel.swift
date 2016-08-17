@@ -58,6 +58,8 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.separatorInset = UIEdgeInsetsZero
         tableView.estimatedRowHeight = 65
+        tableView.estimatedSectionHeaderHeight = 15
+        tableView.sectionHeaderHeight = UITableViewAutomaticDimension
         view.addSubview(tableView)
         tableView.snp_makeConstraints { (make) in
             make.edges.equalTo(self.view)
@@ -74,25 +76,19 @@ extension ActivityStreamPanel {
         case 0:
             return 0
         case 1:
-            return 24
+            return 30
         default:
             return 0
         }
     }
 
-
-    func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0:
-            return ""
-        default:
-            return "Highlights"
-        }
-    }
-
     func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let view = ASHeaderView(frame: CGRect(x: 0, y: 0, width: self.view.frame.width, height: 24))
-        view.title = "Highlights"
+
+        if section == 0 {
+            return nil
+        }
+        let view = ASHeaderView()
+        view.title = "HIGHLIGHTS"
         return view
     }
 }
@@ -148,7 +144,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
 
     func configureTopSitesCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let topSiteCell = cell as! ASHorizontalScrollCell
-        topSiteCell.headerTitle = "TOP SITES"
         topSiteCell.setDelegate(self.topSiteHandler)
         return cell
     }
@@ -170,8 +165,8 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let width = self.view.frame.size.width - 10
         var maxHeight = 100.0
         var numItems = Double(width) / maxHeight
-        if Int(numItems) <= 3 {
-            numItems = 4
+        if Int(numItems) <= 2 {
+            numItems = 3
             maxHeight = Double(width) / numItems
         }
         if floor(numItems) == numItems {
@@ -187,10 +182,36 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         let width = self.view.frame.size.width
         let maxHeight = 100.0
         var numItems = Double(width) / maxHeight
-        if Int(numItems) <= 3 {
-            numItems = 4
+        if Int(numItems) <= 2 {
+            numItems = 3
         }
         return Int(numItems)
+    }
+
+    func collectionViewSizeForRect(contentSize: CGSize, minimumInsets: CGFloat, var itemSize: CGSize, cellCount: Int) -> CGSize {
+        let verticalItemsCount = 2
+        let horizontalItemsCount = 3
+
+        var verticalInsets = (contentSize.height - (CGFloat(verticalItemsCount) * itemSize.height)) / CGFloat(verticalItemsCount + 1)
+        var horizontalInsets = (contentSize.width - (CGFloat(horizontalItemsCount) * itemSize.width)) / CGFloat(horizontalItemsCount + 1)
+        if horizontalInsets < minimumInsets || horizontalInsets != verticalInsets {
+            //resize itemsize to fit
+            verticalInsets = minimumInsets
+            horizontalInsets = minimumInsets
+            itemSize.width = (contentSize.width - (CGFloat(horizontalItemsCount + 1) * horizontalInsets)) / CGFloat(horizontalItemsCount)
+            itemSize.height = itemSize.width
+        }
+
+
+        let itemsPerPage = verticalItemsCount * horizontalItemsCount
+        let numberOfItems = cellCount
+        let numberOfPages = Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
+
+
+        var size = contentSize
+        size.width = CGFloat(numberOfPages) * contentSize.width
+        
+        return size
     }
 
     /*
@@ -201,18 +222,17 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             if let data = result.successValue {
                 self.topSites = data.asArray().map { site in
                     if let imgURL = site.icon?.url {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!)
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, siteURL: site.tileURL)
                         return topSite
                     }
                     else {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!)
+                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, siteURL: site.tileURL)
                         return topSite
                     }
                 }
                 self.topSiteHandler = ASHorizontalScrollSource()
-                self.topSiteHandler.contentPerPage = self.numberOfItemsPerPageInASScrollView()
-                self.topSiteHandler.itemSize =  self.sizeForItemsInASScrollView()
                 self.topSiteHandler.content = self.topSites
+                self.topSiteHandler.urlPressedHandler = self.showSiteWithURL
                 self.tableView.reloadData()
             }
             return succeed()
@@ -242,14 +262,17 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
     func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         var site: Site!
         switch indexPath.section {
-        case 0:
-            return
-        default:
-            site = self.history[indexPath.row]
+            case 0:
+                return
+            default:
+                site = self.history[indexPath.row]
         }
+        showSiteWithURL(site.tileURL)
+    }
+
+    func showSiteWithURL(url: NSURL) {
         let visitType = VisitType.Bookmark
-        homePanelDelegate?.homePanel(self, didSelectURL: site.tileURL, visitType: visitType)
-        
+        homePanelDelegate?.homePanel(self, didSelectURL: url, visitType: visitType)
     }
 }
 

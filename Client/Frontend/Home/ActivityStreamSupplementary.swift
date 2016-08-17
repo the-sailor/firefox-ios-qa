@@ -2,15 +2,6 @@ import Foundation
 import Shared
 import WebImage
 
-/*
- whats missing??
- long press gesture
- remove button
- select overlay (isnt that automatic)
- cache dominant image color
- handle failure cases for no favicon
- */
-
 struct TopSiteCellUX {
     static let TitleInsetPercent: CGFloat = 0.66
     static let TitleBackgroundColor = UIColor(colorLiteralRed: 1, green: 1, blue: 1, alpha: 0.7)
@@ -22,13 +13,6 @@ struct TopSiteCellUX {
 class TopSiteCell: UICollectionViewCell {
     var imageView: UIImageView!
     var titleLabel: UILabel!
-
-    override func layoutSubviews() {
-        //using autolayout on the contentView does not seem to work
-        var squareFrame = CGRectMake(0, 0, frame.height, frame.height)
-        squareFrame.center = frame.center
-        contentView.frame = squareFrame
-    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -107,23 +91,17 @@ class TopSiteCell: UICollectionViewCell {
         setImageWithURL(site.faviconURL)
     }
 
-    func makeCellBlank() {
-        backgroundColor = UIColor.whiteColor()
-        titleLabel.backgroundColor = UIColor.whiteColor()
-        imageView.backgroundColor = UIColor.whiteColor()
-        contentView.backgroundColor = UIColor.whiteColor()
-    }
-
 }
 
 class HorizontalFlowLayout: UICollectionViewLayout {
-    var itemSize = CGSizeZero {
-        didSet {
-            invalidateLayout()
-        }
-    }
+    var itemSize = CGSizeZero
     private var cellCount = 0
     private var boundsSize = CGSizeZero
+    private var insets = UIEdgeInsetsZero
+    var numberOfPages = 0
+    let minimumInsets: CGFloat = 20
+    var heightShouldChange: ((Int) -> ())?
+
 
     override func prepareLayout() {
         cellCount = self.collectionView!.numberOfItemsInSection(0)
@@ -131,15 +109,42 @@ class HorizontalFlowLayout: UICollectionViewLayout {
     }
 
     override func collectionViewContentSize() -> CGSize {
-        let verticalItemsCount = Int(floor(boundsSize.height / itemSize.height))
-        let horizontalItemsCount = Int(floor(boundsSize.width / itemSize.width))
+        return collectionViewSizeForRect(boundsSize)
+    }
+
+    func collectionViewSizeForRect(contentSize: CGSize) -> CGSize {
+        let verticalItemsCount =  Int(floor(boundsSize.height / (itemSize.height + insets.top)))
+        let horizontalItemsCount =  Int(floor(boundsSize.width / (itemSize.width + insets.left)))
+
+        // Take the number of cells and subtract its space in the view from the height. The left over space is the white space.
+        // The left over space is then devided evenly into (n + 1) parts to figure out how much space should be inbetween a cell
+        var verticalInsets = (contentSize.height - (CGFloat(verticalItemsCount) * itemSize.height)) / CGFloat(verticalItemsCount + 1)
+        var horizontalInsets = (contentSize.width - (CGFloat(horizontalItemsCount) * itemSize.width)) / CGFloat(horizontalItemsCount + 1)
+
+        // We want a minimum inset to make things not look crowded. We also don't want uneven spacing.
+        // If we dont have this. Set a minimum inset and recalculate the size of a cell
+        if horizontalInsets < minimumInsets || horizontalInsets != verticalInsets {
+            verticalInsets = minimumInsets
+            horizontalInsets = minimumInsets
+            itemSize.width = (contentSize.width - (CGFloat(horizontalItemsCount + 1) * horizontalInsets)) / CGFloat(horizontalItemsCount)
+            itemSize.height = itemSize.width
+        }
 
         let itemsPerPage = verticalItemsCount * horizontalItemsCount
         let numberOfItems = cellCount
-        let numberOfPages = Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
+        numberOfPages = Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
 
-        var size = boundsSize
-        size.width = CGFloat(numberOfPages) * boundsSize.width
+        insets = UIEdgeInsets(top: verticalInsets, left: horizontalInsets, bottom: verticalInsets, right: horizontalInsets)
+
+        var size = contentSize
+        size.width = CGFloat(numberOfPages) * contentSize.width
+
+        // When Cells are resized the amount of vertical space they need might change. Recalculate the height and layout the view again.
+        let newHeight = Int(verticalInsets) * (verticalItemsCount + 1) + Int(itemSize.height) * verticalItemsCount
+        if Int(size.height) != newHeight {
+            heightShouldChange?(newHeight)
+        }
+        
         return size
     }
 
@@ -161,12 +166,15 @@ class HorizontalFlowLayout: UICollectionViewLayout {
         return true
     }
 
+
     func computeLayoutAttributesForCellAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes {
         let row = indexPath.row
         let bounds = self.collectionView!.bounds
 
-        let verticalItemsCount = Int(floor(boundsSize.height / itemSize.height))
-        let horizontalItemsCount = Int(floor(boundsSize.width / itemSize.width))
+        let verticalItemsCount =  Int(floor(boundsSize.height / (itemSize.height + insets.top)))
+        let horizontalItemsCount =  Int(floor(boundsSize.width / (itemSize.width + insets.left)))
+
+
         let itemsPerPage = verticalItemsCount * horizontalItemsCount
 
         let columnPosition = row % horizontalItemsCount
@@ -176,10 +184,9 @@ class HorizontalFlowLayout: UICollectionViewLayout {
         let attr = UICollectionViewLayoutAttributes(forCellWithIndexPath: indexPath)
 
         var frame = CGRectZero
-        frame.origin.x = CGFloat(itemPage) * bounds.size.width + CGFloat(columnPosition) * itemSize.width
-        frame.origin.y = CGFloat(rowPosition) * itemSize.height
+        frame.origin.x = CGFloat(itemPage) * bounds.size.width + CGFloat(columnPosition) * (itemSize.width + insets.left) + insets.left
+        frame.origin.y = CGFloat(rowPosition) * (itemSize.height + insets.top) + insets.top
         frame.size = itemSize
-        frame = UIEdgeInsetsInsetRect(frame, UIEdgeInsetsMake(5, 5, 5, 5))
         attr.frame = frame
         
         return attr
@@ -191,32 +198,23 @@ class ASHorizontalScrollCell: UITableViewCell {
     private var pageControl: UIPageControl!
     private var headerView: ASHeaderView!
 
-    var headerTitle: String = "" {
-        didSet {
-            headerView.title = headerTitle
-        }
-    }
-
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
         let layout  = HorizontalFlowLayout()
         layout.itemSize = CGSize(width: 100, height: 100)
-//        layout.scrollDirection = UICollectionViewScrollDirection.Horizontal
-//        layout.minimumLineSpacing = 0
-//        layout.sectionInset = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 5)
+        layout.heightShouldChange = heightChanged
         backgroundColor = UIColor(white: 1.0, alpha: 0.5)
-
         collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
         collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSiteCell")
-        collectionView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
+        collectionView.backgroundColor = UIColor.whiteColor()
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.pagingEnabled = true
 
         contentView.addSubview(collectionView)
         collectionView.snp_makeConstraints { make in
-            make.edges.equalTo(contentView).offset(UIEdgeInsetsMake(18, 0, 0, 0))
-            make.height.equalTo(200)
+            make.edges.equalTo(contentView).priorityLow()
+            make.height.equalTo(240).priorityMedium()
         }
 
         //Page control will need to be swapped out with a thirdparty one. I cant customize the built in one at all
@@ -227,21 +225,24 @@ class ASHorizontalScrollCell: UITableViewCell {
         pageControl.snp_makeConstraints { make in
             make.width.equalTo(30)
             make.height.equalTo(20)
-            make.top.equalTo(contentView)
-            make.trailing.equalTo(self.snp_trailing).offset(-5)
+            make.top.equalTo(collectionView.snp_bottom).offset(-10)
+            make.centerX.equalTo(self.snp_centerX)
         }
 
-        headerView = ASHeaderView(frame: CGRect.zero)
-        contentView.addSubview(headerView)
-        headerView.snp_makeConstraints { make in
-            make.width.equalTo(self.snp_width)
-            make.top.equalTo(self.snp_top)
-            make.bottom.equalTo(collectionView.snp_top)
-        }
     }
 
-    func numberOfPagesChanged(sections: Int) {
-        pageControl.numberOfPages = sections
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let layout = collectionView.collectionViewLayout as! HorizontalFlowLayout
+        pageControl.numberOfPages = layout.numberOfPages
+    }
+
+    func heightChanged(newHeight: Int) {
+        collectionView.snp_updateConstraints { make in
+            make.edges.equalTo(contentView).priorityLow()
+            make.height.equalTo(newHeight).priorityMedium()
+        }
+        self.layoutSubviews()
     }
 
     func currentPageChanged(currentPage: Int) {
@@ -251,7 +252,6 @@ class ASHorizontalScrollCell: UITableViewCell {
     func setDelegate(delegate: ASHorizontalScrollSource) {
         collectionView.delegate = delegate
         collectionView.dataSource = delegate
-        delegate.numberOfPagesChangedHandler = numberOfPagesChanged
         delegate.pageChangedHandler = currentPageChanged
         collectionView.reloadData()
     }
@@ -265,80 +265,47 @@ class ASHorizontalScrollCell: UITableViewCell {
 struct TopSiteItem {
     let urlTitle: String
     let faviconURL: NSURL
+    let siteURL: NSURL
 }
 
-class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource {
 
     var content: [TopSiteItem] = []
-    var contentPerPage: Int = 1
-    var itemSize: CGSize = CGSize.zero
-
-    var numberOfPagesChangedHandler: ((Int) -> Void)?
+    var urlPressedHandler: ((NSURL) -> Void)?
     var pageChangedHandler: ((Int) -> Void)?
-    var numberOfPages: Int = 0 {
-        didSet {
-            if oldValue != numberOfPages {
-                numberOfPagesChangedHandler?(numberOfPages)
-            }
-        }
-    }
 
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        // The number of sections is equal to the number of pages we need to show all the content
-        let perPage = Double(content.count) / Double(contentPerPage)
-        numberOfPages = Int(ceil(perPage))
-        return numberOfPages
+        return 1
     }
 
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // The number of items per section (page) is always the full page. This allows for the full page to change while swiping. The missing items on a page will be filled with empties.
-        if content.isEmpty {
-            return 0
-        } else {
-            return contentPerPage
-        }
-    }
-
-    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
-        // All items are square and are exactly the same size.
-        return itemSize
+        return content.count
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("TopSiteCell", forIndexPath: indexPath) as! TopSiteCell
 
-        // We use sections to signify pages. But content is still stored in a single array. So add an offset based on the section.
-        let row = indexPath.row + (indexPath.section * contentPerPage)
-
-        // If the row is out of content index then we have an empty cell at an end of a page.
-        if row > content.count - 1 {
-            cell.makeCellBlank()
-            return cell
-        }
-
-        let contentItem = content[row]
+        let contentItem = content[indexPath.row]
         cell.configureWithTopSiteItem(contentItem)
         return cell
+    }
+
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        let contentItem = content[indexPath.row]
+        urlPressedHandler?(contentItem.siteURL)
     }
 
     func scrollViewDidScroll(scrollView: UIScrollView) {
         let pageWidth = CGRectGetWidth(scrollView.frame)
         pageChangedHandler?(Int(scrollView.contentOffset.x / pageWidth))
     }
-
-
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        print("tapped cell indexpaty\(indexPath.row)")
-    }
-
 }
 
 struct ASHeaderViewUX {
     static let ContentColor = UIColor.grayColor()
     static let TextFont = DynamicFontHelper.defaultHelper.DefaultSmallFont
     static let SeperatorHeight = 1
-    static let Insets = 10
-    static let TitleHeight = 20
+    static let Insets: CGFloat = 10
 }
 
 class ASHeaderView: UIView {
@@ -358,9 +325,7 @@ class ASHeaderView: UIView {
         titleLabel.font = ASHeaderViewUX.TextFont
         addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
-            make.height.equalTo(ASHeaderViewUX.TitleHeight)
-            make.leading.equalTo(self.snp_leading).offset(ASHeaderViewUX.Insets)
-            make.trailing.equalTo(self.snp_trailing).offset(-ASHeaderViewUX.Insets)
+            make.edges.equalTo(self).offset(UIEdgeInsets(top: 0, left: ASHeaderViewUX.Insets, bottom: 0, right: -ASHeaderViewUX.Insets))
         }
 
         let seperatorLine = UIView()
@@ -368,9 +333,9 @@ class ASHeaderView: UIView {
         addSubview(seperatorLine)
         seperatorLine.snp_makeConstraints { make in
             make.height.equalTo(ASHeaderViewUX.SeperatorHeight)
-            make.leading.equalTo(self.snp_leading).offset(ASHeaderViewUX.Insets)
-            make.trailing.equalTo(self.snp_trailing).offset(-ASHeaderViewUX.Insets)
-            make.top.equalTo(titleLabel.snp_bottom).offset(2)
+            make.leading.equalTo(self.snp_leading)
+            make.trailing.equalTo(self.snp_trailing)
+            make.top.equalTo(self.snp_top)
         }
     }
 
