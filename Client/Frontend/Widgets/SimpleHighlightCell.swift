@@ -115,9 +115,8 @@ class SimpleHighlightCell: UITableViewCell {
 
         siteImageView.snp_makeConstraints { make in
             make.top.equalTo(contentView).offset(10)
-            make.leading.equalTo(contentView).offset(5)
-            make.size.equalTo(30)
-            make.bottom.equalTo(contentView).offset(-10)
+            make.leading.equalTo(contentView).offset(15)
+            make.size.equalTo(40)
         }
 
         selectedOverlay.snp_makeConstraints { make in
@@ -126,25 +125,24 @@ class SimpleHighlightCell: UITableViewCell {
 
         titleLabel.snp_remakeConstraints { make in
             make.leading.equalTo(siteImageView.snp_trailing).offset(10)
-            make.top.equalTo(siteImageView).offset(-3)
-            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
+            make.trailing.equalTo(timeStamp.snp_leading).offset(-5)
+            make.top.equalTo(siteImageView)
         }
 
         descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(titleLabel.snp_bottom)
-            make.leading.equalTo(siteImageView.snp_trailing).offset(10)
-            make.width.equalTo(titleLabel)
-            make.bottom.equalTo(siteImageView).offset(2)
+            make.leading.equalTo(statusIcon.snp_trailing).offset(10)
+            make.bottom.equalTo(statusIcon)
         }
 
         timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView).inset(5)
+            make.trailing.equalTo(contentView).inset(15)
             make.bottom.equalTo(descriptionLabel)
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.top.equalTo(titleLabel)
-            make.trailing.equalTo(timeStamp)
+            make.leading.equalTo(titleLabel)
+            make.top.equalTo(titleLabel.snp_bottom).offset(8)
+            make.bottom.equalTo(contentView).offset(-10)
             make.size.equalTo(15)
         }
     }
@@ -177,8 +175,8 @@ class SimpleHighlightCell: UITableViewCell {
             self.siteImageView.layer.borderWidth = 0.5
         }
         self.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        self.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallBold
+        self.descriptionLabel.text = "Bookmarked"
         self.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         self.titleLabel.textColor = UIColor.blackColor()
         self.statusIcon.image = UIImage(named: "bookmarked_passive")

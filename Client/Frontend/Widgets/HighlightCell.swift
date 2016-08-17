@@ -125,13 +125,13 @@ class HighlightCell: UITableViewCell {
         siteImageView.snp_makeConstraints { make in
             make.top.equalTo(backgroundImage)
             make.leading.equalTo(backgroundImage)
-            make.size.equalTo(30)
+            make.size.equalTo(40)
         }
 
         backgroundImage.snp_makeConstraints { make in
             make.top.equalTo(contentView).offset(5)
-            make.leading.equalTo(contentView).offset(5)
-            make.trailing.equalTo(contentView).inset(5)
+            make.leading.equalTo(contentView).offset(15)
+            make.trailing.equalTo(contentView).inset(15)
             make.height.equalTo(200)
         }
 
@@ -140,28 +140,29 @@ class HighlightCell: UITableViewCell {
         }
 
         titleLabel.snp_remakeConstraints { make in
-            make.leading.equalTo(contentView).offset(5)
+            make.leading.equalTo(contentView).offset(15)
             make.top.equalTo(backgroundImage.snp_bottom).offset(10)
-            make.trailing.equalTo(statusIcon.snp_leading).offset(-15)
-        }
-
-        descriptionLabel.snp_makeConstraints { make in
-            make.top.equalTo(titleLabel.snp_bottom)
-            make.leading.equalTo(contentView).offset(5)
-            make.bottom.equalTo(contentView).offset(-10)
-            make.width.equalTo(titleLabel)
-        }
-
-        timeStamp.snp_makeConstraints { make in
-            make.trailing.equalTo(contentView).inset(5)
-            make.bottom.equalTo(descriptionLabel)
+            make.trailing.equalTo(timeStamp.snp_leading).offset(-5)
         }
 
         statusIcon.snp_makeConstraints { make in
-            make.top.equalTo(titleLabel)
-            make.trailing.equalTo(backgroundImage)
+            make.leading.equalTo(backgroundImage)
+            make.top.equalTo(titleLabel.snp_bottom).offset(8)
+            make.bottom.equalTo(contentView).offset(-10)
             make.size.equalTo(15)
         }
+
+        descriptionLabel.snp_makeConstraints { make in
+            make.leading.equalTo(statusIcon.snp_trailing).offset(10)
+            make.bottom.equalTo(statusIcon)
+        }
+
+        timeStamp.snp_makeConstraints { make in
+            make.trailing.equalTo(backgroundImage)
+            make.bottom.equalTo(descriptionLabel)
+        }
+
+
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -196,8 +197,8 @@ class HighlightCell: UITableViewCell {
         }
         self.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
         self.titleLabel.textColor = UIColor.blackColor()
-        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontHistoryPanel
-        self.descriptionLabel.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallBold
+        self.descriptionLabel.text = "Bookmarked"
         self.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         self.statusIcon.image = UIImage(named: "bookmarked_passive")
         self.timeStamp.text = "3 hrs"
