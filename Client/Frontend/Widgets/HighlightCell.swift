@@ -42,7 +42,7 @@ class HighlightCell: UITableViewCell {
     lazy var titleLabel: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
+        textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontMediumBold
         textLabel.textColor = HighlightCellUX.LabelColor
         textLabel.textAlignment = HighlightCellUX.LabelAlignment
         textLabel.numberOfLines = 2
@@ -52,8 +52,8 @@ class HighlightCell: UITableViewCell {
     lazy var timeStamp: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        textLabel.textColor = HighlightCellUX.LabelColor
+        textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallActivityStream
+        textLabel.textColor = UIColor(colorString: "D4D4D4")
         textLabel.textAlignment = HighlightCellUX.LabelAlignment
         return textLabel
     }()
@@ -77,8 +77,8 @@ class HighlightCell: UITableViewCell {
     lazy var descriptionLabel: UILabel = {
         let textLabel = UILabel()
         textLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        textLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        textLabel.textColor = SimpleHighlightCellUX.LabelColor
+        textLabel.font = DynamicFontHelper.defaultHelper.DeviceFontDescriptionActivityStream
+        textLabel.textColor = UIColor(colorString: "919191")
         textLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
         textLabel.numberOfLines = 1
         return textLabel
@@ -125,13 +125,13 @@ class HighlightCell: UITableViewCell {
         siteImageView.snp_makeConstraints { make in
             make.top.equalTo(backgroundImage)
             make.leading.equalTo(backgroundImage)
-            make.size.equalTo(40)
+            make.size.equalTo(48)
         }
 
         backgroundImage.snp_makeConstraints { make in
             make.top.equalTo(contentView).offset(5)
-            make.leading.equalTo(contentView).offset(15)
-            make.trailing.equalTo(contentView).inset(15)
+            make.leading.equalTo(contentView).offset(20)
+            make.trailing.equalTo(contentView).inset(20)
             make.height.equalTo(200)
         }
 
@@ -140,7 +140,7 @@ class HighlightCell: UITableViewCell {
         }
 
         titleLabel.snp_remakeConstraints { make in
-            make.leading.equalTo(contentView).offset(15)
+            make.leading.equalTo(contentView).offset(20)
             make.top.equalTo(backgroundImage.snp_bottom).offset(10)
             make.trailing.equalTo(timeStamp.snp_leading).offset(-5)
         }
@@ -148,8 +148,8 @@ class HighlightCell: UITableViewCell {
         statusIcon.snp_makeConstraints { make in
             make.leading.equalTo(backgroundImage)
             make.top.equalTo(titleLabel.snp_bottom).offset(8)
-            make.bottom.equalTo(contentView).offset(-10)
-            make.size.equalTo(15)
+            make.bottom.equalTo(contentView).offset(-12)
+            make.size.equalTo(12)
         }
 
         descriptionLabel.snp_makeConstraints { make in
@@ -161,8 +161,6 @@ class HighlightCell: UITableViewCell {
             make.trailing.equalTo(backgroundImage)
             make.bottom.equalTo(descriptionLabel)
         }
-
-
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -171,8 +169,6 @@ class HighlightCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        backgroundImage.image = nil
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
         siteImageView.layer.borderWidth = 0
     }
 
@@ -196,11 +192,8 @@ class HighlightCell: UITableViewCell {
             self.siteImageView.layer.borderWidth = 0.5
         }
         self.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        self.titleLabel.textColor = UIColor.blackColor()
-        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallBold
         self.descriptionLabel.text = "Bookmarked"
-        self.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
         self.statusIcon.image = UIImage(named: "bookmarked_passive")
-        self.timeStamp.text = "3 hrs"
+        self.timeStamp.text = "3 days ago"
     }
 }

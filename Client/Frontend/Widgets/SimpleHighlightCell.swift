@@ -43,7 +43,7 @@ class SimpleHighlightCell: UITableViewCell {
     lazy var titleLabel: UILabel = {
         let titleLabel = UILabel()
         titleLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultMediumBoldFont
+        titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontMediumBold
         titleLabel.textColor = SimpleHighlightCellUX.LabelColor
         titleLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
         titleLabel.numberOfLines = 2
@@ -53,8 +53,8 @@ class SimpleHighlightCell: UITableViewCell {
     lazy var descriptionLabel: UILabel = {
         let titleLabel = UILabel()
         titleLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        titleLabel.textColor = SimpleHighlightCellUX.LabelColor
+        titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontDescriptionActivityStream
+        titleLabel.textColor = UIColor(colorString: "919191")
         titleLabel.textAlignment = SimpleHighlightCellUX.LabelAlignment
         titleLabel.numberOfLines = 1
         return titleLabel
@@ -63,8 +63,8 @@ class SimpleHighlightCell: UITableViewCell {
     lazy var timeStamp: UILabel = {
         let titleLabel = UILabel()
         titleLabel.setContentHuggingPriority(1000, forAxis: UILayoutConstraintAxis.Vertical)
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
-        titleLabel.textColor = SimpleHighlightCellUX.LabelColor
+        titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallActivityStream
+        titleLabel.textColor = UIColor(colorString: "D4D4D4")
         titleLabel.textAlignment = .Right
         return titleLabel
     }()
@@ -115,7 +115,7 @@ class SimpleHighlightCell: UITableViewCell {
 
         siteImageView.snp_makeConstraints { make in
             make.top.equalTo(contentView).offset(12)
-            make.bottom.equalTo(contentView).offset(-12)
+            make.bottom.equalTo(contentView).offset(-12).priorityLow()
             make.leading.equalTo(contentView).offset(20)
             make.size.equalTo(48)
         }
@@ -125,8 +125,8 @@ class SimpleHighlightCell: UITableViewCell {
         }
 
         titleLabel.snp_remakeConstraints { make in
-            make.leading.equalTo(siteImageView.snp_trailing).offset(18)
-            make.trailing.equalTo(timeStamp.snp_leading).offset(-20)
+            make.leading.equalTo(siteImageView.snp_trailing).offset(12)
+            make.trailing.equalTo(timeStamp.snp_leading).offset(15)
             make.top.equalTo(siteImageView)
         }
 
@@ -142,19 +142,14 @@ class SimpleHighlightCell: UITableViewCell {
 
         statusIcon.snp_makeConstraints { make in
             make.leading.equalTo(titleLabel)
-            make.top.equalTo(titleLabel.snp_bottom).offset(8)
-            make.bottom.equalTo(contentView).offset(-16)
-            make.size.equalTo(15)
+            make.top.equalTo(titleLabel.snp_bottom).offset(12)
+            make.size.equalTo(12)
+            make.bottom.equalTo(contentView).offset(-16).priorityHigh()
         }
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        titleLabel.font = DynamicFontHelper.defaultHelper.DefaultSmallFont
     }
 
     func setImageWithURL(url: NSURL) {
@@ -176,11 +171,8 @@ class SimpleHighlightCell: UITableViewCell {
             self.siteImageView.layer.borderWidth = 0.5
         }
         self.titleLabel.text = site.title.characters.count <= 1 ? site.url : site.title
-        self.titleLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallBold
         self.descriptionLabel.text = "Bookmarked"
-        self.descriptionLabel.font = DynamicFontHelper.defaultHelper.DeviceFontSmallHistoryPanel
-        self.titleLabel.textColor = UIColor.blackColor()
         self.statusIcon.image = UIImage(named: "bookmarked_passive")
-        self.timeStamp.text = "5 hrs"
+        self.timeStamp.text = "5 hours ago"
     }
 }

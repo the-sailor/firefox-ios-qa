@@ -119,7 +119,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             identifier = "TopSite"
         default:
             if indexPath.row % 3 == 0 {
-                identifier = "Cell"
+                identifier = "Highlight"
             }
             else {
                 identifier = "Cell"
