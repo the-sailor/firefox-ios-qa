@@ -24,7 +24,6 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
 
     //once things get fleshed out we can refactor and find a better home for these
     var topSites: [TopSiteItem] = []
-    var highlights: [Site] = []
     var history: [Site] = []
 
     init(profile: Profile) {
@@ -40,7 +39,6 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         super.viewDidLoad()
         reloadTopSitesWithLimit(10)
         reloadRecentHistoryWithLimit(10)
-        reloadHighlights(3)
         configureTableView()
     }
 
@@ -76,7 +74,7 @@ extension ActivityStreamPanel {
         case 0:
             return 0
         case 1:
-            return 30
+            return 40
         default:
             return 0
         }
@@ -121,7 +119,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             identifier = "TopSite"
         default:
             if indexPath.row % 3 == 0 {
-                identifier = "Highlight"
+                identifier = "Cell"
             }
             else {
                 identifier = "Cell"
@@ -158,61 +156,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         return urlString
     }
 
-    /*
-     We use this to figure out how big a button in a TopSite should be. This tries to allow as many cells in a single page as possible.
-     */
-    func sizeForItemsInASScrollView() -> CGSize {
-        let width = self.view.frame.size.width - 10
-        var maxHeight = 100.0
-        var numItems = Double(width) / maxHeight
-        if Int(numItems) <= 2 {
-            numItems = 3
-            maxHeight = Double(width) / numItems
-        }
-        if floor(numItems) == numItems {
-            //we have an exact fit. Make the cell slightly smaller.
-            maxHeight = maxHeight - 5
-        }
-        let cellWidth =  Double(width) / floor(numItems)
-
-        return CGSize(width: cellWidth, height: maxHeight)
-    }
-
-    func numberOfItemsPerPageInASScrollView() -> Int {
-        let width = self.view.frame.size.width
-        let maxHeight = 100.0
-        var numItems = Double(width) / maxHeight
-        if Int(numItems) <= 2 {
-            numItems = 3
-        }
-        return Int(numItems)
-    }
-
-    func collectionViewSizeForRect(contentSize: CGSize, minimumInsets: CGFloat, var itemSize: CGSize, cellCount: Int) -> CGSize {
-        let verticalItemsCount = 2
-        let horizontalItemsCount = 3
-
-        var verticalInsets = (contentSize.height - (CGFloat(verticalItemsCount) * itemSize.height)) / CGFloat(verticalItemsCount + 1)
-        var horizontalInsets = (contentSize.width - (CGFloat(horizontalItemsCount) * itemSize.width)) / CGFloat(horizontalItemsCount + 1)
-        if horizontalInsets < minimumInsets || horizontalInsets != verticalInsets {
-            //resize itemsize to fit
-            verticalInsets = minimumInsets
-            horizontalInsets = minimumInsets
-            itemSize.width = (contentSize.width - (CGFloat(horizontalItemsCount + 1) * horizontalInsets)) / CGFloat(horizontalItemsCount)
-            itemSize.height = itemSize.width
-        }
-
-
-        let itemsPerPage = verticalItemsCount * horizontalItemsCount
-        let numberOfItems = cellCount
-        let numberOfPages = Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
-
-
-        var size = contentSize
-        size.width = CGFloat(numberOfPages) * contentSize.width
-        
-        return size
-    }
 
     /*
      Simple methods to fetch some data from the DB
@@ -243,16 +186,6 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         return self.profile.history.getSitesByLastVisit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
                 self.history = data.asArray()
-                self.tableView.reloadData()
-            }
-            return succeed()
-        }
-    }
-
-    private func reloadHighlights(limit: Int) -> Success {
-        return self.profile.history.getSitesByFrecencyWithHistoryLimit(limit).bindQueue(dispatch_get_main_queue()) {result in
-            if let data = result.successValue {
-                self.highlights = data.asArray()
                 self.tableView.reloadData()
             }
             return succeed()

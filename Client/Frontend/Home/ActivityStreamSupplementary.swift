@@ -302,10 +302,10 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 }
 
 struct ASHeaderViewUX {
-    static let ContentColor = UIColor.grayColor()
-    static let TextFont = DynamicFontHelper.defaultHelper.DefaultSmallFont
+    static let ContentColor =  UIColor.redColor()
+    static let TextFont = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
     static let SeperatorHeight = 1
-    static let Insets: CGFloat = 10
+    static let Insets: CGFloat = 20
 }
 
 class ASHeaderView: UIView {
@@ -321,15 +321,15 @@ class ASHeaderView: UIView {
 
         titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.textColor = ASHeaderViewUX.ContentColor
+        titleLabel.textColor = UIColor.grayColor()
         titleLabel.font = ASHeaderViewUX.TextFont
         addSubview(titleLabel)
         titleLabel.snp_makeConstraints { make in
-            make.edges.equalTo(self).offset(UIEdgeInsets(top: 0, left: ASHeaderViewUX.Insets, bottom: 0, right: -ASHeaderViewUX.Insets))
+            make.edges.equalTo(self).offset(UIEdgeInsets(top: 5, left: ASHeaderViewUX.Insets, bottom: 0, right: -ASHeaderViewUX.Insets))
         }
 
         let seperatorLine = UIView()
-        seperatorLine.backgroundColor = ASHeaderViewUX.ContentColor
+        seperatorLine.backgroundColor = UIColor(rgb: 0xedecea)
         addSubview(seperatorLine)
         seperatorLine.snp_makeConstraints { make in
             make.height.equalTo(ASHeaderViewUX.SeperatorHeight)
