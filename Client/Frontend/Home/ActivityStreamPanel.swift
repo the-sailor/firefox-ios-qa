@@ -173,7 +173,7 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         switch Section(indexPath.section) {
         case .history:
             let site = self.history[indexPath.row]
-            showSiteWithURL(site.tileURL)
+            showSiteWithURL(NSURL(string:site.url)!)
         default:
             return
         }
