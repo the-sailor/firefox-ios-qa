@@ -10,9 +10,29 @@ struct TopSiteCellUX {
     static let CellCornerRadius: CGFloat = 4
 }
 
+struct TopSiteItem {
+    let urlTitle: String
+    let faviconURL: NSURL?
+    let siteURL: NSURL
+}
+
 class TopSiteCell: UICollectionViewCell {
-    var imageView: UIImageView!
-    var titleLabel: UILabel!
+
+    lazy private var imageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.layer.masksToBounds = true
+        return imageView
+    }()
+
+    lazy private var titleLabel: UILabel = {
+        let titleLabel = UILabel()
+        titleLabel.layer.masksToBounds = true
+        titleLabel.textAlignment = .Center
+        titleLabel.font = TopSiteCellUX.TitleFont
+        titleLabel.textColor = TopSiteCellUX.TitleTextColor
+        titleLabel.backgroundColor = TopSiteCellUX.TitleBackgroundColor
+        return titleLabel
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -20,30 +40,20 @@ class TopSiteCell: UICollectionViewCell {
         contentView.layer.cornerRadius = TopSiteCellUX.CellCornerRadius
         contentView.layer.masksToBounds = true
 
-        titleLabel = UILabel()
-        titleLabel.layer.masksToBounds = true
-        titleLabel.textAlignment = .Center
-        titleLabel.font = TopSiteCellUX.TitleFont
-        titleLabel.textColor = UIColor.blackColor()
-        titleLabel.backgroundColor = TopSiteCellUX.TitleBackgroundColor
         contentView.addSubview(titleLabel)
+        contentView.addSubview(imageView)
 
-        let heightInset = Int(frame.height * TopSiteCellUX.TitleInsetPercent)
+        let heightInset = frame.height * TopSiteCellUX.TitleInsetPercent
         titleLabel.snp_makeConstraints { make in
-            make.edges.equalTo(self).inset(UIEdgeInsetsMake(CGFloat(heightInset), 0, 0, 0))
+            make.edges.equalTo(self).inset(UIEdgeInsetsMake(heightInset, 0, 0, 0))
         }
 
-        imageView = UIImageView()
-        imageView.layer.masksToBounds = true
-        contentView.addSubview(imageView)
         imageView.snp_makeConstraints { make in
-            make.height.equalTo(self.frame.height/2)
-            make.width.equalTo(self.frame.height/2)
+            make.size.equalTo(CGSize(width: self.frame.width/2, height: self.frame.height/2))
 
             // Add an offset to the image to make it appear centered with the titleLabel
-            let offset = Int(self.frame.height) - heightInset
-            make.centerX.equalTo(self.snp_centerX)
-            make.centerY.equalTo(self.snp_centerY).offset(CGFloat(-offset/2))
+            let offset = self.frame.height - CGFloat(heightInset)
+            make.center.equalTo(self.snp_center).offset(UIEdgeInsets(top: -offset/2, left: 0, bottom: 0, right: 0))
         }
     }
 
@@ -52,54 +62,58 @@ class TopSiteCell: UICollectionViewCell {
     }
 
     override func prepareForReuse() {
-        backgroundColor = UIColor.whiteColor()
+        contentView.backgroundColor = UIColor.lightGrayColor()
         imageView.image = nil
         titleLabel.text = ""
     }
 
-    func setImageWithURL(url: NSURL) {
-        imageView.sd_setImageWithURL(url) { (img, err, type, url) -> Void in
+    private func setImageWithURL(url: NSURL) {
+        imageView.sd_setImageWithURL(url) { [unowned self] (img, err, type, url) -> Void in
             guard let img = img else {
                 // No favicon found. Do something!
+                self.imageView.image = FaviconFetcher.getDefaultFavicon(url)
+                self.contentView.backgroundColor = UIColor.lightGrayColor()
                 return
             }
 
-            img.getColors(CGSize(width: 50, height:50)) { colors in
+            // Get dominant colors using a scaled 25/25 image.
+            img.getColors(CGSize(width: 25, height: 25)) { colors in
                 //In cases where the background is white. Force the background color to a different color
                 var bgColor: UIColor
                 if colors.backgroundColor.isWhite {
-                    let colorArr = [colors.detailColor, colors.primaryColor].filter {return !$0.isWhite}
+                    let colorArr = [colors.detailColor, colors.primaryColor].filter { !$0.isWhite }
                     if colorArr.isEmpty {
-                        ///need an array of default colors
-                        bgColor = UIColor.greenColor()
+                        bgColor = UIColor.lightGrayColor()
+                    } else {
+                        bgColor = colorArr.first!
                     }
-                    else {
-                        bgColor = colorArr[0]
-                    }
-                }
-                else {
+                } else {
                     bgColor = colors.backgroundColor
                 }
                 self.contentView.backgroundColor = bgColor
-
             }
         }
     }
 
     func configureWithTopSiteItem(site: TopSiteItem) {
         titleLabel.text = site.urlTitle
-        setImageWithURL(site.faviconURL)
+        if let favURL = site.faviconURL {
+            setImageWithURL(favURL)
+        } else {
+            imageView.image = FaviconFetcher.getDefaultFavicon(site.siteURL)
+        }
     }
 
 }
 
+// A modified version of http://stackoverflow.com/a/34167915
 class HorizontalFlowLayout: UICollectionViewLayout {
     var itemSize = CGSizeZero
     private var cellCount = 0
     private var boundsSize = CGSizeZero
     private var insets = UIEdgeInsetsZero
+    private let minimumInsets: CGFloat = 20
     var numberOfPages = 0
-    let minimumInsets: CGFloat = 20
     var heightShouldChange: ((Int) -> ())?
 
 
@@ -193,35 +207,45 @@ class HorizontalFlowLayout: UICollectionViewLayout {
     }
 }
 
+struct ASHorizontalScrollCellUX {
+    static let TopSiteCellIdentifier = "TopSiteCell"
+    static let TopSiteItemSize = CGSize(width: 100, height: 100)
+    static let BackgroundColor = UIColor.whiteColor()
+}
+
 class ASHorizontalScrollCell: UITableViewCell {
-    private var collectionView: UICollectionView!
-    private var pageControl: UIPageControl!
-    private var headerView: ASHeaderView!
+
+    lazy private var collectionView: UICollectionView = {
+        let layout  = HorizontalFlowLayout()
+        layout.itemSize = ASHorizontalScrollCellUX.TopSiteItemSize
+        layout.heightShouldChange = self.heightChanged
+        let collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
+        collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: ASHorizontalScrollCellUX.TopSiteCellIdentifier)
+        collectionView.backgroundColor = ASHorizontalScrollCellUX.BackgroundColor
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.pagingEnabled = true
+        return collectionView
+    }()
+
+    lazy private var pageControl: UIPageControl = {
+        let pageControl = UIPageControl()
+        pageControl.pageIndicatorTintColor = UIColor.grayColor()
+        pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
+        return pageControl
+    }()
 
     override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        let layout  = HorizontalFlowLayout()
-        layout.itemSize = CGSize(width: 100, height: 100)
-        layout.heightShouldChange = heightChanged
         backgroundColor = UIColor(white: 1.0, alpha: 0.5)
-        collectionView = UICollectionView(frame: CGRectZero, collectionViewLayout: layout)
-        collectionView.registerClass(TopSiteCell.self, forCellWithReuseIdentifier: "TopSiteCell")
-        collectionView.backgroundColor = UIColor.whiteColor()
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.pagingEnabled = true
-
         contentView.addSubview(collectionView)
+        contentView.addSubview(pageControl)
+
         collectionView.snp_makeConstraints { make in
             make.edges.equalTo(contentView).priorityLow()
             make.height.equalTo(240).priorityMedium()
         }
 
-        //Page control will need to be swapped out with a thirdparty one. I cant customize the built in one at all
-        pageControl = UIPageControl()
-        pageControl.pageIndicatorTintColor = UIColor.grayColor()
-        pageControl.currentPageIndicatorTintColor = UIColor.darkGrayColor()
-        contentView.addSubview(pageControl)
         pageControl.snp_makeConstraints { make in
             make.width.equalTo(30)
             make.height.equalTo(20)
@@ -262,11 +286,7 @@ class ASHorizontalScrollCell: UITableViewCell {
 }
 
 
-struct TopSiteItem {
-    let urlTitle: String
-    let faviconURL: NSURL
-    let siteURL: NSURL
-}
+
 
 class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollectionViewDataSource {
 

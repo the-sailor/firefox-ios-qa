@@ -164,14 +164,10 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         return self.profile.history.getTopSitesWithLimit(limit).bindQueue(dispatch_get_main_queue()) { result in
             if let data = result.successValue {
                 self.topSites = data.asArray().map { site in
-                    if let imgURL = site.icon?.url {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:imgURL)!, siteURL: site.tileURL)
-                        return topSite
+                    if let favURL = site.icon?.url {
+                        return TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string: favURL)!, siteURL: site.tileURL)
                     }
-                    else {
-                        let topSite = TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string:"http://google.com")!, siteURL: site.tileURL)
-                        return topSite
-                    }
+                    return TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: nil, siteURL: site.tileURL)
                 }
                 self.topSiteHandler = ASHorizontalScrollSource()
                 self.topSiteHandler.content = self.topSites
@@ -192,13 +188,13 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         var site: Site!
         switch indexPath.section {
-            case 0:
-                return
-            default:
-                site = self.history[indexPath.row]
+        case 0:
+            return
+        default:
+            site = self.history[indexPath.row]
         }
         showSiteWithURL(site.tileURL)
     }
