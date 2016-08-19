@@ -8,23 +8,81 @@ import Deferred
 import Storage
 import WebImage
 
-/*
- Section headers
- only show a single row of highlights
- general reorg
- remove all magic numbers in favor of a struct
- fonts
- */
 
+// Lifecycle
 class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
     weak var homePanelDelegate: HomePanelDelegate? = nil
     let profile: Profile
-    var tableView: UITableView!
+
+    lazy private var tableView: UITableView = {
+        let tableView = UITableView(frame: CGRect.zero, style: .Grouped)
+        tableView.registerClass(SimpleHighlightCell.self, forCellReuseIdentifier: "Cell")
+        tableView.registerClass(ASHorizontalScrollCell.self, forCellReuseIdentifier: "TopSite")
+        tableView.registerClass(HighlightCell.self, forCellReuseIdentifier: "Highlight")
+        tableView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
+        tableView.separatorStyle = .None
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.separatorInset = UIEdgeInsetsZero
+        tableView.estimatedRowHeight = 65
+        tableView.estimatedSectionHeaderHeight = 15
+        tableView.sectionHeaderHeight = UITableViewAutomaticDimension
+        return tableView
+    }()
+
     var topSiteHandler: ASHorizontalScrollSource!
 
     //once things get fleshed out we can refactor and find a better home for these
     var topSites: [TopSiteItem] = []
     var history: [Site] = []
+
+    enum Section: Int {
+        case topSites
+        case history
+
+        static let count = 2
+
+        var title: String? {
+            switch self {
+                case .history: return "HIGHLIGHTS"
+                default: return nil
+            }
+        }
+
+        var headerHeight: CGFloat {
+            switch self {
+                case .history: return 40
+                default: return 0
+            }
+        }
+
+        var headerView: UIView? {
+            switch self {
+                case .history:
+                    let view = ASHeaderView()
+                    view.title = "HIGHLIGHTS"
+                    return view
+                default:
+                    return nil
+            }
+        }
+
+        var cellIdentifier: String {
+            switch self {
+                case .topSites: return "TopSite"
+                default: return "Cell"
+            }
+        }
+
+        init(at indexPath: NSIndexPath) {
+            self.init(rawValue: indexPath.section)!
+        }
+
+        init(_ section: Int) {
+            self.init(rawValue: section)!
+        }
+    }
 
     init(profile: Profile) {
         self.profile = profile
@@ -39,104 +97,57 @@ class ActivityStreamPanel: UIViewController, UICollectionViewDelegate {
         super.viewDidLoad()
         reloadTopSitesWithLimit(10)
         reloadRecentHistoryWithLimit(10)
-        configureTableView()
-    }
 
-
-
-    func configureTableView() {
-        tableView = UITableView(frame: CGRect.zero, style: .Grouped)
-        tableView.registerClass(SimpleHighlightCell.self, forCellReuseIdentifier: "Cell")
-        tableView.registerClass(ASHorizontalScrollCell.self, forCellReuseIdentifier: "TopSite")
-        tableView.registerClass(HighlightCell.self, forCellReuseIdentifier: "Highlight")
-        tableView.backgroundColor = UIColor(white: 1.0, alpha: 0.5)
-        tableView.separatorStyle = .None
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.separatorInset = UIEdgeInsetsZero
-        tableView.estimatedRowHeight = 65
-        tableView.estimatedSectionHeaderHeight = 15
-        tableView.sectionHeaderHeight = UITableViewAutomaticDimension
         view.addSubview(tableView)
         tableView.snp_makeConstraints { (make) in
             make.edges.equalTo(self.view)
         }
     }
+
 }
 
 
-//Headers layout
+// Header Views
 extension ActivityStreamPanel {
 
     func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        switch section {
-        case 0:
-            return 0
-        case 1:
-            return 40
-        default:
-            return 0
-        }
+        return Section(section).headerHeight
     }
 
     func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-
-        if section == 0 {
-            return nil
-        }
-        let view = ASHeaderView()
-        view.title = "HIGHLIGHTS"
-        return view
+        return Section(section).headerView
     }
 }
 
-//TopSites data source
+// Tableview management
 extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
 
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return 2
+        return Section.count
     }
 
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0:
-            if topSiteHandler != nil && topSiteHandler.content.count != 0 {
-                return 1
-            }
-            else {
-                return 0
-            }
-        default:
-            return self.history.count
+        switch Section(section) {
+            case .topSites:
+                if topSiteHandler != nil && !topSiteHandler.content.isEmpty {
+                    return 1
+                } else {
+                    return 0
+                }
+            case .history:
+                 return self.history.count
         }
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        var identifier = "Cell"
-        switch indexPath.section {
-        case 0:
-            identifier = "TopSite"
-        default:
-            if indexPath.row % 3 == 0 {
-                identifier = "Highlight"
-            }
-            else {
-                identifier = "Cell"
-            }
-        }
+        let identifier = Section(indexPath.section).cellIdentifier
         let cell = tableView.dequeueReusableCellWithIdentifier(identifier, forIndexPath: indexPath)
-        switch identifier {
-        case "TopSite":
-            return configureTopSitesCell(cell, forIndexPath: indexPath)
-        case "Highlight":
-            let highlightCell = cell as! HighlightCell
-            highlightCell.configureHighlightCell(history[indexPath.row])
-            return highlightCell
-        default:
-            let simpleHighlightCell = cell as! SimpleHighlightCell
-            simpleHighlightCell.configureSimpleHighlightCell(history[indexPath.row])
-            return simpleHighlightCell
+
+        switch Section(indexPath.section) {
+            case .topSites:
+                return configureTopSitesCell(cell, forIndexPath: indexPath)
+            default:
+                return configureHistoryItemCell(cell, forIndexPath: indexPath)
         }
     }
 
@@ -146,17 +157,31 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
 
-    private func extractDomainURL(url: String) -> String {
-        let urlString =  NSURL(string: url)?.normalizedHost() ?? url
-        var arr = urlString.componentsSeparatedByString(".")
-        if (arr.count >= 2) {
-            arr.popLast()
-            return arr.joinWithSeparator(".")
-        }
-        return urlString
+    func configureHistoryItemCell(cell: UITableViewCell, forIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let simpleHighlightCell = cell as! SimpleHighlightCell
+        let site = history[indexPath.row]
+        simpleHighlightCell.configureSimpleHighlightCell(site)
+        return simpleHighlightCell
     }
 
+    func showSiteWithURL(url: NSURL) {
+        let visitType = VisitType.Bookmark
+        homePanelDelegate?.homePanel(self, didSelectURL: url, visitType: visitType)
+    }
 
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        switch Section(indexPath.section) {
+        case .history:
+            let site = self.history[indexPath.row]
+            showSiteWithURL(site.tileURL)
+        default:
+            return
+        }
+    }
+}
+
+// Data Management
+extension ActivityStreamPanel {
     /*
      Simple methods to fetch some data from the DB
      */
@@ -165,9 +190,9 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             if let data = result.successValue {
                 self.topSites = data.asArray().map { site in
                     if let favURL = site.icon?.url {
-                        return TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: NSURL(string: favURL)!, siteURL: site.tileURL)
+                        return TopSiteItem(urlTitle: site.tileURL.extractDomainName(), faviconURL: NSURL(string: favURL)!, siteURL: site.tileURL)
                     }
-                    return TopSiteItem(urlTitle: self.extractDomainURL(site.url), faviconURL: nil, siteURL: site.tileURL)
+                    return TopSiteItem(urlTitle: site.tileURL.extractDomainName(), faviconURL: nil, siteURL: site.tileURL)
                 }
                 self.topSiteHandler = ASHorizontalScrollSource()
                 self.topSiteHandler.content = self.topSites
@@ -187,24 +212,9 @@ extension ActivityStreamPanel: UITableViewDelegate, UITableViewDataSource {
             return succeed()
         }
     }
-
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        var site: Site!
-        switch indexPath.section {
-        case 0:
-            return
-        default:
-            site = self.history[indexPath.row]
-        }
-        showSiteWithURL(site.tileURL)
-    }
-
-    func showSiteWithURL(url: NSURL) {
-        let visitType = VisitType.Bookmark
-        homePanelDelegate?.homePanel(self, didSelectURL: url, visitType: visitType)
-    }
 }
 
+// HomePanel Protocol
 extension ActivityStreamPanel: HomePanel {
     func endEditing() {
     }

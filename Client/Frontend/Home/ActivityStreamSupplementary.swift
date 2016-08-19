@@ -247,8 +247,7 @@ class ASHorizontalScrollCell: UITableViewCell {
         }
 
         pageControl.snp_makeConstraints { make in
-            make.width.equalTo(30)
-            make.height.equalTo(20)
+            make.size.equalTo(CGSize(width: 30, height: 20))
             make.top.equalTo(collectionView.snp_bottom).offset(-10)
             make.centerX.equalTo(self.snp_centerX)
         }
@@ -259,6 +258,9 @@ class ASHorizontalScrollCell: UITableViewCell {
         super.layoutSubviews()
         let layout = collectionView.collectionViewLayout as! HorizontalFlowLayout
         pageControl.numberOfPages = layout.numberOfPages
+        if pageControl.numberOfPages == 1 {
+            pageControl.hidden = true
+        }
     }
 
     func heightChanged(newHeight: Int) {
@@ -322,14 +324,21 @@ class ASHorizontalScrollSource: NSObject, UICollectionViewDelegate, UICollection
 }
 
 struct ASHeaderViewUX {
-    static let ContentColor =  UIColor.redColor()
+    static let SeperatorColor =  UIColor(rgb: 0xedecea)
     static let TextFont = DynamicFontHelper.defaultHelper.DefaultSmallFontBold
     static let SeperatorHeight = 1
     static let Insets: CGFloat = 20
 }
 
 class ASHeaderView: UIView {
-    var titleLabel: UILabel!
+    lazy private var titleLabel: UILabel = {
+        let titleLabel = UILabel()
+        titleLabel.text = self.title
+        titleLabel.textColor = UIColor.grayColor()
+        titleLabel.font = ASHeaderViewUX.TextFont
+        return titleLabel
+    }()
+
     var title: String = "" {
         willSet(newTitle) {
             titleLabel.text = newTitle
@@ -339,17 +348,14 @@ class ASHeaderView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        titleLabel = UILabel()
-        titleLabel.text = title
-        titleLabel.textColor = UIColor.grayColor()
-        titleLabel.font = ASHeaderViewUX.TextFont
         addSubview(titleLabel)
+
         titleLabel.snp_makeConstraints { make in
             make.edges.equalTo(self).offset(UIEdgeInsets(top: 5, left: ASHeaderViewUX.Insets, bottom: 0, right: -ASHeaderViewUX.Insets))
         }
 
         let seperatorLine = UIView()
-        seperatorLine.backgroundColor = UIColor(rgb: 0xedecea)
+        seperatorLine.backgroundColor = ASHeaderViewUX.SeperatorColor
         addSubview(seperatorLine)
         seperatorLine.snp_makeConstraints { make in
             make.height.equalTo(ASHeaderViewUX.SeperatorHeight)
